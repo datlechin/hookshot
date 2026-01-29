@@ -1,0 +1,19 @@
+# Rust
+/target
+
+# CCPM - Local working files (don't commit)
+.opencode/epics/
+.opencode/context/*.local.md
+
+# Frontend build
+frontend/dist/
+frontend/node_modules/
+
+# Database
+*.db
+*.db-shm
+*.db-wal
+
+# Environment files
+.env
+.env.local

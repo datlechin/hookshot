@@ -1,0 +1,36 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "permission": {
+    "*": "allow",
+    "bash": {
+      "*": "ask",
+      ".opencode/scripts/*": "allow",
+      "git *": "allow",
+      "gh *": "allow",
+      "cargo *": "allow",
+      "npm *": "allow",
+      "cat *": "allow",
+      "ls *": "allow",
+      "find *": "allow",
+      "grep *": "allow",
+      "sed *": "allow",
+      "tree *": "allow",
+      "chmod *": "allow",
+      "mkdir *": "allow",
+      "rm -rf target": "allow"
+    },
+    "edit": {
+      "*": "allow",
+      "Cargo.lock": "deny"
+    },
+    "read": {
+      "*": "allow",
+      "*.env": "deny",
+      "*.env.*": "deny",
+      "*.env.example": "allow"
+    },
+    "external_directory": {
+      "~/.config/opencode/**": "allow"
+    }
+  }
+}
