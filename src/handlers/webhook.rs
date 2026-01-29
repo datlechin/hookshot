@@ -1,0 +1,201 @@
+use axum::{
+    body::Bytes,
+    extract::{ConnectInfo, Path, State},
+    http::{HeaderMap, Method, StatusCode, Uri},
+    response::{IntoResponse, Response},
+};
+use sqlx::SqlitePool;
+use std::net::SocketAddr;
+use tracing::{error, info};
+
+const MAX_BODY_SIZE: usize = 10 * 1024 * 1024; // 10MB
+
+/// Webhook capture handler - accepts any HTTP method and stores the request
+pub async fn webhook_handler(
+    Path(endpoint_id): Path<String>,
+    method: Method,
+    uri: Uri,
+    headers: HeaderMap,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    State(pool): State<SqlitePool>,
+    body: Bytes,
+) -> Result<Response, StatusCode> {
+    // Check body size limit
+    if body.len() > MAX_BODY_SIZE {
+        info!(
+            "Request to endpoint {} rejected: body size {} exceeds limit {}",
+            endpoint_id,
+            body.len(),
+            MAX_BODY_SIZE
+        );
+        return Err(StatusCode::PAYLOAD_TOO_LARGE);
+    }
+
+    // Validate endpoint exists in database
+    let endpoint_exists = match sqlx::query_scalar::<_, i32>(
+        "SELECT 1 FROM endpoints WHERE id = ? LIMIT 1"
+    )
+    .bind(&endpoint_id)
+    .fetch_optional(&pool)
+    .await
+    {
+        Ok(Some(_)) => true,
+        Ok(None) => false,
+        Err(e) => {
+            error!("Database error checking endpoint {}: {}", endpoint_id, e);
+            return Err(StatusCode::INTERNAL_SERVER_ERROR);
+        }
+    };
+
+    if !endpoint_exists {
+        info!("Request to non-existent endpoint: {}", endpoint_id);
+        return Err(StatusCode::NOT_FOUND);
+    }
+
+    // Extract request data
+    let http_method = method.as_str();
+    let path = uri.path();
+    let query_string = uri.query().map(|q| q.to_string());
+    
+    // Convert headers to JSON
+    let headers_json = headers_to_json(&headers);
+    
+    // Extract Content-Type header
+    let content_type = headers
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .map(|s| s.to_string());
+    
+    // Get client IP address
+    let ip_address = addr.ip().to_string();
+    
+    // Get current timestamp with millisecond precision
+    let received_at = chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
+    
+    // Store body as bytes (can be empty)
+    let body_bytes = if body.is_empty() {
+        None
+    } else {
+        Some(body.to_vec())
+    };
+
+    // Insert request into database asynchronously
+    let pool_clone = pool.clone();
+    let endpoint_id_clone = endpoint_id.clone();
+    let method_str = http_method.to_string();
+    let path_str = path.to_string();
+    
+    tokio::spawn(async move {
+        // Insert the request record
+        if let Err(e) = sqlx::query(
+            r#"
+            INSERT INTO requests (endpoint_id, method, path, query_string, headers, body, content_type, received_at, ip_address)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            "#
+        )
+        .bind(&endpoint_id_clone)
+        .bind(&method_str)
+        .bind(&path_str)
+        .bind(&query_string)
+        .bind(&headers_json)
+        .bind(&body_bytes)
+        .bind(&content_type)
+        .bind(&received_at)
+        .bind(&ip_address)
+        .execute(&pool_clone)
+        .await
+        {
+            error!("Failed to insert request for endpoint {}: {}", endpoint_id_clone, e);
+            return;
+        }
+
+        // Increment request count for the endpoint
+        if let Err(e) = sqlx::query(
+            "UPDATE endpoints SET request_count = request_count + 1 WHERE id = ?"
+        )
+        .bind(&endpoint_id_clone)
+        .execute(&pool_clone)
+        .await
+        {
+            error!("Failed to increment request count for endpoint {}: {}", endpoint_id_clone, e);
+        }
+
+        info!(
+            "Captured {} request to endpoint {} from {}",
+            method_str, endpoint_id_clone, ip_address
+        );
+    });
+
+    // Return 200 OK immediately (non-blocking response)
+    Ok((
+        StatusCode::OK,
+        [("Access-Control-Allow-Origin", "*")],
+        "",
+    ).into_response())
+}
+
+/// Convert HeaderMap to JSON string
+fn headers_to_json(headers: &HeaderMap) -> String {
+    let mut map = serde_json::Map::new();
+    
+    for (name, value) in headers.iter() {
+        let key = name.as_str().to_string();
+        let val = value.to_str().unwrap_or("[binary]").to_string();
+        
+        // If header appears multiple times, create an array
+        match map.get_mut(&key) {
+            Some(serde_json::Value::Array(arr)) => {
+                arr.push(serde_json::Value::String(val));
+            }
+            Some(existing) => {
+                let old = existing.clone();
+                *existing = serde_json::Value::Array(vec![old, serde_json::Value::String(val)]);
+            }
+            None => {
+                map.insert(key, serde_json::Value::String(val));
+            }
+        }
+    }
+    
+    serde_json::to_string(&map).unwrap_or_else(|_| "{}".to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::http::{HeaderName, HeaderValue};
+
+    #[test]
+    fn test_headers_to_json() {
+        let mut headers = HeaderMap::new();
+        headers.insert("content-type", HeaderValue::from_static("application/json"));
+        headers.insert("user-agent", HeaderValue::from_static("test-agent"));
+        
+        let json = headers_to_json(&headers);
+        let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+        
+        assert_eq!(parsed["content-type"], "application/json");
+        assert_eq!(parsed["user-agent"], "test-agent");
+    }
+
+    #[test]
+    fn test_headers_to_json_multiple_values() {
+        let mut headers = HeaderMap::new();
+        headers.append("x-custom", HeaderValue::from_static("value1"));
+        headers.append("x-custom", HeaderValue::from_static("value2"));
+        
+        let json = headers_to_json(&headers);
+        let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+        
+        assert!(parsed["x-custom"].is_array());
+        let arr = parsed["x-custom"].as_array().unwrap();
+        assert_eq!(arr.len(), 2);
+    }
+
+    #[test]
+    fn test_headers_to_json_empty() {
+        let headers = HeaderMap::new();
+        let json = headers_to_json(&headers);
+        assert_eq!(json, "{}");
+    }
+}
