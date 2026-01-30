@@ -92,7 +92,7 @@ async fn main() {
             get(handlers::websocket::websocket_handler),
         )
         // Webhook capture route - accepts all HTTP methods
-        .route("/webhook/{id}", any(handlers::webhook::webhook_handler));
+        .route("/hook/{id}", any(handlers::webhook::webhook_handler));
 
     // Combine API routes with static file serving
     let app = api_routes
@@ -111,5 +111,10 @@ async fn main() {
         .await
         .expect("Failed to bind to address");
 
-    axum::serve(listener, app).await.expect("Server failed");
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .await
+    .expect("Server failed");
 }
