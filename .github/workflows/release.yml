@@ -1,0 +1,223 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-release:
+    name: Build Release
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # macOS builds
+          - target: x86_64-apple-darwin
+            os: macos-latest
+            name: macos-x86_64
+          - target: aarch64-apple-darwin
+            os: macos-latest
+            name: macos-arm64
+
+          # Linux builds
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            name: linux-x86_64
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+            name: linux-arm64
+
+          # Windows build
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+            name: windows-x86_64
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+          cache-on-failure: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+      # Linux ARM64 cross-compilation setup
+      - name: Install cross-compilation tools (Linux ARM64)
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu
+
+      - name: Configure cross-compilation (Linux ARM64)
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        run: |
+          echo "[target.aarch64-unknown-linux-gnu]" >> ~/.cargo/config.toml
+          echo "linker = \"aarch64-linux-gnu-gcc\"" >> ~/.cargo/config.toml
+
+      - name: Build release binary
+        run: cargo build --release --target ${{ matrix.target }} --verbose
+
+      - name: Get version from tag
+        id: get_version
+        shell: bash
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Prepare binary (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          cd target/${{ matrix.target }}/release
+          BINARY_NAME=hookshot-${{ steps.get_version.outputs.VERSION }}-${{ matrix.name }}
+          mv hookshot $BINARY_NAME
+          tar -czf $BINARY_NAME.tar.gz $BINARY_NAME
+          shasum -a 256 $BINARY_NAME.tar.gz > $BINARY_NAME.tar.gz.sha256
+
+      - name: Prepare binary (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          cd target/${{ matrix.target }}/release
+          BINARY_NAME=hookshot-${{ steps.get_version.outputs.VERSION }}-${{ matrix.name }}
+          mv hookshot.exe $BINARY_NAME.exe
+          7z a $BINARY_NAME.zip $BINARY_NAME.exe
+          sha256sum $BINARY_NAME.zip > $BINARY_NAME.zip.sha256
+
+      - name: Upload release artifacts (Unix)
+        if: runner.os != 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}
+          path: |
+            target/${{ matrix.target }}/release/hookshot-*.tar.gz
+            target/${{ matrix.target }}/release/hookshot-*.tar.gz.sha256
+
+      - name: Upload release artifacts (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}
+          path: |
+            target/${{ matrix.target }}/release/hookshot-*.zip
+            target/${{ matrix.target }}/release/hookshot-*.zip.sha256
+
+  create-release:
+    name: Create Release
+    needs: build-release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Display structure of downloaded files
+        run: ls -R artifacts
+
+      - name: Create release notes
+        run: |
+          cat > release-notes.md << 'EOF'
+          ## Hookshot ${{ steps.get_version.outputs.VERSION }}
+
+          Self-hosted webhook testing tool built with Rust and React.
+
+          ### Download
+
+          Choose the binary for your platform:
+
+          **macOS:**
+          - `hookshot-${{ steps.get_version.outputs.VERSION }}-macos-x86_64.tar.gz` - Intel Macs
+          - `hookshot-${{ steps.get_version.outputs.VERSION }}-macos-arm64.tar.gz` - Apple Silicon Macs (M1/M2/M3)
+
+          **Linux:**
+          - `hookshot-${{ steps.get_version.outputs.VERSION }}-linux-x86_64.tar.gz` - 64-bit Intel/AMD
+          - `hookshot-${{ steps.get_version.outputs.VERSION }}-linux-arm64.tar.gz` - 64-bit ARM (Raspberry Pi, etc.)
+
+          **Windows:**
+          - `hookshot-${{ steps.get_version.outputs.VERSION }}-windows-x86_64.zip` - 64-bit Intel/AMD
+
+          ### Quick Start
+
+          ```bash
+          # macOS / Linux
+          tar -xzf hookshot-*.tar.gz
+          chmod +x hookshot-*
+          ./hookshot-*
+
+          # Windows
+          # Extract the ZIP file and run hookshot-*.exe
+          ```
+
+          Then open http://localhost:3000 in your browser.
+
+          ### Verification
+
+          Verify the download with SHA256 checksums:
+
+          ```bash
+          # macOS / Linux
+          shasum -a 256 -c hookshot-*.tar.gz.sha256
+
+          # Windows
+          certutil -hashfile hookshot-*.zip SHA256
+          ```
+
+          ### What's New
+
+          See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/${{ steps.get_version.outputs.VERSION }}/CHANGELOG.md) for full details.
+          EOF
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Release ${{ steps.get_version.outputs.VERSION }}
+          body_path: release-notes.md
+          draft: false
+          prerelease: false
+          files: |
+            artifacts/**/*.tar.gz
+            artifacts/**/*.tar.gz.sha256
+            artifacts/**/*.zip
+            artifacts/**/*.zip.sha256
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update latest tag
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git tag -f latest
+          git push origin latest --force
