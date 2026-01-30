@@ -2,6 +2,7 @@ mod db;
 mod handlers;
 mod models;
 mod services;
+mod static_files;
 mod websocket;
 
 use axum::{
@@ -11,6 +12,7 @@ use axum::{
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tower_http::{
+    compression::CompressionLayer,
     cors::{Any, CorsLayer},
     trace::TraceLayer,
 };
@@ -57,8 +59,15 @@ async fn main() {
         .allow_methods(Any)
         .allow_headers(Any);
 
+    // Check if static files are embedded
+    if static_files::is_embedded() {
+        tracing::info!("Static files embedded successfully");
+    } else {
+        tracing::warn!("Static files not embedded - frontend may not be available");
+    }
+
     // Build application routes
-    let app = Router::new()
+    let api_routes = Router::new()
         // Health check endpoint
         .route("/health", get(handlers::health_check))
         // API routes for endpoint management
@@ -72,7 +81,13 @@ async fn main() {
         // WebSocket endpoint for real-time updates
         .route("/ws/endpoints/:id", get(handlers::websocket::websocket_handler))
         // Webhook capture route - accepts all HTTP methods
-        .route("/webhook/:id", any(handlers::webhook::webhook_handler))
+        .route("/webhook/:id", any(handlers::webhook::webhook_handler));
+
+    // Combine API routes with static file serving
+    let app = api_routes
+        // Fallback to static file serving for all other routes (SPA support)
+        .fallback(static_files::serve_static_file)
+        .layer(CompressionLayer::new())
         .layer(cors)
         .layer(TraceLayer::new_for_http())
         .with_state((pool, ws_manager))

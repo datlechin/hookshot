@@ -3,6 +3,10 @@ export interface Endpoint {
   name: string;
   description?: string;
   created_at: string;
+  custom_response_enabled: boolean;
+  response_status: number;
+  response_headers: string | null;
+  response_body: string | null;
 }
 
 export interface Request {

@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft } from 'lucide-react';
-import { endpointsApi, requestsApi } from '@/lib/api';
-import { WebSocketClient } from '@/lib/websocket';
+import { ArrowLeft, Copy, CheckCircle2, WifiOff, Wifi } from 'lucide-react';
+import { useEndpoint } from '@/hooks/useEndpoints';
+import { useRequests } from '@/hooks/useRequests';
+import { useWebSocket } from '@/hooks/useWebSocket';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -12,66 +12,80 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { RequestList } from '@/components/RequestList';
+import { ResponseConfig } from '@/components/ResponseConfig';
 import type { Request } from '@/types';
+
+const REQUESTS_PER_PAGE = 50;
 
 export default function EndpointView() {
   const { id } = useParams<{ id: string }>();
-  const [liveRequests, setLiveRequests] = useState<Request[]>([]);
+  const [copiedUrl, setCopiedUrl] = useState(false);
+  const [displayCount, setDisplayCount] = useState(REQUESTS_PER_PAGE);
 
-  const { data: endpoint, isLoading: isLoadingEndpoint } = useQuery({
-    queryKey: ['endpoint', id],
-    queryFn: () => endpointsApi.get(id!),
-    enabled: !!id,
-  });
+  const { data: endpoint, isLoading: isLoadingEndpoint, refetch: refetchEndpoint } = useEndpoint(id);
+  const { data: requests, isLoading: isLoadingRequests } = useRequests(id);
+  const { isConnected, newRequests, clearNewRequests } = useWebSocket(id);
 
-  const { data: requests, isLoading: isLoadingRequests } = useQuery({
-    queryKey: ['requests', id],
-    queryFn: () => requestsApi.list(id!),
-    enabled: !!id,
-  });
+  const webhookUrl = `${window.location.origin}/hook/${id}`;
 
-  useEffect(() => {
-    if (!id) return;
-
-    const ws = new WebSocketClient(id);
-    ws.connect();
-
-    const unsubscribe = ws.onMessage((message) => {
-      if (message.type === 'new_request') {
-        setLiveRequests((prev) => [message.data, ...prev]);
-      }
+  const handleCopyUrl = () => {
+    navigator.clipboard.writeText(webhookUrl).then(() => {
+      setCopiedUrl(true);
+      setTimeout(() => setCopiedUrl(false), 2000);
     });
+  };
 
-    return () => {
-      unsubscribe();
-      ws.disconnect();
-    };
-  }, [id]);
+  // Merge live and fetched requests, removing duplicates
+  const allRequests = useMemo(() => {
+    const requestMap = new Map<string, Request>();
+
+    // Add fetched requests first
+    requests?.forEach((req) => requestMap.set(req.id, req));
+
+    // Add new requests (will override if same ID)
+    newRequests.forEach((req) => requestMap.set(req.id, req));
+
+    // Sort by received_at descending
+    return Array.from(requestMap.values()).sort(
+      (a, b) => new Date(b.received_at).getTime() - new Date(a.received_at).getTime()
+    );
+  }, [requests, newRequests]);
+
+  const displayedRequests = allRequests.slice(0, displayCount);
+  const hasMore = allRequests.length > displayCount;
+
+  const handleLoadMore = () => {
+    setDisplayCount((prev) => prev + REQUESTS_PER_PAGE);
+    clearNewRequests();
+  };
 
   if (isLoadingEndpoint || isLoadingRequests) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-muted-foreground">Loading...</div>
+      </div>
+    );
   }
 
   if (!endpoint) {
-    return <div className="text-destructive">Endpoint not found</div>;
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-destructive">Endpoint not found</div>
+      </div>
+    );
   }
-
-  const allRequests = [...liveRequests, ...(requests || [])];
-  const uniqueRequests = Array.from(
-    new Map(allRequests.map((r) => [r.id, r])).values()
-  );
 
   return (
     <div className="space-y-6">
+      {copiedUrl && (
+        <div className="fixed top-4 right-4 bg-primary text-primary-foreground px-4 py-2 rounded-md shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-top-2 z-50">
+          <CheckCircle2 className="h-4 w-4" />
+          URL copied to clipboard!
+        </div>
+      )}
+
       <div className="flex items-center gap-4">
         <Link to="/">
           <Button variant="ghost" size="icon">
@@ -79,7 +93,22 @@ export default function EndpointView() {
           </Button>
         </Link>
         <div className="flex-1">
-          <h1 className="text-3xl font-bold">{endpoint.name}</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold">{endpoint.name}</h1>
+            <Badge variant={isConnected ? 'default' : 'secondary'} className="flex items-center gap-1">
+              {isConnected ? (
+                <>
+                  <Wifi className="h-3 w-3" />
+                  Live
+                </>
+              ) : (
+                <>
+                  <WifiOff className="h-3 w-3" />
+                  Disconnected
+                </>
+              )}
+            </Badge>
+          </div>
           {endpoint.description && (
             <p className="text-muted-foreground">{endpoint.description}</p>
           )}
@@ -91,51 +120,57 @@ export default function EndpointView() {
           <CardTitle>Webhook URL</CardTitle>
           <CardDescription>Send requests to this endpoint</CardDescription>
         </CardHeader>
-        <CardContent>
-          <code className="block p-3 bg-muted rounded-md text-sm">
-            {window.location.origin}/hook/{id}
-          </code>
+        <CardContent className="space-y-3">
+          <div className="flex items-center gap-2">
+            <code className="flex-1 p-3 bg-muted rounded-md text-sm break-all">
+              {webhookUrl}
+            </code>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleCopyUrl}
+              className="shrink-0"
+            >
+              <Copy className="h-4 w-4" />
+            </Button>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Send HTTP requests to this URL. All methods (GET, POST, PUT, DELETE, etc.) are supported.
+          </p>
         </CardContent>
       </Card>
 
+      <ResponseConfig endpoint={endpoint} onUpdate={refetchEndpoint} />
+
       <Card>
         <CardHeader>
-          <CardTitle>Requests</CardTitle>
-          <CardDescription>
-            {uniqueRequests.length} request{uniqueRequests.length !== 1 ? 's' : ''} received
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Requests</CardTitle>
+              <CardDescription>
+                {allRequests.length} request{allRequests.length !== 1 ? 's' : ''} received
+                {newRequests.length > 0 && (
+                  <span className="ml-2 text-primary font-medium">
+                    ({newRequests.length} new)
+                  </span>
+                )}
+              </CardDescription>
+            </div>
+            {allRequests.length > 0 && (
+              <Badge variant="outline">
+                Showing {displayedRequests.length} of {allRequests.length}
+              </Badge>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
-          {uniqueRequests.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">
-              No requests yet. Send a request to the webhook URL above.
-            </p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Method</TableHead>
-                  <TableHead>Time</TableHead>
-                  <TableHead>Headers</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {uniqueRequests.map((request) => (
-                  <TableRow key={request.id}>
-                    <TableCell>
-                      <Badge variant="outline">{request.method}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      {new Date(request.received_at).toLocaleString()}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {Object.keys(request.headers).length} headers
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+          <RequestList
+            requests={displayedRequests}
+            onLoadMore={handleLoadMore}
+            hasMore={hasMore}
+            isLoading={false}
+            newRequestCount={newRequests.length}
+          />
         </CardContent>
       </Card>
     </div>
