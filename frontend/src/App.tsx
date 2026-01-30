@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { useTheme, useEndpoints } from '@/hooks';
+import { useTheme } from '@/hooks';
 import { Header, Sidebar, RequestList, DetailPanel } from '@/components/layout';
+import { EndpointProvider, useSelectedEndpoint } from '@/contexts/EndpointContext';
 import type { Request } from '@/lib/types';
 
-function App() {
+function AppContent() {
   const { theme, toggleTheme } = useTheme();
-  const { selectedId: selectedEndpointId } = useEndpoints();
+  const { selectedEndpointId } = useSelectedEndpoint();
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<
     'connected' | 'connecting' | 'disconnected' | 'polling'
@@ -59,4 +60,12 @@ function App() {
   );
 }
 
-export default App;
+}
+
+export default function App() {
+  return (
+    <EndpointProvider>
+      <AppContent />
+    </EndpointProvider>
+  );
+}
