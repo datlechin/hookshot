@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react'
-import { Trash2 } from 'lucide-react'
+import { Trash2, Settings } from 'lucide-react'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { CopyURLButton } from '@/components/ui/CopyURLButton'
 import type { Endpoint } from '@/lib/types'
@@ -15,14 +15,26 @@ interface EndpointItemProps {
   selected: boolean
   onSelect: () => void
   onDelete: () => void
+  onConfigure: () => void
 }
 
-export function EndpointItem({ endpoint, selected, onSelect, onDelete }: EndpointItemProps) {
+export function EndpointItem({
+  endpoint,
+  selected,
+  onSelect,
+  onDelete,
+  onConfigure,
+}: EndpointItemProps) {
   const [showConfirm, setShowConfirm] = useState(false)
 
   function handleDelete(e: React.MouseEvent) {
     e.stopPropagation()
     setShowConfirm(true)
+  }
+
+  function handleConfigure(e: React.MouseEvent) {
+    e.stopPropagation()
+    onConfigure()
   }
 
   function handleConfirm() {
@@ -52,9 +64,14 @@ export function EndpointItem({ endpoint, selected, onSelect, onDelete }: Endpoin
       >
         <div className="flex items-start justify-between mb-2">
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-mono text-[var(--text-primary)] truncate">
-              {endpoint.id}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-mono text-[var(--text-primary)] truncate">
+                {endpoint.id}
+              </p>
+              {endpoint.custom_response_enabled && (
+                <span className="flex-shrink-0 w-2 h-2 bg-[var(--accent-green)] rounded-full" title="Custom response enabled" />
+              )}
+            </div>
             <p className="text-xs text-[var(--text-tertiary)] mt-1">
               {new Date(endpoint.created_at).toLocaleDateString('en-US', {
                 month: 'short',
@@ -63,14 +80,24 @@ export function EndpointItem({ endpoint, selected, onSelect, onDelete }: Endpoin
               })}
             </p>
           </div>
-          <button
-            onClick={handleDelete}
-            className="ml-2 text-[var(--text-tertiary)] hover:text-[var(--accent-red)] transition-colors opacity-0 group-hover:opacity-100"
-            title="Delete endpoint"
-            aria-label="Delete endpoint"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
+          <div className="flex gap-1 ml-2">
+            <button
+              onClick={handleConfigure}
+              className="text-[var(--text-tertiary)] hover:text-[var(--accent-blue)] transition-colors opacity-0 group-hover:opacity-100"
+              title="Configure response"
+              aria-label="Configure response"
+            >
+              <Settings className="w-4 h-4" />
+            </button>
+            <button
+              onClick={handleDelete}
+              className="text-[var(--text-tertiary)] hover:text-[var(--accent-red)] transition-colors opacity-0 group-hover:opacity-100"
+              title="Delete endpoint"
+              aria-label="Delete endpoint"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         <div className="opacity-0 group-hover:opacity-100 transition-opacity">

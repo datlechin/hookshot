@@ -1,15 +1,26 @@
+import { useState } from 'react'
 import { Webhook, Loader2 } from 'lucide-react'
 import { useEndpoints } from '@/hooks'
 import { EmptyState, Button } from '@/components/ui'
-import { EndpointItem } from '@/components/endpoint'
+import { EndpointItem, EndpointConfig } from '@/components/endpoint'
+import type { Endpoint, EndpointConfig as Config } from '@/lib/types'
 
 /**
  * Sidebar component for displaying endpoint list
  * Width: 280px on desktop, collapsible on tablet, hidden on mobile
  */
 export function Sidebar() {
-  const { endpoints, loading, error, selectedId, setSelectedId, deleteEndpoint, createEndpoint } =
-    useEndpoints()
+  const {
+    endpoints,
+    loading,
+    error,
+    selectedId,
+    setSelectedId,
+    deleteEndpoint,
+    createEndpoint,
+    updateConfig,
+  } = useEndpoints()
+  const [configuringEndpoint, setConfiguringEndpoint] = useState<Endpoint | null>(null)
 
   async function handleCreateEndpoint() {
     await createEndpoint()
@@ -17,6 +28,12 @@ export function Sidebar() {
 
   async function handleDeleteEndpoint(id: string) {
     await deleteEndpoint(id)
+  }
+
+  async function handleSaveConfig(config: Config) {
+    if (!configuringEndpoint) return
+    await updateConfig(configuringEndpoint.id, config)
+    setConfiguringEndpoint(null)
   }
 
   return (
@@ -65,9 +82,19 @@ export function Sidebar() {
                 selected={selectedId === endpoint.id}
                 onSelect={() => setSelectedId(endpoint.id)}
                 onDelete={() => handleDeleteEndpoint(endpoint.id)}
+                onConfigure={() => setConfiguringEndpoint(endpoint)}
               />
             ))}
           </div>
+        )}
+
+        {/* Config Dialog */}
+        {configuringEndpoint && (
+          <EndpointConfig
+            endpoint={configuringEndpoint}
+            onSave={handleSaveConfig}
+            onCancel={() => setConfiguringEndpoint(null)}
+          />
         )}
       </div>
     </aside>
