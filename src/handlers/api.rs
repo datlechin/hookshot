@@ -1,17 +1,19 @@
-use crate::models::{Request, RequestListResponse, RequestQueryParams, RequestResponse};
+use crate::models::{Request, RequestListResponse, RequestQueryParams, RequestResponse, UpdateResponseConfig};
+use crate::websocket::WebSocketManager;
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
     Json,
 };
 use sqlx::SqlitePool;
+use std::sync::Arc;
 
 /// Handler for GET /api/endpoints/:id/requests
 /// Returns paginated list of requests for an endpoint with optional method filtering
 pub async fn get_endpoint_requests(
     Path(endpoint_id): Path<String>,
     Query(params): Query<RequestQueryParams>,
-    State(pool): State<SqlitePool>,
+    State((pool, _ws_manager)): State<(SqlitePool, Arc<WebSocketManager>)>,
 ) -> Result<Json<RequestListResponse>, StatusCode> {
     // Validate pagination parameters
     let page = params.page.max(1);
@@ -138,7 +140,7 @@ pub async fn get_endpoint_requests(
 /// Returns full details of a single request
 pub async fn get_request_by_id(
     Path(request_id): Path<i64>,
-    State(pool): State<SqlitePool>,
+    State((pool, _ws_manager)): State<(SqlitePool, Arc<WebSocketManager>)>,
 ) -> Result<Json<RequestResponse>, StatusCode> {
     let request: Request = sqlx::query_as("SELECT * FROM requests WHERE id = ?")
         .bind(request_id)
@@ -157,7 +159,7 @@ pub async fn get_request_by_id(
 /// Deletes an endpoint and all associated requests (cascade)
 pub async fn delete_endpoint(
     Path(endpoint_id): Path<String>,
-    State(pool): State<SqlitePool>,
+    State((pool, _ws_manager)): State<(SqlitePool, Arc<WebSocketManager>)>,
 ) -> Result<StatusCode, StatusCode> {
     // Check if endpoint exists
     let endpoint_exists: Option<(i64,)> =
@@ -189,6 +191,60 @@ pub async fn delete_endpoint(
     Ok(StatusCode::NO_CONTENT)
 }
 
+/// Handler for PUT /api/endpoints/:id/response
+/// Updates custom response configuration for an endpoint
+pub async fn update_endpoint_response(
+    Path(endpoint_id): Path<String>,
+    State((pool, _ws_manager)): State<(SqlitePool, Arc<WebSocketManager>)>,
+    Json(config): Json<UpdateResponseConfig>,
+) -> Result<StatusCode, (StatusCode, String)> {
+    // Validate status code (100-599)
+    if !(100..=599).contains(&config.status) {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            "Status code must be between 100 and 599".to_string(),
+        ));
+    }
+
+    // Validate headers JSON if provided
+    if let Some(ref headers) = config.headers {
+        if serde_json::from_str::<serde_json::Value>(headers).is_err() {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                "Headers must be valid JSON".to_string(),
+            ));
+        }
+    }
+
+    // Update endpoint response configuration
+    let updated = crate::services::endpoint::update_response_config(
+        &pool,
+        &endpoint_id,
+        config.enabled,
+        config.status,
+        config.headers,
+        config.body,
+    )
+    .await
+    .map_err(|e| {
+        tracing::error!("Database error updating endpoint response: {}", e);
+        (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error".to_string())
+    })?;
+
+    if !updated {
+        return Err((StatusCode::NOT_FOUND, "Endpoint not found".to_string()));
+    }
+
+    tracing::info!(
+        "Updated response config for endpoint {}: enabled={}, status={}",
+        endpoint_id,
+        config.enabled,
+        config.status
+    );
+
+    Ok(StatusCode::NO_CONTENT)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -197,6 +253,10 @@ mod tests {
 
     async fn setup_test_db() -> SqlitePool {
         db::init_pool("sqlite::memory:").await.unwrap()
+    }
+
+    fn create_test_state(pool: SqlitePool) -> (SqlitePool, Arc<WebSocketManager>) {
+        (pool, Arc::new(WebSocketManager::new()))
     }
 
     async fn create_test_endpoint(pool: &SqlitePool) -> String {
@@ -211,7 +271,7 @@ mod tests {
 
     async fn create_test_request(pool: &SqlitePool, endpoint_id: &str, method: &str) -> i64 {
         let result = sqlx::query(
-            "INSERT INTO requests (endpoint_id, method, path, headers) 
+            "INSERT INTO requests (endpoint_id, method, path, headers)
              VALUES (?, ?, ?, ?)",
         )
         .bind(endpoint_id)
@@ -239,7 +299,7 @@ mod tests {
         let result = get_endpoint_requests(
             Path(endpoint_id),
             Query(params),
-            State(pool),
+            State(create_test_state(pool)),
         )
         .await;
 
@@ -268,7 +328,7 @@ mod tests {
         let result = get_endpoint_requests(
             Path(endpoint_id),
             Query(params),
-            State(pool),
+            State(create_test_state(pool)),
         )
         .await;
 
@@ -298,7 +358,7 @@ mod tests {
         let result = get_endpoint_requests(
             Path(endpoint_id.clone()),
             Query(params),
-            State(pool.clone()),
+            State(create_test_state(pool.clone())),
         )
         .await;
 
@@ -318,7 +378,7 @@ mod tests {
         let result = get_endpoint_requests(
             Path(endpoint_id),
             Query(params),
-            State(pool),
+            State(create_test_state(pool)),
         )
         .await;
 
@@ -355,7 +415,7 @@ mod tests {
         let result = get_endpoint_requests(
             Path(endpoint_id.clone()),
             Query(params),
-            State(pool.clone()),
+            State(create_test_state(pool.clone())),
         )
         .await;
 
@@ -375,7 +435,7 @@ mod tests {
         let result = get_endpoint_requests(
             Path(endpoint_id),
             Query(params),
-            State(pool),
+            State(create_test_state(pool)),
         )
         .await;
 
@@ -391,7 +451,7 @@ mod tests {
         let endpoint_id = create_test_endpoint(&pool).await;
         let request_id = create_test_request(&pool, &endpoint_id, "POST").await;
 
-        let result = get_request_by_id(Path(request_id), State(pool)).await;
+        let result = get_request_by_id(Path(request_id), State(create_test_state(pool))).await;
 
         assert!(result.is_ok());
         let response = result.unwrap().0;
@@ -403,7 +463,7 @@ mod tests {
     async fn test_get_request_by_id_not_found() {
         let pool = setup_test_db().await;
 
-        let result = get_request_by_id(Path(99999), State(pool)).await;
+        let result = get_request_by_id(Path(99999), State(create_test_state(pool))).await;
 
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), StatusCode::NOT_FOUND);
@@ -420,7 +480,7 @@ mod tests {
         }
 
         // Delete endpoint
-        let result = delete_endpoint(Path(endpoint_id.clone()), State(pool.clone())).await;
+        let result = delete_endpoint(Path(endpoint_id.clone()), State(create_test_state(pool.clone()))).await;
 
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), StatusCode::NO_CONTENT);
@@ -447,9 +507,191 @@ mod tests {
     async fn test_delete_endpoint_not_found() {
         let pool = setup_test_db().await;
 
-        let result = delete_endpoint(Path("nonexistent".to_string()), State(pool)).await;
+        let result = delete_endpoint(Path("nonexistent".to_string()), State(create_test_state(pool))).await;
 
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), StatusCode::NOT_FOUND);
+    }
+
+    #[tokio::test]
+    async fn test_update_endpoint_response() {
+        let pool = setup_test_db().await;
+        let endpoint_id = create_test_endpoint(&pool).await;
+
+        let config = UpdateResponseConfig {
+            enabled: true,
+            status: 404,
+            headers: Some(r#"{"x-custom":"header"}"#.to_string()),
+            body: Some(r#"{"error":"Custom error"}"#.to_string()),
+        };
+
+        let result = update_endpoint_response(
+            Path(endpoint_id.clone()),
+            State(create_test_state(pool.clone())),
+            Json(config),
+        )
+        .await;
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), StatusCode::NO_CONTENT);
+
+        // Verify the update
+        let endpoint: crate::models::Endpoint = sqlx::query_as(
+            "SELECT id, created_at, custom_response_enabled, response_status, response_headers, response_body, request_count FROM endpoints WHERE id = ?"
+        )
+        .bind(&endpoint_id)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+
+        assert!(endpoint.custom_response_enabled);
+        assert_eq!(endpoint.response_status, 404);
+        assert_eq!(endpoint.response_headers, Some(r#"{"x-custom":"header"}"#.to_string()));
+        assert_eq!(endpoint.response_body, Some(r#"{"error":"Custom error"}"#.to_string()));
+    }
+
+    #[tokio::test]
+    async fn test_update_endpoint_response_invalid_status() {
+        let pool = setup_test_db().await;
+        let endpoint_id = create_test_endpoint(&pool).await;
+
+        // Test status code too low
+        let config = UpdateResponseConfig {
+            enabled: true,
+            status: 99,
+            headers: None,
+            body: None,
+        };
+
+        let result = update_endpoint_response(
+            Path(endpoint_id.clone()),
+            State(create_test_state(pool.clone())),
+            Json(config),
+        )
+        .await;
+
+        assert!(result.is_err());
+        let (status, msg) = result.unwrap_err();
+        assert_eq!(status, StatusCode::BAD_REQUEST);
+        assert!(msg.contains("100 and 599"));
+
+        // Test status code too high
+        let config = UpdateResponseConfig {
+            enabled: true,
+            status: 600,
+            headers: None,
+            body: None,
+        };
+
+        let result = update_endpoint_response(
+            Path(endpoint_id),
+            State(create_test_state(pool)),
+            Json(config),
+        )
+        .await;
+
+        assert!(result.is_err());
+        let (status, msg) = result.unwrap_err();
+        assert_eq!(status, StatusCode::BAD_REQUEST);
+        assert!(msg.contains("100 and 599"));
+    }
+
+    #[tokio::test]
+    async fn test_update_endpoint_response_invalid_json_headers() {
+        let pool = setup_test_db().await;
+        let endpoint_id = create_test_endpoint(&pool).await;
+
+        let config = UpdateResponseConfig {
+            enabled: true,
+            status: 200,
+            headers: Some("not valid json".to_string()),
+            body: None,
+        };
+
+        let result = update_endpoint_response(
+            Path(endpoint_id),
+            State(create_test_state(pool)),
+            Json(config),
+        )
+        .await;
+
+        assert!(result.is_err());
+        let (status, msg) = result.unwrap_err();
+        assert_eq!(status, StatusCode::BAD_REQUEST);
+        assert!(msg.contains("valid JSON"));
+    }
+
+    #[tokio::test]
+    async fn test_update_endpoint_response_not_found() {
+        let pool = setup_test_db().await;
+
+        let config = UpdateResponseConfig {
+            enabled: true,
+            status: 200,
+            headers: None,
+            body: None,
+        };
+
+        let result = update_endpoint_response(
+            Path("nonexistent-id".to_string()),
+            State(pool),
+            Json(config),
+        )
+        .await;
+
+        assert!(result.is_err());
+        let (status, _) = result.unwrap_err();
+        assert_eq!(status, StatusCode::NOT_FOUND);
+    }
+
+    #[tokio::test]
+    async fn test_update_endpoint_response_disable() {
+        let pool = setup_test_db().await;
+        let endpoint_id = create_test_endpoint(&pool).await;
+
+        // First enable with config
+        let config = UpdateResponseConfig {
+            enabled: true,
+            status: 500,
+            headers: Some(r#"{"x-error":"true"}"#.to_string()),
+            body: Some("Error".to_string()),
+        };
+
+        update_endpoint_response(
+            Path(endpoint_id.clone()),
+            State(pool.clone()),
+            Json(config),
+        )
+        .await
+        .unwrap();
+
+        // Now disable
+        let config = UpdateResponseConfig {
+            enabled: false,
+            status: 200,
+            headers: None,
+            body: None,
+        };
+
+        let result = update_endpoint_response(
+            Path(endpoint_id.clone()),
+            State(create_test_state(pool.clone())),
+            Json(config),
+        )
+        .await;
+
+        assert!(result.is_ok());
+
+        // Verify disabled
+        let endpoint: crate::models::Endpoint = sqlx::query_as(
+            "SELECT id, created_at, custom_response_enabled, response_status, response_headers, response_body, request_count FROM endpoints WHERE id = ?"
+        )
+        .bind(&endpoint_id)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+
+        assert!(!endpoint.custom_response_enabled);
+        assert_eq!(endpoint.response_status, 200);
     }
 }
