@@ -57,7 +57,67 @@ A self-hosted webhook testing tool built with Rust and React - like webhook.site
 
 ## Development Setup
 
-Coming soon...
+### Prerequisites
+
+- Rust 1.70+ (install from [rustup.rs](https://rustup.rs))
+- Node.js 18+ and npm
+- SQLite3 (optional, for manual database inspection)
+
+### Quick Start
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/hookshot.git
+cd hookshot
+
+# Build and run (development mode)
+cargo run
+
+# In another terminal, run the frontend dev server
+cd frontend
+npm install
+npm run dev
+```
+
+The backend runs on `http://localhost:3000` and the frontend dev server proxies API/WebSocket requests to it.
+
+### Production Build
+
+Build a single binary with embedded frontend:
+
+```bash
+# Build release binary (automatically builds frontend first)
+cargo build --release
+
+# Run the binary
+./target/release/hookshot
+
+# Or with custom database location
+DATABASE_URL=sqlite:./data/hookshot.db ./target/release/hookshot
+```
+
+The release build:
+- Automatically builds the frontend via `build.rs`
+- Embeds all static files into the binary
+- Produces a ~7.5MB executable with no external dependencies
+- Serves both API and frontend from a single port (3000)
+
+### Environment Variables
+
+- `DATABASE_URL` - SQLite database path (default: `sqlite:./hookshot.db`)
+- `RUST_LOG` - Logging level (default: `hookshot=debug,tower_http=debug`)
+- `FORCE_FRONTEND_BUILD` - Force frontend build in dev mode (set to `1`)
+
+### Manual Frontend Build
+
+If you need to rebuild the frontend separately:
+
+```bash
+cd frontend
+npm run build
+```
+
+The build output goes to `frontend/dist/` and will be embedded on next Rust build.
 
 ## Architecture
 
