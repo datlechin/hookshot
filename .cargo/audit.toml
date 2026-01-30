@@ -1,0 +1,13 @@
+# Cargo audit configuration
+# https://rustsec.org/
+
+[advisories]
+# Ignored advisories
+ignore = [
+    # RUSTSEC-2023-0071: rsa crate timing sidechannel (Marvin Attack)
+    # Reason: This project uses SQLite only, not PostgreSQL.
+    # The rsa crate is a transitive dependency via sqlx-postgres which is
+    # not used in our application. No RSA operations are performed.
+    # Will remove this ignore once upstream provides a fix.
+    "RUSTSEC-2023-0071",
+]

@@ -64,7 +64,7 @@ async fn handle_websocket(
             // Serialize message to JSON
             match serde_json::to_string(&msg) {
                 Ok(json) => {
-                    if let Err(e) = sender.send(Message::Text(json)).await {
+                    if let Err(e) = sender.send(Message::Text(json.into())).await {
                         error!("Failed to send WebSocket message: {}", e);
                         break;
                     }

@@ -13,12 +13,12 @@ path = "src/main.rs"
 
 [dependencies]
 # Web framework
-axum = { version = "0.7", features = ["ws"] }
-tower = { version = "0.4", features = ["util"] }
-tower-http = { version = "0.5", features = ["cors", "trace", "fs", "compression-gzip"] }
+axum = { version = "0.8", features = ["ws"] }
+tower = { version = "0.5", features = ["util"] }
+tower-http = { version = "0.6", features = ["cors", "trace", "fs", "compression-gzip"] }
 
 # Async runtime
-tokio = { version = "1", features = ["full"] }
+tokio = { version = "1.49", features = ["full"] }
 futures-util = "0.3"
 
 # Database
@@ -47,4 +47,4 @@ mime_guess = "2.0"
 
 [build-dependencies]
 # For running frontend build
-walkdir = "2"
+walkdir = "2.5"
