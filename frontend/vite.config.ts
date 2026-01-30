@@ -11,6 +11,13 @@ export default defineConfig({
     },
   },
   server: {
-    port: 3000,
+    port: 5173, // Vite default port
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000', // Rust backend
+        changeOrigin: true,
+        ws: true, // Enable WebSocket proxying
+      },
+    },
   },
 })
