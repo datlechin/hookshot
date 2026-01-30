@@ -2,9 +2,10 @@
 name: hookshot-ui-implementation
 status: backlog
 created: 2026-01-30T07:59:43Z
+updated: 2026-01-30T08:27:22Z
 progress: 0%
 prd: .claude/prds/hookshot-ui-implementation.md
-github: [To be updated during sync]
+github: https://github.com/datlechin/hookshot/issues/23
 ---
 
 # Epic: Hookshot UI Implementation
@@ -638,24 +639,25 @@ To keep the epic manageable and focused, here are the **10 consolidated tasks** 
 
 ## Tasks Created
 
-- [ ] 001.md - Project Setup & Infrastructure (parallel: false)
-- [ ] 002.md - Core Layout & Theming (parallel: false, depends on 001)
-- [ ] 003.md - API Client & Type Definitions (parallel: true, depends on 001)
-- [ ] 004.md - Endpoint Management (parallel: true, depends on 002, 003)
-- [ ] 005.md - Request List & Filtering (parallel: true, depends on 002, 003)
-- [ ] 006.md - Request Detail Panel (parallel: true, depends on 002, 003)
-- [ ] 007.md - Real-time Updates (parallel: false, depends on 003, 005)
-- [ ] 008.md - Custom Response Configuration (parallel: true, depends on 003, 004)
-- [ ] 009.md - Performance Optimization & Polish (parallel: false, depends on 004-008)
-- [ ] 010.md - Testing, Documentation & Deployment (parallel: false, depends on 009)
+- [ ] [#25](https://github.com/datlechin/hookshot/issues/25) - Project Setup & Infrastructure (parallel: false)
+- [ ] [#26](https://github.com/datlechin/hookshot/issues/26) - Core Layout & Theming (parallel: false, depends on #25)
+- [ ] [#27](https://github.com/datlechin/hookshot/issues/27) - API Client & Type Definitions (parallel: true, depends on #25)
+- [ ] [#28](https://github.com/datlechin/hookshot/issues/28) - Endpoint Management (parallel: true, depends on #26, #27)
+- [ ] [#29](https://github.com/datlechin/hookshot/issues/29) - Request List & Filtering (parallel: true, depends on #26, #27)
+- [ ] [#30](https://github.com/datlechin/hookshot/issues/30) - Request Detail Panel (parallel: true, depends on #26, #27)
+- [ ] [#31](https://github.com/datlechin/hookshot/issues/31) - Real-time Updates (parallel: false, depends on #27, #29)
+- [ ] [#32](https://github.com/datlechin/hookshot/issues/32) - Custom Response Configuration (parallel: true, depends on #27, #28)
+- [ ] [#33](https://github.com/datlechin/hookshot/issues/33) - Performance Optimization & Polish (parallel: false, depends on #28-#32)
+- [ ] [#34](https://github.com/datlechin/hookshot/issues/34) - Testing, Documentation & Deployment (parallel: false, depends on #33)
 
 **Total tasks:** 10
-**Parallel tasks:** 5 (Tasks 003, 004, 005, 006, 008)
-**Sequential tasks:** 5 (Tasks 001, 002, 007, 009, 010)
+**Parallel tasks:** 5 (Issues #27, #28, #29, #30, #32)
+**Sequential tasks:** 5 (Issues #25, #26, #31, #33, #34)
 **Estimated total effort:** 74-88 hours (~9-11 days full-time)
 
 ## Next Steps
 
 1. ✅ Epic created and decomposed into tasks
-2. **Next:** Run `/pm:epic-sync hookshot-ui-implementation` to sync tasks to GitHub
-3. Begin Phase 1 development (Task 001)
+2. ✅ Tasks synced to GitHub (Epic: #23, Tasks: #25-#34)
+3. **Next:** Run `/pm:epic-start hookshot-ui-implementation` to create development worktree
+4. Begin Phase 1 development (Issue #25)
