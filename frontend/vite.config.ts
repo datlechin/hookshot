@@ -16,6 +16,10 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:3000', // Rust backend
         changeOrigin: true,
+      },
+      '/ws': {
+        target: 'http://localhost:3000', // Rust backend WebSocket
+        changeOrigin: true,
         ws: true, // Enable WebSocket proxying
       },
     },
