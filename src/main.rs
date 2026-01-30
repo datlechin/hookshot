@@ -43,6 +43,8 @@ async fn main() {
 
     // Build application routes
     let app = Router::new()
+        // Health check endpoint
+        .route("/health", get(handlers::health_check))
         // API routes for endpoint management
         .route("/api/endpoints", post(handlers::endpoint::create_endpoint))
         .route("/api/endpoints", get(handlers::endpoint::list_endpoints))
