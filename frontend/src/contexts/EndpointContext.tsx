@@ -2,7 +2,8 @@
  * Context for sharing selected endpoint state across components
  */
 
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState } from 'react';
+import type { ReactNode } from 'react';
 
 interface EndpointContextType {
   selectedEndpointId: string | null;

@@ -36,14 +36,13 @@ export interface Request {
 }
 
 /**
- * Config for custom response
+ * Config for custom response - matches backend UpdateResponseConfig
  */
 export interface EndpointConfig {
-  custom_response_enabled: boolean
-  response_status?: number
-  response_headers?: Record<string, string>
-  response_body?: string
-  forward_url?: string
+  enabled: boolean
+  status: number
+  headers?: string  // JSON string
+  body?: string
 }
 
 /**

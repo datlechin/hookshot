@@ -147,10 +147,10 @@ export function EndpointConfig({ endpoint, onSave, onCancel }: EndpointConfigPro
         )
 
       const config: Config = {
-        custom_response_enabled: enabled,
-        response_status: enabled ? parseInt(statusCode) : undefined,
-        response_headers: enabled && Object.keys(headersObj).length > 0 ? headersObj : undefined,
-        response_body: enabled && body.trim() ? body : undefined,
+        enabled,
+        status: parseInt(statusCode),
+        headers: Object.keys(headersObj).length > 0 ? JSON.stringify(headersObj) : undefined,
+        body: body.trim() || undefined,
       }
 
       await onSave(config)

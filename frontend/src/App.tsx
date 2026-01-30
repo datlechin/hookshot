@@ -42,7 +42,7 @@ function AppContent() {
         />
 
         {/* Main 3-panel layout - offset by header height (64px) */}
-        <div className="flex h-[calc(100vh-64px)] mt-16">
+        <div className="flex h-[calc(100vh-64px)] pt-16">
           <Sidebar />
           <RequestList
             selectedEndpointId={selectedEndpointId}
