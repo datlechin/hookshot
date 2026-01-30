@@ -22,16 +22,17 @@ worktree: /Users/ngoquocdat/Projects/epic-hookshot-ui-implementation
   - `frontend/src/hooks/useWebSocket.ts` - WebSocket connection hook
   - `frontend/src/hooks/useLocalStorage.ts` - localStorage persistence
 
-### Agent 2: Issue #28 - Endpoint Management
-- **Status:** 🔄 In Progress (waiting for #27 types)
+### Agent 2: Issue #28 - Endpoint Management ✅ COMPLETED
+- **Status:** ✅ Completed at 2026-01-30T09:05:58Z
 - **Started:** 2026-01-30T09:00:59Z
-- **Work:** Implementing endpoint list, creation dialog, and management UI
-- **Dependencies:** Waiting for types from Agent 1
-- **Scope:**
-  - Update `frontend/src/components/layout/Sidebar.tsx`
-  - `frontend/src/components/endpoint/EndpointItem.tsx`
-  - `frontend/src/components/endpoint/CreateEndpointDialog.tsx`
-  - Endpoint selection and deletion logic
+- **Duration:** ~5 minutes
+- **Work Completed:**
+  - Created useEndpoints hook for state management
+  - Built ConfirmDialog and CopyURLButton components
+  - Implemented EndpointItem component with delete confirmation
+  - Updated Sidebar with full endpoint management
+- **Commits:** 4 commits pushed to epic branch
+- **Files:** 8 files created/modified, all features working
 
 ### Agent 3: Issue #29 - Request List & Filtering
 - **Status:** 🔄 In Progress (waiting for #27 types)
@@ -64,6 +65,7 @@ worktree: /Users/ngoquocdat/Projects/epic-hookshot-ui-implementation
 
 - ✅ **Issue #25** - Project Setup & Infrastructure (completed)
 - ✅ **Issue #26** - Core Layout & Theming (completed 2026-01-30T08:58:18Z)
+- ✅ **Issue #28** - Endpoint Management (completed 2026-01-30T09:05:58Z)
 
 ## Queued Issues (blocked by current work)
 
