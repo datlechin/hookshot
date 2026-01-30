@@ -115,8 +115,11 @@ export const api = {
     /**
      * List all requests for an endpoint
      */
-    list: (endpointId: string) =>
-      request<Request[]>(`/api/endpoints/${endpointId}/requests`),
+    list: async (endpointId: string) => {
+      const response = await request<{ requests: Request[]; total: number; page: number; limit: number }>(`/api/endpoints/${endpointId}/requests`);
+      // Backend returns paginated response, extract the requests array
+      return response.requests;
+    },
 
     /**
      * Get a specific request
