@@ -76,10 +76,30 @@ worktree: /Users/ngoquocdat/Projects/epic-hookshot-ui-implementation
 **Total Duration:** ~8 minutes (all parallel)
 **Success Rate:** 100% (4/4 agents completed successfully)
 
-## Queued Issues (blocked by current work)
+## Active Agents (2 running in parallel)
 
-- ⏸ **Issue #31** - Real-time Updates (depends on #27, #29)
-- ⏸ **Issue #32** - Custom Response Configuration (depends on #27, #28)
+### Agent 5: Issue #31 - Real-time Updates
+- **Status:** 🔄 In Progress
+- **Started:** 2026-01-30T09:10:30Z
+- **Work:** Integrating WebSocket for real-time request updates
+- **Scope:**
+  - Update RequestList with WebSocket integration
+  - Connection status indicator in Header
+  - Request animations for new arrivals
+  - Auto-scroll and visual indicators
+
+### Agent 6: Issue #32 - Custom Response Configuration
+- **Status:** 🔄 In Progress
+- **Started:** 2026-01-30T09:10:30Z
+- **Work:** Building custom response configuration UI
+- **Scope:**
+  - EndpointConfig component with toggle
+  - Status code selector and headers editor
+  - Response body editor with validation
+  - Integration with Sidebar
+
+## Queued Issues
+
 - ⏸ **Issue #33** - Performance Optimization & Polish (depends on #28-#32)
 - ⏸ **Issue #34** - Testing, Documentation & Deployment (depends on #33)
 
