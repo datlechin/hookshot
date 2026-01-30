@@ -1,7 +1,7 @@
 ---
 name: task-1
 title: Backend foundation: Database, models, and basic server setup
-status: open
+status: completed
 github_issue: 2
 github_url: https://github.com/datlechin/hookshot/issues/2
 priority: critical
