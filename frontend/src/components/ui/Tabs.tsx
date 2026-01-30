@@ -2,7 +2,8 @@
  * Tabs component for tabbed interface
  */
 
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext } from 'react';
+import type { ReactNode } from 'react';
 
 interface TabsContextValue {
   value: string;

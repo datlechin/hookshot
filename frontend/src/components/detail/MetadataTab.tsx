@@ -2,7 +2,7 @@
  * MetadataTab component - displays request metadata and technical details
  */
 
-import { WebhookRequest } from '@/lib/types';
+import type { WebhookRequest } from '@/lib/types';
 import { formatTimestamp, formatBytes } from '@/lib/export';
 import { CopyButton } from '@/components/ui';
 import { Hash, Globe, Clock, FileText, Database } from 'lucide-react';

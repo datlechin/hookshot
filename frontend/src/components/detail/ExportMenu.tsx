@@ -3,7 +3,7 @@
  */
 
 import { useState, useRef, useEffect } from 'react';
-import { WebhookRequest } from '@/lib/types';
+import type { WebhookRequest } from '@/lib/types';
 import { exportAsJSON, exportAsCurl, exportAsHTTPRaw } from '@/lib/export';
 import { Download, FileJson, Terminal, FileText } from 'lucide-react';
 

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, FileText } from 'lucide-react';
 import { Button, MethodBadge, Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { WebhookRequest } from '@/lib/types';
+import type { WebhookRequest } from '@/lib/types';
 import { OverviewTab } from '@/components/detail/OverviewTab';
 import { HeadersTab } from '@/components/detail/HeadersTab';
 import { BodyTab } from '@/components/detail/BodyTab';

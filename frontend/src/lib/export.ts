@@ -2,7 +2,7 @@
  * Export utilities for request data
  */
 
-import { WebhookRequest } from './types';
+import type { WebhookRequest } from './types';
 
 /**
  * Export request as JSON file

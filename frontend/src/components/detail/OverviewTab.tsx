@@ -2,7 +2,7 @@
  * OverviewTab component - displays request overview information
  */
 
-import { WebhookRequest } from '@/lib/types';
+import type { WebhookRequest } from '@/lib/types';
 import { formatTimestamp, formatBytes, exportAsCurl, exportAsJSON } from '@/lib/export';
 import { MethodBadge, CopyButton } from '@/components/ui';
 import { Globe, Clock, FileText } from 'lucide-react';
@@ -19,15 +19,6 @@ export function OverviewTab({ request }: OverviewTabProps) {
   const bodyPreview = request.body
     ? request.body.substring(0, 200) + (request.body.length > 200 ? '...' : '')
     : 'No body content';
-
-  const handleCopyCurl = async () => {
-    const curlCommand = exportAsCurl(request);
-    await navigator.clipboard.writeText(curlCommand);
-  };
-
-  const handleExportJSON = () => {
-    exportAsJSON(request);
-  };
 
   return (
     <div className="p-4 space-y-6">
@@ -101,7 +92,7 @@ export function OverviewTab({ request }: OverviewTabProps) {
       <div className="flex flex-wrap gap-2">
         <CopyButton text={exportAsCurl(request)} label="Copy as cURL" />
         <button
-          onClick={handleExportJSON}
+          onClick={() => exportAsJSON(request)}
           className="px-3 py-1.5 text-sm font-medium text-[var(--text-primary)] bg-[var(--background)] border border-[var(--border)] rounded hover:bg-[var(--surface)] transition-colors"
         >
           Export as JSON
