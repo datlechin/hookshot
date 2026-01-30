@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Webhook, Loader2 } from 'lucide-react'
 import { useEndpoints } from '@/hooks'
+import { useSelectedEndpoint } from '@/contexts/EndpointContext'
 import { EmptyState, Button } from '@/components/ui'
 import { EndpointItem, EndpointConfig } from '@/components/endpoint'
 import type { Endpoint, EndpointConfig as Config } from '@/lib/types'
@@ -14,12 +15,11 @@ export function Sidebar() {
     endpoints,
     loading,
     error,
-    selectedId,
-    setSelectedId,
     deleteEndpoint,
     createEndpoint,
     updateConfig,
   } = useEndpoints()
+  const { selectedEndpointId, setSelectedEndpointId } = useSelectedEndpoint()
   const [configuringEndpoint, setConfiguringEndpoint] = useState<Endpoint | null>(null)
 
   async function handleCreateEndpoint() {
@@ -79,8 +79,8 @@ export function Sidebar() {
               <EndpointItem
                 key={endpoint.id}
                 endpoint={endpoint}
-                selected={selectedId === endpoint.id}
-                onSelect={() => setSelectedId(endpoint.id)}
+                selected={selectedEndpointId === endpoint.id}
+                onSelect={() => setSelectedEndpointId(endpoint.id)}
                 onDelete={() => handleDeleteEndpoint(endpoint.id)}
                 onConfigure={() => setConfiguringEndpoint(endpoint)}
               />
