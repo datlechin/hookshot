@@ -105,7 +105,7 @@ export const api = {
      * Update endpoint configuration
      */
     updateConfig: (id: string, config: EndpointConfig) =>
-      request<Endpoint>(`/api/endpoints/${id}/config`, {
+      request<Endpoint>(`/api/endpoints/${id}/response`, {
         method: 'PUT',
         body: JSON.stringify(config),
       }),
