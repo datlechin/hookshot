@@ -1,7 +1,7 @@
 ---
 name: task-10
 title: Documentation, CI/CD, and cross-platform release builds
-status: open
+status: completed
 github_issue: 11
 github_url: https://github.com/datlechin/hookshot/issues/11
 priority: medium

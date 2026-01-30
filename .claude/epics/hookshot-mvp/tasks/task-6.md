@@ -1,7 +1,7 @@
 ---
 name: task-6
 title: Dashboard and Endpoint View pages with real-time request list
-status: open
+status: completed
 github_issue: 7
 github_url: https://github.com/datlechin/hookshot/issues/7
 priority: high

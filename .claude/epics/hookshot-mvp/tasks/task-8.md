@@ -1,7 +1,7 @@
 ---
 name: task-8
 title: Custom response configuration UI with templates
-status: open
+status: completed
 github_issue: 9
 github_url: https://github.com/datlechin/hookshot/issues/9
 priority: medium

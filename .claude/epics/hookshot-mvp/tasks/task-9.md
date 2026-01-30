@@ -1,7 +1,7 @@
 ---
 name: task-9
 title: Frontend embedding and single binary build
-status: open
+status: completed
 github_issue: 10
 github_url: https://github.com/datlechin/hookshot/issues/10
 priority: high
