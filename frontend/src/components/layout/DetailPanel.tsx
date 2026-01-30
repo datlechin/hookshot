@@ -1,20 +1,46 @@
+import { useState, useEffect } from 'react';
 import { X, FileText } from 'lucide-react';
-import { Button } from '@/components/ui';
+import { Button, MethodBadge, Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { WebhookRequest } from '@/lib/types';
+import { OverviewTab } from '@/components/detail/OverviewTab';
+import { HeadersTab } from '@/components/detail/HeadersTab';
+import { BodyTab } from '@/components/detail/BodyTab';
+import { MetadataTab } from '@/components/detail/MetadataTab';
+import { ExportMenu } from '@/components/detail/ExportMenu';
 
 interface DetailPanelProps {
   isOpen?: boolean;
   onClose?: () => void;
+  selectedRequest?: WebhookRequest | null;
 }
 
 /**
  * DetailPanel component for displaying request details
  * Width: 480px on desktop, full width on mobile
- * Collapsible/closable with X button
+ * Collapsible/closable with X button and ESC key
  */
-export function DetailPanel({ isOpen = false, onClose }: DetailPanelProps) {
-  // Placeholder - will be replaced with actual request data in later tasks
-  const selectedRequest = null;
+export function DetailPanel({ isOpen = false, onClose, selectedRequest = null }: DetailPanelProps) {
+  const [activeTab, setActiveTab] = useState<'overview' | 'headers' | 'body' | 'metadata'>('overview');
+
+  // Handle ESC key to close panel
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen && onClose) {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isOpen, onClose]);
+
+  // Reset to overview tab when request changes
+  useEffect(() => {
+    if (selectedRequest) {
+      setActiveTab('overview');
+    }
+  }, [selectedRequest]);
 
   if (!isOpen) {
     return null;
@@ -22,46 +48,87 @@ export function DetailPanel({ isOpen = false, onClose }: DetailPanelProps) {
 
   return (
     <aside className="fixed inset-0 lg:relative lg:inset-auto w-full lg:w-[480px] bg-[var(--surface)] border-l border-[var(--border)] flex flex-col overflow-hidden z-40">
-      {/* Header with close button */}
-      <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-[var(--border)]">
-        <h2 className="text-lg font-semibold text-[var(--text-primary)]">Request Details</h2>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onClose}
-          aria-label="Close detail panel"
-        >
-          <X className="w-5 h-5" />
-        </Button>
-      </div>
-
-      {/* Tabbed interface placeholder - will be implemented in next task */}
-      <div className="flex-shrink-0 flex items-center space-x-4 px-4 py-2 border-b border-[var(--border)] bg-[var(--background)]">
-        <button className="px-3 py-1.5 text-sm font-medium text-[var(--accent-blue)] border-b-2 border-[var(--accent-blue)]">
-          Overview
-        </button>
-        <button className="px-3 py-1.5 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
-          Headers
-        </button>
-        <button className="px-3 py-1.5 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
-          Body
-        </button>
-      </div>
-
-      {/* Scrollable content area */}
-      <div className="flex-1 overflow-y-auto p-4">
-        {selectedRequest === null ? (
-          <EmptyState
-            icon={<FileText className="w-12 h-12" />}
-            title="No request selected"
-            description="Select a request to view its details."
-          />
-        ) : (
-          <div>
-            {/* Request details will be rendered here in later tasks */}
+      {selectedRequest ? (
+        <>
+          {/* Header with request info and actions */}
+          <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-[var(--border)]">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <MethodBadge method={selectedRequest.method} />
+              <div className="flex-1 min-w-0">
+                <h2 className="text-sm font-semibold text-[var(--text-primary)] truncate">
+                  Request #{selectedRequest.id}
+                </h2>
+                <p className="text-xs text-[var(--text-secondary)] truncate">
+                  {selectedRequest.path}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <ExportMenu request={selectedRequest} />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onClose}
+                aria-label="Close detail panel"
+              >
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
           </div>
-        )}
-      </div>
+
+          {/* Tabbed interface */}
+          <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as typeof activeTab)}>
+            <TabsList>
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="headers">
+                Headers ({Object.keys(selectedRequest.headers).length})
+              </TabsTrigger>
+              <TabsTrigger value="body">Body</TabsTrigger>
+              <TabsTrigger value="metadata">Metadata</TabsTrigger>
+            </TabsList>
+
+            {/* Tab content with proper overflow handling */}
+            <div className="flex-1 overflow-y-auto">
+              <TabsContent value="overview">
+                <OverviewTab request={selectedRequest} />
+              </TabsContent>
+              <TabsContent value="headers">
+                <HeadersTab headers={selectedRequest.headers} />
+              </TabsContent>
+              <TabsContent value="body">
+                <BodyTab body={selectedRequest.body} contentType={selectedRequest.content_type} />
+              </TabsContent>
+              <TabsContent value="metadata">
+                <MetadataTab request={selectedRequest} />
+              </TabsContent>
+            </div>
+          </Tabs>
+        </>
+      ) : (
+        <>
+          {/* Header with close button */}
+          <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-[var(--border)]">
+            <h2 className="text-lg font-semibold text-[var(--text-primary)]">Request Details</h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              aria-label="Close detail panel"
+            >
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
+
+          {/* Empty state */}
+          <div className="flex-1 overflow-y-auto p-4 flex items-center justify-center">
+            <EmptyState
+              icon={<FileText className="w-12 h-12" />}
+              title="No request selected"
+              description="Select a request to view its details."
+            />
+          </div>
+        </>
+      )}
     </aside>
   );
 }
