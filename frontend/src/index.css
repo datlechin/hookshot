@@ -1,5 +1,8 @@
 @import 'tailwindcss';
 
+/* Custom breakpoint for 3-panel layout */
+@custom-media --2xl (min-width: 1400px);
+
 @layer theme {
   :root {
     --background: #ffffff;
