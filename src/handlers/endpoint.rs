@@ -1,7 +1,7 @@
-use crate::models::{CreateEndpointResponse, EndpointSummary};
+use crate::models::{CreateEndpointResponse, Endpoint, EndpointSummary};
 use crate::services::endpoint;
 use crate::websocket::WebSocketManager;
-use axum::{extract::State, http::StatusCode, Json};
+use axum::{extract::{Path, State}, http::StatusCode, Json};
 use sqlx::SqlitePool;
 use std::sync::Arc;
 
@@ -26,6 +26,21 @@ pub async fn list_endpoints(
         Ok(endpoints) => Ok(Json(endpoints)),
         Err(e) => {
             tracing::error!("Failed to list endpoints: {}", e);
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
+}
+
+/// Handler for GET /api/endpoints/:id - Get a single endpoint
+pub async fn get_endpoint(
+    Path(id): Path<String>,
+    State((pool, _ws_manager)): State<(SqlitePool, Arc<WebSocketManager>)>,
+) -> Result<Json<Endpoint>, StatusCode> {
+    match endpoint::get_endpoint(&pool, &id).await {
+        Ok(Some(endpoint)) => Ok(Json(endpoint)),
+        Ok(None) => Err(StatusCode::NOT_FOUND),
+        Err(e) => {
+            tracing::error!("Failed to get endpoint: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
         }
     }

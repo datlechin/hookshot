@@ -37,7 +37,6 @@ pub async fn list_endpoints(pool: &SqlitePool) -> Result<Vec<EndpointSummary>, s
 }
 
 /// Get a single endpoint by ID
-#[allow(dead_code)]
 pub async fn get_endpoint(pool: &SqlitePool, id: &str) -> Result<Option<Endpoint>, sqlx::Error> {
     let endpoint = sqlx::query_as::<_, Endpoint>(
         r#"

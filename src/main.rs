@@ -73,6 +73,7 @@ async fn main() {
         // API routes for endpoint management
         .route("/api/endpoints", post(handlers::endpoint::create_endpoint))
         .route("/api/endpoints", get(handlers::endpoint::list_endpoints))
+        .route("/api/endpoints/:id", get(handlers::endpoint::get_endpoint))
         .route("/api/endpoints/:id", delete(handlers::api::delete_endpoint))
         .route("/api/endpoints/:id/response", put(handlers::api::update_endpoint_response))
         // API routes for request retrieval
