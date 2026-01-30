@@ -1,6 +1,7 @@
 pub mod api;
 pub mod endpoint;
 pub mod webhook;
+pub mod websocket;
 
 use axum::Json;
 use serde_json::{json, Value};

@@ -5,9 +5,11 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use crate::models::Endpoint;
+use crate::websocket::{WebSocketManager, WebSocketMessage, RequestData};
 use sqlx::SqlitePool;
 use std::net::SocketAddr;
 use std::str::FromStr;
+use std::sync::Arc;
 use tracing::{error, info};
 
 const MAX_BODY_SIZE: usize = 10 * 1024 * 1024; // 10MB
@@ -19,7 +21,7 @@ pub async fn webhook_handler(
     uri: Uri,
     headers: HeaderMap,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
-    State(pool): State<SqlitePool>,
+    State((pool, ws_manager)): State<(SqlitePool, Arc<WebSocketManager>)>,
     body: Bytes,
 ) -> Result<Response, StatusCode> {
     // Check body size limit
@@ -84,10 +86,11 @@ pub async fn webhook_handler(
     let endpoint_id_clone = endpoint_id.clone();
     let method_str = http_method.to_string();
     let path_str = path.to_string();
-    
+    let ws_manager_clone = ws_manager.clone();
+
     tokio::spawn(async move {
         // Insert the request record
-        if let Err(e) = sqlx::query(
+        let insert_result = sqlx::query(
             r#"
             INSERT INTO requests (endpoint_id, method, path, query_string, headers, body, content_type, received_at, ip_address)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -103,11 +106,15 @@ pub async fn webhook_handler(
         .bind(&received_at)
         .bind(&ip_address)
         .execute(&pool_clone)
-        .await
-        {
-            error!("Failed to insert request for endpoint {}: {}", endpoint_id_clone, e);
-            return;
-        }
+        .await;
+
+        let request_id = match insert_result {
+            Ok(result) => result.last_insert_rowid(),
+            Err(e) => {
+                error!("Failed to insert request for endpoint {}: {}", endpoint_id_clone, e);
+                return;
+            }
+        };
 
         // Increment request count for the endpoint
         if let Err(e) = sqlx::query(
@@ -124,6 +131,22 @@ pub async fn webhook_handler(
             "Captured {} request to endpoint {} from {}",
             method_str, endpoint_id_clone, ip_address
         );
+
+        // Broadcast to WebSocket clients
+        let ws_message = WebSocketMessage::NewRequest {
+            data: RequestData {
+                id: request_id,
+                method: method_str,
+                path: path_str,
+                query_string,
+                headers: headers_json,
+                content_type,
+                received_at,
+                ip_address: Some(ip_address),
+            },
+        };
+
+        ws_manager_clone.broadcast(&endpoint_id_clone, ws_message).await;
     });
 
     // Build response based on custom configuration

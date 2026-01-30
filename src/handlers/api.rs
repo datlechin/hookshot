@@ -634,7 +634,7 @@ mod tests {
 
         let result = update_endpoint_response(
             Path("nonexistent-id".to_string()),
-            State(pool),
+            State(create_test_state(pool)),
             Json(config),
         )
         .await;
@@ -659,7 +659,7 @@ mod tests {
 
         update_endpoint_response(
             Path(endpoint_id.clone()),
-            State(pool.clone()),
+            State(create_test_state(pool.clone())),
             Json(config),
         )
         .await
