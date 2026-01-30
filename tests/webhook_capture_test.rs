@@ -187,6 +187,8 @@ async fn test_webhook_all_http_methods() {
         Method::PUT,
         Method::PATCH,
         Method::DELETE,
+        Method::HEAD,
+        Method::OPTIONS,
     ];
 
     for method in methods {
@@ -215,7 +217,7 @@ async fn test_webhook_all_http_methods() {
     }
 
     // Wait for async database insertions
-    tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
+    tokio::time::sleep(tokio::time::Duration::from_millis(700)).await;
 
     // Verify all requests were captured
     let count: i32 = sqlx::query_scalar("SELECT COUNT(*) FROM requests WHERE endpoint_id = ?")
@@ -224,7 +226,7 @@ async fn test_webhook_all_http_methods() {
         .await
         .expect("Failed to count requests");
 
-    assert_eq!(count, 5);
+    assert_eq!(count, 7);
 }
 
 #[tokio::test]
@@ -335,4 +337,75 @@ async fn test_webhook_cors_headers() {
         .expect("CORS header should be present");
 
     assert_eq!(cors_header, "*");
+}
+
+#[tokio::test]
+async fn test_webhook_custom_response() {
+    let pool = create_test_pool().await;
+
+    // Create endpoint with custom response
+    let endpoint_id = uuid::Uuid::new_v4().to_string();
+    sqlx::query(
+        r#"
+        INSERT INTO endpoints (id, created_at, custom_response_enabled, response_status, response_headers, response_body, request_count)
+        VALUES (?, datetime('now'), true, 201, ?, ?, 0)
+        "#
+    )
+    .bind(&endpoint_id)
+    .bind(r#"{"X-Custom-Header": "CustomValue", "Content-Type": "application/json"}"#)
+    .bind(r#"{"message": "Custom response body"}"#)
+    .execute(&pool)
+    .await
+    .expect("Failed to create test endpoint with custom response");
+
+    let app = axum::Router::new()
+        .route("/webhook/:id", axum::routing::any(handlers::webhook::webhook_handler))
+        .with_state(pool.clone())
+        .layer(MockConnectInfo(std::net::SocketAddr::from(([127, 0, 0, 1], 8080))));
+
+    let request = Request::builder()
+        .method(Method::POST)
+        .uri(format!("/webhook/{}", endpoint_id))
+        .body(Body::from(r#"{"test": "data"}"#))
+        .unwrap();
+
+    let response = app
+        .oneshot(request)
+        .await
+        .expect("Failed to execute request");
+
+    // Verify custom status code
+    assert_eq!(response.status(), StatusCode::CREATED);
+
+    // Verify custom headers
+    let custom_header = response
+        .headers()
+        .get("x-custom-header")
+        .expect("Custom header should be present");
+    assert_eq!(custom_header, "CustomValue");
+
+    let content_type = response
+        .headers()
+        .get("content-type")
+        .expect("Content-Type header should be present");
+    assert_eq!(content_type, "application/json");
+
+    // Verify custom body
+    let body_bytes = axum::body::to_bytes(response.into_body(), usize::MAX)
+        .await
+        .expect("Failed to read response body");
+    let body_str = String::from_utf8(body_bytes.to_vec()).expect("Invalid UTF-8");
+    assert_eq!(body_str, r#"{"message": "Custom response body"}"#);
+
+    // Wait for async database insertion
+    tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+
+    // Verify request was still captured despite custom response
+    let count: i32 = sqlx::query_scalar("SELECT COUNT(*) FROM requests WHERE endpoint_id = ?")
+        .bind(&endpoint_id)
+        .fetch_one(&pool)
+        .await
+        .expect("Failed to count requests");
+
+    assert_eq!(count, 1);
 }
