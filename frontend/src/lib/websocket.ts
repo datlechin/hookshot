@@ -1,56 +1,74 @@
 /**
- * WebSocket client for real-time updates
+ * WebSocket client for real-time updates with auto-reconnect
  */
 
-import type { WebSocketMessage } from './types.ts'
+import type { WebSocketMessage } from './types'
 
 type MessageHandler = (message: WebSocketMessage) => void
+type StatusHandler = (connected: boolean) => void
 
-const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8080'
-
+/**
+ * WebSocket client with exponential backoff reconnection
+ */
 export class WebSocketClient {
   private ws: WebSocket | null = null
-  private endpointId: string
-  private handlers: MessageHandler[] = []
+  private url: string
+  private messageHandlers: MessageHandler[] = []
+  private statusHandlers: StatusHandler[] = []
   private reconnectAttempts = 0
-  private maxReconnectAttempts = 5
-  private reconnectDelay = 1000
+  private maxReconnectDelay = 30000 // 30 seconds
+  private reconnectTimer?: number
+  private shouldReconnect = true
 
-  constructor(endpointId: string) {
-    this.endpointId = endpointId
+  constructor(url: string) {
+    this.url = url
   }
 
   /**
    * Connect to WebSocket server
    */
-  connect(): void {
+  connect(onMessage?: MessageHandler, onStatusChange?: StatusHandler): void {
+    if (onMessage) {
+      this.messageHandlers.push(onMessage)
+    }
+    if (onStatusChange) {
+      this.statusHandlers.push(onStatusChange)
+    }
+
     try {
-      this.ws = new WebSocket(`${WS_BASE_URL}/ws/${this.endpointId}`)
+      this.ws = new WebSocket(this.url)
 
       this.ws.onopen = () => {
-        console.log('WebSocket connected')
+        console.log('[WebSocket] Connected to', this.url)
         this.reconnectAttempts = 0
+        this.notifyStatus(true)
       }
 
       this.ws.onmessage = (event) => {
         try {
           const message: WebSocketMessage = JSON.parse(event.data)
-          this.handlers.forEach((handler) => handler(message))
+          this.messageHandlers.forEach((handler) => handler(message))
         } catch (err) {
-          console.error('Failed to parse WebSocket message:', err)
+          console.error('[WebSocket] Failed to parse message:', err)
         }
       }
 
       this.ws.onerror = (error) => {
-        console.error('WebSocket error:', error)
+        console.error('[WebSocket] Error:', error)
       }
 
       this.ws.onclose = () => {
-        console.log('WebSocket disconnected')
-        this.attemptReconnect()
+        console.log('[WebSocket] Disconnected')
+        this.notifyStatus(false)
+        if (this.shouldReconnect) {
+          this.attemptReconnect()
+        }
       }
     } catch (err) {
-      console.error('Failed to create WebSocket:', err)
+      console.error('[WebSocket] Failed to create connection:', err)
+      if (this.shouldReconnect) {
+        this.attemptReconnect()
+      }
     }
   }
 
@@ -58,9 +76,26 @@ export class WebSocketClient {
    * Disconnect from WebSocket server
    */
   disconnect(): void {
+    this.shouldReconnect = false
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer)
+      this.reconnectTimer = undefined
+    }
     if (this.ws) {
       this.ws.close()
       this.ws = null
+    }
+    this.notifyStatus(false)
+  }
+
+  /**
+   * Send data to WebSocket server
+   */
+  send(data: unknown): void {
+    if (this.ws?.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify(data))
+    } else {
+      console.warn('[WebSocket] Cannot send - not connected')
     }
   }
 
@@ -68,28 +103,58 @@ export class WebSocketClient {
    * Subscribe to WebSocket messages
    */
   subscribe(handler: MessageHandler): () => void {
-    this.handlers.push(handler)
+    this.messageHandlers.push(handler)
     return () => {
-      this.handlers = this.handlers.filter((h) => h !== handler)
+      this.messageHandlers = this.messageHandlers.filter((h) => h !== handler)
     }
   }
 
   /**
-   * Attempt to reconnect to WebSocket server
+   * Subscribe to connection status changes
+   */
+  onStatusChange(handler: StatusHandler): () => void {
+    this.statusHandlers.push(handler)
+    return () => {
+      this.statusHandlers = this.statusHandlers.filter((h) => h !== handler)
+    }
+  }
+
+  /**
+   * Get current connection status
+   */
+  get isConnected(): boolean {
+    return this.ws?.readyState === WebSocket.OPEN
+  }
+
+  /**
+   * Attempt to reconnect with exponential backoff
+   * Delays: 1s, 2s, 4s, 8s, 16s, 30s (max)
    */
   private attemptReconnect(): void {
-    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.error('Max reconnection attempts reached')
-      return
+    if (this.reconnectTimer) {
+      return // Already scheduled
     }
 
-    this.reconnectAttempts++
-    const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1)
+    const delay = Math.min(
+      1000 * Math.pow(2, this.reconnectAttempts),
+      this.maxReconnectDelay
+    )
 
-    console.log(`Attempting to reconnect in ${delay}ms... (attempt ${this.reconnectAttempts})`)
+    console.log(
+      `[WebSocket] Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts + 1})`
+    )
 
-    setTimeout(() => {
+    this.reconnectTimer = window.setTimeout(() => {
+      this.reconnectAttempts++
+      this.reconnectTimer = undefined
       this.connect()
     }, delay)
+  }
+
+  /**
+   * Notify all status handlers of connection state change
+   */
+  private notifyStatus(connected: boolean): void {
+    this.statusHandlers.forEach((handler) => handler(connected))
   }
 }
