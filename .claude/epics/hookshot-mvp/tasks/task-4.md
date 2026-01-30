@@ -1,7 +1,7 @@
 ---
 name: task-4
 title: WebSocket server for real-time request notifications
-status: open
+status: completed
 github_issue: 5
 github_url: https://github.com/datlechin/hookshot/issues/5
 priority: high

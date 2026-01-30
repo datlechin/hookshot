@@ -1,7 +1,7 @@
 ---
 name: task-3
 title: REST API for endpoint and request management
-status: open
+status: completed
 github_issue: 4
 github_url: https://github.com/datlechin/hookshot/issues/4
 priority: critical
