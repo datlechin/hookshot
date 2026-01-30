@@ -74,25 +74,25 @@ async fn main() {
         // API routes for endpoint management
         .route("/api/endpoints", post(handlers::endpoint::create_endpoint))
         .route("/api/endpoints", get(handlers::endpoint::list_endpoints))
-        .route("/api/endpoints/:id", get(handlers::endpoint::get_endpoint))
-        .route("/api/endpoints/:id", delete(handlers::api::delete_endpoint))
+        .route("/api/endpoints/{id}", get(handlers::endpoint::get_endpoint))
+        .route("/api/endpoints/{id}", delete(handlers::api::delete_endpoint))
         .route(
-            "/api/endpoints/:id/response",
+            "/api/endpoints/{id}/response",
             put(handlers::api::update_endpoint_response),
         )
         // API routes for request retrieval
         .route(
-            "/api/endpoints/:id/requests",
+            "/api/endpoints/{id}/requests",
             get(handlers::api::get_endpoint_requests),
         )
-        .route("/api/requests/:id", get(handlers::api::get_request_by_id))
+        .route("/api/requests/{id}", get(handlers::api::get_request_by_id))
         // WebSocket endpoint for real-time updates
         .route(
-            "/ws/endpoints/:id",
+            "/ws/endpoints/{id}",
             get(handlers::websocket::websocket_handler),
         )
         // Webhook capture route - accepts all HTTP methods
-        .route("/webhook/:id", any(handlers::webhook::webhook_handler));
+        .route("/webhook/{id}", any(handlers::webhook::webhook_handler));
 
     // Combine API routes with static file serving
     let app = api_routes
