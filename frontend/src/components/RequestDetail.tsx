@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import { Copy, Check } from 'lucide-react';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import type { Request } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -237,24 +235,9 @@ ${request.body || ''}`;
             </div>
             <ScrollArea className="h-[400px] w-full rounded-md border">
               {request.body ? (
-                language === 'text' ? (
-                  <pre className="text-sm whitespace-pre-wrap break-words p-4">
-                    {formattedBody}
-                  </pre>
-                ) : (
-                  <SyntaxHighlighter
-                    language={language}
-                    style={oneDark}
-                    customStyle={{
-                      margin: 0,
-                      borderRadius: 0,
-                      fontSize: '0.875rem',
-                    }}
-                    wrapLongLines
-                  >
-                    {formattedBody}
-                  </SyntaxHighlighter>
-                )
+                <pre className={`text-sm whitespace-pre-wrap break-words p-4 ${language === 'json' ? 'font-mono bg-slate-950 text-emerald-400' : language === 'xml' ? 'font-mono bg-slate-950 text-blue-400' : ''}`}>
+                  {formattedBody}
+                </pre>
               ) : (
                 <div className="p-4">
                   <p className="text-muted-foreground text-sm">No body</p>

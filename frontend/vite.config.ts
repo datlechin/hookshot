@@ -10,6 +10,22 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Separate React and React Router
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          // Separate UI library (shadcn/ui dependencies)
+          'ui-vendor': ['@radix-ui/react-dialog', '@radix-ui/react-tabs', '@radix-ui/react-slot', '@radix-ui/react-scroll-area'],
+          // Separate data fetching library
+          'query-vendor': ['@tanstack/react-query'],
+          // Don't bundle syntax-highlighter here - it's lazy loaded with specific languages
+        },
+      },
+    },
+    chunkSizeWarningLimit: 600, // Increase slightly for main chunk
+  },
   server: {
     port: 5173,
     proxy: {
