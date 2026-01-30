@@ -126,12 +126,14 @@ impl WebSocketManager {
     }
 
     /// Get the number of connected clients for an endpoint
+    #[allow(dead_code)]
     pub async fn client_count(&self, endpoint_id: &str) -> usize {
         let connections = self.connections.read().await;
         connections.get(endpoint_id).map(|c| c.len()).unwrap_or(0)
     }
 
     /// Get total number of connections across all endpoints
+    #[allow(dead_code)]
     pub async fn total_connections(&self) -> usize {
         let connections = self.connections.read().await;
         connections.values().map(|v| v.len()).sum()
