@@ -47,9 +47,7 @@ export function EndpointItem({
       <div
         className={cn(
           'p-3 rounded-lg cursor-pointer transition-colors group',
-          selected
-            ? 'bg-[var(--surface-hover)] border-l-2 border-[var(--accent-blue)]'
-            : 'hover:bg-[var(--surface-hover)]'
+          selected ? 'bg-(--surface-hover)' : 'hover:bg-(--surface-hover)'
         )}
         onClick={onSelect}
         role="button"
@@ -65,14 +63,15 @@ export function EndpointItem({
         <div className="flex items-start justify-between mb-2">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <p className="text-sm font-mono text-[var(--text-primary)] truncate">
-                {endpoint.id}
-              </p>
+              <p className="text-sm font-mono text-(--text-primary) truncate">{endpoint.id}</p>
               {endpoint.custom_response_enabled && (
-                <span className="flex-shrink-0 w-2 h-2 bg-[var(--accent-green)] rounded-full" title="Custom response enabled" />
+                <span
+                  className="flex-shrink-0 w-2 h-2 bg-(--accent-green) rounded-full"
+                  title="Custom response enabled"
+                />
               )}
             </div>
-            <p className="text-xs text-[var(--text-tertiary)] mt-1">
+            <p className="text-xs text-(--text-tertiary) mt-1">
               {new Date(endpoint.created_at).toLocaleDateString('en-US', {
                 month: 'short',
                 day: 'numeric',
@@ -83,7 +82,7 @@ export function EndpointItem({
           <div className="flex gap-1 ml-2">
             <button
               onClick={handleConfigure}
-              className="text-[var(--text-tertiary)] hover:text-[var(--accent-blue)] transition-colors opacity-0 group-hover:opacity-100"
+              className="text-(--text-tertiary) hover:text-(--accent-blue) transition-colors opacity-0 group-hover:opacity-100"
               title="Configure response"
               aria-label="Configure response"
             >
@@ -91,7 +90,7 @@ export function EndpointItem({
             </button>
             <button
               onClick={handleDelete}
-              className="text-[var(--text-tertiary)] hover:text-[var(--accent-red)] transition-colors opacity-0 group-hover:opacity-100"
+              className="text-(--text-tertiary) hover:text-(--accent-red) transition-colors opacity-0 group-hover:opacity-100"
               title="Delete endpoint"
               aria-label="Delete endpoint"
             >
