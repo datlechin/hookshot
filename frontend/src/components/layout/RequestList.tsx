@@ -80,6 +80,12 @@ export function RequestList({ selectedEndpointId, onConnectionStatusChange, onRe
 
   // Filter and search logic
   const filteredRequests = useMemo(() => {
+    // Safety check: ensure requests is an array
+    if (!Array.isArray(requests)) {
+      console.warn('requests is not an array:', requests);
+      return [];
+    }
+
     return requests.filter((req) => {
       // Filter by HTTP method
       if (selectedMethods.length > 0 && !selectedMethods.includes(req.method as HttpMethod)) {
