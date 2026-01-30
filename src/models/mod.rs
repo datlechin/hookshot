@@ -87,8 +87,8 @@ pub struct RequestResponse {
     pub endpoint_id: String,
     pub method: String,
     pub path: String,
-    pub query_string: Option<String>,
-    pub headers: String,
+    pub query_params: serde_json::Value,
+    pub headers: serde_json::Value,
     pub body: Option<String>, // Base64 encoded or UTF-8 string
     pub content_type: Option<String>,
     pub received_at: String,
@@ -97,13 +97,28 @@ pub struct RequestResponse {
 
 impl From<Request> for RequestResponse {
     fn from(req: Request) -> Self {
+        // Parse headers JSON string into serde_json::Value
+        let headers = serde_json::from_str(&req.headers)
+            .unwrap_or_else(|_| serde_json::json!({}));
+
+        // Parse query string into object
+        let query_params = if let Some(qs) = req.query_string {
+            let mut params = serde_json::Map::new();
+            for (key, value) in form_urlencoded::parse(qs.as_bytes()) {
+                params.insert(key.into_owned(), serde_json::Value::String(value.into_owned()));
+            }
+            serde_json::Value::Object(params)
+        } else {
+            serde_json::json!({})
+        };
+
         Self {
             id: req.id,
             endpoint_id: req.endpoint_id,
             method: req.method,
             path: req.path,
-            query_string: req.query_string,
-            headers: req.headers,
+            query_params,
+            headers,
             body: req.body.map(|b| {
                 // Try to decode as UTF-8, otherwise base64
                 String::from_utf8(b.clone()).unwrap_or_else(|_| {

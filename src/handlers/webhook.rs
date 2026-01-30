@@ -137,14 +137,29 @@ pub async fn webhook_handler(
             method_str, endpoint_id_clone, ip_address
         );
 
+        // Parse headers JSON string into serde_json::Value
+        let headers_value = serde_json::from_str(&headers_json)
+            .unwrap_or_else(|_| serde_json::json!({}));
+
+        // Parse query string into object
+        let query_params_value = if let Some(qs) = &query_string {
+            let mut params = serde_json::Map::new();
+            for (key, value) in form_urlencoded::parse(qs.as_bytes()) {
+                params.insert(key.into_owned(), serde_json::Value::String(value.into_owned()));
+            }
+            serde_json::Value::Object(params)
+        } else {
+            serde_json::json!({})
+        };
+
         // Broadcast to WebSocket clients
         let ws_message = WebSocketMessage::NewRequest {
             data: RequestData {
                 id: request_id,
                 method: method_str,
                 path: path_str,
-                query_string,
-                headers: headers_json,
+                query_params: query_params_value,
+                headers: headers_value,
                 content_type,
                 received_at,
                 ip_address: Some(ip_address),
