@@ -5,7 +5,7 @@ import type { Request } from '@/lib/types';
 
 function App() {
   const { theme, toggleTheme } = useTheme();
-  const { selectedId: selectedEndpointId, setSelectedId: setSelectedEndpointId } = useEndpoints();
+  const { selectedId: selectedEndpointId } = useEndpoints();
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<
     'connected' | 'connecting' | 'disconnected' | 'polling'
