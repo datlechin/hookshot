@@ -75,7 +75,10 @@ async fn main() {
         .route("/api/endpoints", post(handlers::endpoint::create_endpoint))
         .route("/api/endpoints", get(handlers::endpoint::list_endpoints))
         .route("/api/endpoints/{id}", get(handlers::endpoint::get_endpoint))
-        .route("/api/endpoints/{id}", delete(handlers::api::delete_endpoint))
+        .route(
+            "/api/endpoints/{id}",
+            delete(handlers::api::delete_endpoint),
+        )
         .route(
             "/api/endpoints/{id}/response",
             put(handlers::api::update_endpoint_response),
@@ -92,7 +95,7 @@ async fn main() {
             get(handlers::websocket::websocket_handler),
         )
         // Webhook capture route - accepts all HTTP methods
-        .route("/hook/{id}", any(handlers::webhook::webhook_handler));
+        .route("/webhook/{id}", any(handlers::webhook::webhook_handler));
 
     // Combine API routes with static file serving
     let app = api_routes

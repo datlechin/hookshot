@@ -8,16 +8,16 @@ import { VirtualRequestList } from '@/components/request/VirtualRequestList';
 import { EmptyState } from '@/components/ui/EmptyState';
 
 interface RequestListProps {
+  selectedEndpointId: string | null;
   onConnectionStatusChange?: (status: 'connected' | 'connecting' | 'disconnected' | 'polling') => void;
+  onRequestSelect?: (request: Request) => void;
 }
 
 /**
  * RequestList component - middle panel showing captured webhook requests
  * Flexible width, takes remaining space between sidebar and detail panel
  */
-export function RequestList({ onConnectionStatusChange }: RequestListProps) {
-  // TODO: Get selectedEndpointId from context/state management
-  const selectedEndpointId = null;
+export function RequestList({ selectedEndpointId, onConnectionStatusChange, onRequestSelect }: RequestListProps) {
   const { requests, loading, addRequest } = useRequests(selectedEndpointId);
   const { lastMessage, connected, usingPolling } = useWebSocket(selectedEndpointId);
 
@@ -101,7 +101,7 @@ export function RequestList({ onConnectionStatusChange }: RequestListProps) {
 
   function handleRequestClick(request: Request) {
     setSelectedRequestId(request.id);
-    // TODO: Open detail panel with request details
+    onRequestSelect?.(request);
   }
 
   return (

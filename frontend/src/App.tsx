@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { useTheme } from '@/hooks';
+import { useTheme, useEndpoints } from '@/hooks';
 import { Header, Sidebar, RequestList, DetailPanel } from '@/components/layout';
+import type { Request } from '@/lib/types';
 
 function App() {
   const { theme, toggleTheme } = useTheme();
-  const [detailPanelOpen, setDetailPanelOpen] = useState(false);
+  const { selectedId: selectedEndpointId, setSelectedId: setSelectedEndpointId } = useEndpoints();
+  const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<
     'connected' | 'connecting' | 'disconnected' | 'polling'
   >('disconnected');
@@ -15,13 +17,17 @@ function App() {
   };
 
   const handleCloseDetailPanel = () => {
-    setDetailPanelOpen(false);
+    setSelectedRequest(null);
   };
 
   const handleConnectionStatusChange = (
     status: 'connected' | 'connecting' | 'disconnected' | 'polling'
   ) => {
     setConnectionStatus(status);
+  };
+
+  const handleRequestSelect = (request: Request) => {
+    setSelectedRequest(request);
   };
 
   return (
@@ -37,8 +43,16 @@ function App() {
         {/* Main 3-panel layout - offset by header height (64px) */}
         <div className="flex h-[calc(100vh-64px)] mt-16">
           <Sidebar />
-          <RequestList onConnectionStatusChange={handleConnectionStatusChange} />
-          <DetailPanel isOpen={detailPanelOpen} onClose={handleCloseDetailPanel} />
+          <RequestList
+            selectedEndpointId={selectedEndpointId}
+            onConnectionStatusChange={handleConnectionStatusChange}
+            onRequestSelect={handleRequestSelect}
+          />
+          <DetailPanel
+            isOpen={!!selectedRequest}
+            onClose={handleCloseDetailPanel}
+            selectedRequest={selectedRequest}
+          />
         </div>
       </div>
     </div>
