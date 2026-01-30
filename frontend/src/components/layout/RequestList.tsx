@@ -1,5 +1,10 @@
-import { Search, Filter, Inbox } from 'lucide-react';
-import { Button } from '@/components/ui';
+import { useState, useMemo } from 'react';
+import { Inbox } from 'lucide-react';
+import { useRequests } from '@/hooks';
+import type { HttpMethod, Request } from '@/lib/types';
+import { RequestFilters } from '@/components/request/RequestFilters';
+import { RequestSearch } from '@/components/request/RequestSearch';
+import { VirtualRequestList } from '@/components/request/VirtualRequestList';
 import { EmptyState } from '@/components/ui/EmptyState';
 
 /**
@@ -7,45 +12,80 @@ import { EmptyState } from '@/components/ui/EmptyState';
  * Flexible width, takes remaining space between sidebar and detail panel
  */
 export function RequestList() {
-  // Placeholder - will be replaced with actual request data in later tasks
-  const requests: never[] = [];
+  // TODO: Get selectedEndpointId from context/state management
+  const selectedEndpointId = null;
+  const { requests, loading } = useRequests(selectedEndpointId);
+
+  const [selectedMethods, setSelectedMethods] = useState<HttpMethod[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedRequestId, setSelectedRequestId] = useState<number | undefined>();
+
+  // Filter and search logic
+  const filteredRequests = useMemo(() => {
+    return requests.filter((req) => {
+      // Filter by HTTP method
+      if (selectedMethods.length > 0 && !selectedMethods.includes(req.method as HttpMethod)) {
+        return false;
+      }
+
+      // Search in headers and body
+      if (searchQuery) {
+        const search = searchQuery.toLowerCase();
+        const inHeaders = JSON.stringify(req.headers).toLowerCase().includes(search);
+        const inBody = req.body?.toLowerCase().includes(search);
+        const inPath = req.path?.toLowerCase().includes(search);
+        return inHeaders || inBody || inPath;
+      }
+
+      return true;
+    });
+  }, [requests, selectedMethods, searchQuery]);
+
+  function handleRequestClick(request: Request) {
+    setSelectedRequestId(request.id);
+    // TODO: Open detail panel with request details
+  }
 
   return (
     <main className="flex-1 min-w-0 flex flex-col bg-[var(--background)]">
       {/* Header with filters and search */}
-      <div className="flex-shrink-0 border-b border-[var(--border)] bg-[var(--surface)] p-4">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold text-[var(--text-primary)]">Requests</h2>
-          <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="sm" aria-label="Filter requests">
-              <Filter className="w-4 h-4" />
-            </Button>
-          </div>
+      <div className="flex-shrink-0 border-b border-[var(--border)] bg-[var(--surface)] p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-[var(--text-primary)]">
+            Requests
+            {filteredRequests.length !== requests.length && (
+              <span className="ml-2 text-sm font-normal text-[var(--text-secondary)]">
+                ({filteredRequests.length} of {requests.length})
+              </span>
+            )}
+          </h2>
         </div>
 
-        {/* Search bar placeholder */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" />
-          <input
-            type="text"
-            placeholder="Search requests..."
-            className="w-full pl-10 pr-4 py-2 bg-[var(--background)] border border-[var(--border)] rounded-lg text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)] focus:border-transparent"
-          />
-        </div>
+        {/* Filters */}
+        <RequestFilters selectedMethods={selectedMethods} onMethodsChange={setSelectedMethods} />
+
+        {/* Search bar */}
+        <RequestSearch value={searchQuery} onChange={setSearchQuery} />
       </div>
 
       {/* Scrollable list area */}
-      <div className="flex-1 overflow-y-auto">
-        {requests.length === 0 ? (
+      <div className="flex-1 overflow-hidden">
+        {loading ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-[var(--text-secondary)]">Loading requests...</div>
+          </div>
+        ) : !selectedEndpointId ? (
           <EmptyState
             icon={<Inbox className="w-16 h-16" />}
-            title="No requests captured"
-            description="Waiting for webhooks..."
+            title="No endpoint selected"
+            description="Select an endpoint from the sidebar to view requests."
           />
         ) : (
-          <div className="divide-y divide-[var(--border)]">
-            {/* Request items will be rendered here in later tasks */}
-          </div>
+          <VirtualRequestList
+            requests={filteredRequests}
+            onRequestClick={handleRequestClick}
+            selectedRequestId={selectedRequestId}
+          />
         )}
       </div>
     </main>
