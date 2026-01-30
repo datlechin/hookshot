@@ -42,7 +42,10 @@ pub async fn store_request(
 
 /// Increment request count for an endpoint
 #[allow(dead_code)]
-pub async fn increment_request_count(pool: &SqlitePool, endpoint_id: &str) -> Result<(), sqlx::Error> {
+pub async fn increment_request_count(
+    pool: &SqlitePool,
+    endpoint_id: &str,
+) -> Result<(), sqlx::Error> {
     sqlx::query("UPDATE endpoints SET request_count = request_count + 1 WHERE id = ?")
         .bind(endpoint_id)
         .execute(pool)

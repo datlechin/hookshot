@@ -33,7 +33,10 @@ async fn main() {
     tracing::info!("Starting Hookshot server...");
 
     // Initialize database
-    let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| "sqlite:./hookshot.db".to_string());
+    let database_url =
+
+
+        std::env::var("DATABASE_URL").unwrap_or_else(|_| "sqlite:./hookshot.db".to_string());
     let pool = db::init_pool(&database_url)
         .await
         .expect("Failed to initialize database pool");
@@ -73,18 +76,43 @@ async fn main() {
         // API routes for endpoint management
         .route("/api/endpoints", post(handlers::endpoint::create_endpoint))
         .route("/api/endpoints", get(handlers::endpoint::list_endpoints))
-        .route("/api/endpoints/:id", get(handlers::endpoint::get_endpoint))
-        .route("/api/endpoints/:id", delete(handlers::api::delete_endpoint))
-        .route("/api/endpoints/:id/response", put(handlers::api::update_endpoint_response))
-        // API routes for request retrieval
-        .route("/api/endpoints/:id/requests", get(handlers::api::get_endpoint_requests))
+        .route(
+            "/api/endpoints/:id", get(hand
+           lers::endpoint::get_endpoint)),
+
+        .route(
+            "/a
+            pi/endpoints/:id", delete(h
+           ,
+
+           andlers::api::delete_endpoint)),
+
+        .route(
+
+           ,
+
+            "/a
+            pi/endpoints/:id/response",
+           ,
+
+            put(handlers::api::update_endpoint_response),
+        )
+        // API
+            routes for request r
+           etrieval,
+
+        .route(
+            "/api/endpoints/:id/requests",
+            get(handlers::api::get_endpoint_requests),
+        )
         .route("/api/requests/:id", get(handlers::api::get_request_by_id))
         // WebSocket endpoint for real-time updates
-        .route("/ws/endpoints/:id", get(handlers::websocket::websocket_handler))
+        .route(
+            "/ws/endpoints/:id",
+            get(handlers::websocket::websocket_handler),
+        )
         // Webhook capture route - accepts all HTTP methods
-        .route("/webhook/:id", any(handlers::webhook::webhook_handler));
-
-    // Combine API routes with static file serving
+        .route("/webhook/:id",.awaitombine API routes with static file serving
     let app = api_routes
         // Fallback to static file serving for all other routes (SPA support)
         .fallback(static_files::serve_static_file)
@@ -92,9 +120,7 @@ async fn main() {
         .layer(cors)
         .layer(TraceLayer::new_for_http())
         .with_state((pool, ws_manager))
-        .into_make_service_with_connect_info::<SocketAddr>();
-
-    // Start server
+        .into_make_service_wit.awaittart server
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
     tracing::info!("Server listening on {}", addr);
 
@@ -102,7 +128,5 @@ async fn main() {
         .await
         .expect("Failed to bind to address");
 
-    axum::serve(listener, app)
-        .await
-        .expect("Server failed");
+    axum::serve(listener, app).await.expect("Server failed");
 }

@@ -57,7 +57,9 @@ impl WebSocketManager {
         tx: mpsc::UnboundedSender<WebSocketMessage>,
     ) {
         let mut connections = self.connections.write().await;
-        let clients = connections.entry(endpoint_id.clone()).or_insert_with(Vec::new);
+        let clients = connections
+            .entry(endpoint_id.clone())
+            .or_insert_with(Vec::new);
         clients.push(ClientHandle { tx });
 
         info!(
@@ -181,7 +183,9 @@ mod tests {
         let (tx, _rx) = mpsc::unbounded_channel();
 
         // Register client
-        manager.register_client("endpoint1".to_string(), tx.clone()).await;
+        manager
+            .register_client("endpoint1".to_string(), tx.clone())
+            .await;
         assert_eq!(manager.client_count("endpoint1").await, 1);
 
         // Unregister client

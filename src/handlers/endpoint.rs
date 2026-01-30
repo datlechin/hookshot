@@ -1,7 +1,11 @@
 use crate::models::{CreateEndpointResponse, Endpoint, EndpointSummary};
 use crate::services::endpoint;
 use crate::websocket::WebSocketManager;
-use axum::{extract::{Path, State}, http::StatusCode, Json};
+use axum::{
+    extract::{Path, State},
+    http::StatusCode,
+    Json,
+};
 use sqlx::SqlitePool;
 use std::sync::Arc;
 

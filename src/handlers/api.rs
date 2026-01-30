@@ -1,4 +1,6 @@
-use crate::models::{Request, RequestListResponse, RequestQueryParams, RequestResponse, UpdateResponseConfig};
+use crate::models::{
+    Request, RequestListResponse, RequestQueryParams, RequestResponse, UpdateResponseConfig,
+};
 use crate::websocket::WebSocketManager;
 use axum::{
     extract::{Path, Query, State},
@@ -21,15 +23,14 @@ pub async fn get_endpoint_requests(
     let offset = (page - 1) * limit;
 
     // Check if endpoint exists
-    let endpoint_exists: Option<(i64,)> =
-        sqlx::query_as("SELECT 1 FROM endpoints WHERE id = ?")
-            .bind(&endpoint_id)
-            .fetch_optional(&pool)
-            .await
-            .map_err(|e| {
-                tracing::error!("Database error checking endpoint: {}", e);
-                StatusCode::INTERNAL_SERVER_ERROR
-            })?;
+    let endpoint_exists: Option<(i64,)> = sqlx::query_as("SELECT 1 FROM endpoints WHERE id = ?")
+        .bind(&endpoint_id)
+        .fetch_optional(&pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Database error checking endpoint: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
 
     if endpoint_exists.is_none() {
         return Err(StatusCode::NOT_FOUND);
@@ -47,15 +48,15 @@ pub async fn get_endpoint_requests(
 
         // Build SQL with IN clause for method filtering
         let query = format!(
-            "SELECT * FROM requests 
-             WHERE endpoint_id = ? AND method IN ({}) 
-             ORDER BY received_at DESC 
+            "SELECT * FROM requests
+             WHERE endpoint_id = ? AND method IN ({})
+             ORDER BY received_at DESC
              LIMIT ? OFFSET ?",
             placeholders
         );
 
         let count_query = format!(
-            "SELECT COUNT(*) FROM requests 
+            "SELECT COUNT(*) FROM requests
              WHERE endpoint_id = ? AND method IN ({})",
             placeholders
         );
@@ -64,12 +65,12 @@ pub async fn get_endpoint_requests(
     } else {
         // No method filter
         (
-            "SELECT * FROM requests 
-             WHERE endpoint_id = ? 
-             ORDER BY received_at DESC 
+            "SELECT * FROM requests
+             WHERE endpoint_id = ?
+             ORDER BY received_at DESC
              LIMIT ? OFFSET ?"
                 .to_string(),
-            "SELECT COUNT(*) FROM requests 
+            "SELECT COUNT(*) FROM requests
              WHERE endpoint_id = ?"
                 .to_string(),
         )
@@ -162,15 +163,14 @@ pub async fn delete_endpoint(
     State((pool, _ws_manager)): State<(SqlitePool, Arc<WebSocketManager>)>,
 ) -> Result<StatusCode, StatusCode> {
     // Check if endpoint exists
-    let endpoint_exists: Option<(i64,)> =
-        sqlx::query_as("SELECT 1 FROM endpoints WHERE id = ?")
-            .bind(&endpoint_id)
-            .fetch_optional(&pool)
-            .await
-            .map_err(|e| {
-                tracing::error!("Database error checking endpoint: {}", e);
-                StatusCode::INTERNAL_SERVER_ERROR
-            })?;
+    let endpoint_exists: Option<(i64,)> = sqlx::query_as("SELECT 1 FROM endpoints WHERE id = ?")
+        .bind(&endpoint_id)
+        .fetch_optional(&pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Database error checking endpoint: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
 
     if endpoint_exists.is_none() {
         return Err(StatusCode::NOT_FOUND);
@@ -186,7 +186,10 @@ pub async fn delete_endpoint(
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
-    tracing::info!("Deleted endpoint {} and all associated requests", endpoint_id);
+    tracing::info!(
+        "Deleted endpoint {} and all associated requests",
+        endpoint_id
+    );
 
     Ok(StatusCode::NO_CONTENT)
 }
@@ -228,7 +231,10 @@ pub async fn update_endpoint_response(
     .await
     .map_err(|e| {
         tracing::error!("Database error updating endpoint response: {}", e);
-        (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error".to_string())
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Internal server error".to_string(),
+        )
     })?;
 
     if !updated {
@@ -480,7 +486,11 @@ mod tests {
         }
 
         // Delete endpoint
-        let result = delete_endpoint(Path(endpoint_id.clone()), State(create_test_state(pool.clone()))).await;
+        let result = delete_endpoint(
+            Path(endpoint_id.clone()),
+            State(create_test_state(pool.clone())),
+        )
+        .await;
 
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), StatusCode::NO_CONTENT);
@@ -495,11 +505,12 @@ mod tests {
         assert!(endpoint_exists.is_none());
 
         // Verify requests are deleted (cascade)
-        let request_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM requests WHERE endpoint_id = ?")
-            .bind(&endpoint_id)
-            .fetch_one(&pool)
-            .await
-            .unwrap();
+        let request_count: i64 =
+            sqlx::query_scalar("SELECT COUNT(*) FROM requests WHERE endpoint_id = ?")
+                .bind(&endpoint_id)
+                .fetch_one(&pool)
+                .await
+                .unwrap();
         assert_eq!(request_count, 0);
     }
 
@@ -507,7 +518,11 @@ mod tests {
     async fn test_delete_endpoint_not_found() {
         let pool = setup_test_db().await;
 
-        let result = delete_endpoint(Path("nonexistent".to_string()), State(create_test_state(pool))).await;
+        let result = delete_endpoint(
+            Path("nonexistent".to_string()),
+            State(create_test_state(pool)),
+        )
+        .await;
 
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), StatusCode::NOT_FOUND);
@@ -546,8 +561,14 @@ mod tests {
 
         assert!(endpoint.custom_response_enabled);
         assert_eq!(endpoint.response_status, 404);
-        assert_eq!(endpoint.response_headers, Some(r#"{"x-custom":"header"}"#.to_string()));
-        assert_eq!(endpoint.response_body, Some(r#"{"error":"Custom error"}"#.to_string()));
+        assert_eq!(
+            endpoint.response_headers,
+            Some(r#"{"x-custom":"header"}"#.to_string())
+        );
+        assert_eq!(
+            endpoint.response_body,
+            Some(r#"{"error":"Custom error"}"#.to_string())
+        );
     }
 
     #[tokio::test]

@@ -40,14 +40,20 @@ pub async fn websocket_handler(
 }
 
 /// Handle an individual WebSocket connection
-async fn handle_websocket(socket: WebSocket, endpoint_id: String, ws_manager: Arc<WebSocketManager>) {
+async fn handle_websocket(
+    socket: WebSocket,
+    endpoint_id: String,
+    ws_manager: Arc<WebSocketManager>,
+) {
     let (mut sender, mut receiver) = socket.split();
 
     // Create a channel for this client
     let (tx, mut rx) = mpsc::unbounded_channel::<WebSocketMessage>();
 
     // Register the client
-    ws_manager.register_client(endpoint_id.clone(), tx.clone()).await;
+    ws_manager
+        .register_client(endpoint_id.clone(), tx.clone())
+        .await;
 
     info!("WebSocket connected for endpoint: {}", endpoint_id);
 
@@ -89,7 +95,10 @@ async fn handle_websocket(socket: WebSocket, endpoint_id: String, ws_manager: Ar
                     }
                 }
                 Ok(Message::Close(_)) => {
-                    info!("Client closed connection for endpoint: {}", endpoint_id_clone);
+                    info!(
+                        "Client closed connection for endpoint: {}",
+                        endpoint_id_clone
+                    );
                     break;
                 }
                 Ok(Message::Ping(data)) => {
@@ -112,7 +121,9 @@ async fn handle_websocket(socket: WebSocket, endpoint_id: String, ws_manager: Ar
         }
 
         // Unregister when connection closes
-        ws_manager_clone.unregister_client(&endpoint_id_clone, &tx_clone).await;
+        ws_manager_clone
+            .unregister_client(&endpoint_id_clone, &tx_clone)
+            .await;
         debug!("Receive task ended for endpoint: {}", endpoint_id_clone);
     });
 

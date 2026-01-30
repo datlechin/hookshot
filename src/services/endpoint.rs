@@ -93,7 +93,7 @@ mod tests {
         let pool = init_pool("sqlite::memory:").await.unwrap();
         let result = create_endpoint(&pool).await;
         assert!(result.is_ok(), "Creating endpoint should succeed");
-        
+
         let response = result.unwrap();
         assert!(!response.id.is_empty(), "Generated ID should not be empty");
     }
@@ -101,11 +101,11 @@ mod tests {
     #[tokio::test]
     async fn test_list_endpoints() {
         let pool = init_pool("sqlite::memory:").await.unwrap();
-        
+
         // Initially empty
         let endpoints = list_endpoints(&pool).await.unwrap();
         assert_eq!(endpoints.len(), 0, "Should start with no endpoints");
-        
+
         // Create one endpoint
         create_endpoint(&pool).await.unwrap();
         let endpoints = list_endpoints(&pool).await.unwrap();
@@ -115,14 +115,14 @@ mod tests {
     #[tokio::test]
     async fn test_get_endpoint() {
         let pool = init_pool("sqlite::memory:").await.unwrap();
-        
+
         // Create an endpoint
         let created = create_endpoint(&pool).await.unwrap();
-        
+
         // Retrieve it
         let endpoint = get_endpoint(&pool, &created.id).await.unwrap();
         assert!(endpoint.is_some(), "Endpoint should exist");
-        
+
         let endpoint = endpoint.unwrap();
         assert_eq!(endpoint.id, created.id);
         assert_eq!(endpoint.request_count, 0);
@@ -161,25 +161,27 @@ mod tests {
         let endpoint = get_endpoint(&pool, &created.id).await.unwrap().unwrap();
         assert!(endpoint.custom_response_enabled);
         assert_eq!(endpoint.response_status, 404);
-        assert_eq!(endpoint.response_headers, Some(r#"{"x-custom":"value"}"#.to_string()));
-        assert_eq!(endpoint.response_body, Some(r#"{"error":"not found"}"#.to_string()));
+        assert_eq!(
+            endpoint.response_headers,
+            Some(r#"{"x-custom":"value"}"#.to_string())
+        );
+        assert_eq!(
+            endpoint.response_body,
+            Some(r#"{"error":"not found"}"#.to_string())
+        );
     }
 
     #[tokio::test]
     async fn test_update_response_config_nonexistent() {
         let pool = init_pool("sqlite::memory:").await.unwrap();
 
-        let updated = update_response_config(
-            &pool,
-            "nonexistent-id",
-            true,
-            404,
-            None,
-            None,
-        )
-        .await
-        .unwrap();
+        let updated = update_response_config(&pool, "nonexistent-id", true, 404, None, None)
+            .await
+            .unwrap();
 
-        assert!(!updated, "Update should return false for nonexistent endpoint");
+        assert!(
+            !updated,
+            "Update should return false for nonexistent endpoint"
+        );
     }
 }

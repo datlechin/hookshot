@@ -1,11 +1,11 @@
+use crate::models::Endpoint;
+use crate::websocket::{RequestData, WebSocketManager, WebSocketMessage};
 use axum::{
     body::Bytes,
     extract::{ConnectInfo, Path, State},
     http::{HeaderMap, HeaderName, HeaderValue, Method, StatusCode, Uri},
     response::{IntoResponse, Response},
 };
-use crate::models::Endpoint;
-use crate::websocket::{WebSocketManager, WebSocketMessage, RequestData};
 use sqlx::SqlitePool;
 use std::net::SocketAddr;
 use std::str::FromStr;
@@ -58,22 +58,22 @@ pub async fn webhook_handler(
     let http_method = method.as_str();
     let path = uri.path();
     let query_string = uri.query().map(|q| q.to_string());
-    
+
     // Convert headers to JSON
     let headers_json = headers_to_json(&headers);
-    
+
     // Extract Content-Type header
     let content_type = headers
         .get("content-type")
         .and_then(|v| v.to_str().ok())
         .map(|s| s.to_string());
-    
+
     // Get client IP address
     let ip_address = addr.ip().to_string();
-    
+
     // Get current timestamp with millisecond precision
     let received_at = chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
-    
+
     // Store body as bytes (can be empty)
     let body_bytes = if body.is_empty() {
         None
@@ -111,20 +111,25 @@ pub async fn webhook_handler(
         let request_id = match insert_result {
             Ok(result) => result.last_insert_rowid(),
             Err(e) => {
-                error!("Failed to insert request for endpoint {}: {}", endpoint_id_clone, e);
+                error!(
+                    "Failed to insert request for endpoint {}: {}",
+                    endpoint_id_clone, e
+                );
                 return;
             }
         };
 
         // Increment request count for the endpoint
-        if let Err(e) = sqlx::query(
-            "UPDATE endpoints SET request_count = request_count + 1 WHERE id = ?"
-        )
-        .bind(&endpoint_id_clone)
-        .execute(&pool_clone)
-        .await
+        if let Err(e) =
+            sqlx::query("UPDATE endpoints SET request_count = request_count + 1 WHERE id = ?")
+                .bind(&endpoint_id_clone)
+                .execute(&pool_clone)
+                .await
         {
-            error!("Failed to increment request count for endpoint {}: {}", endpoint_id_clone, e);
+            error!(
+                "Failed to increment request count for endpoint {}: {}",
+                endpoint_id_clone, e
+            );
         }
 
         info!(
@@ -146,24 +151,25 @@ pub async fn webhook_handler(
             },
         };
 
-        ws_manager_clone.broadcast(&endpoint_id_clone, ws_message).await;
+        ws_manager_clone
+            .broadcast(&endpoint_id_clone, ws_message)
+            .await;
     });
 
     // Build response based on custom configuration
     if endpoint.custom_response_enabled {
         // Parse custom status code
-        let status = StatusCode::from_u16(endpoint.response_status as u16)
-            .unwrap_or(StatusCode::OK);
+        let status =
+            StatusCode::from_u16(endpoint.response_status as u16).unwrap_or(StatusCode::OK);
 
         // Parse custom headers if provided
         let mut response_headers = HeaderMap::new();
-        response_headers.insert(
-            "Access-Control-Allow-Origin",
-            HeaderValue::from_static("*")
-        );
+        response_headers.insert("Access-Control-Allow-Origin", HeaderValue::from_static("*"));
 
         if let Some(headers_json) = endpoint.response_headers {
-            if let Ok(headers_map) = serde_json::from_str::<serde_json::Map<String, serde_json::Value>>(&headers_json) {
+            if let Ok(headers_map) =
+                serde_json::from_str::<serde_json::Map<String, serde_json::Value>>(&headers_json)
+            {
                 for (key, value) in headers_map {
                     if let Ok(header_name) = HeaderName::from_str(&key) {
                         if let Some(val_str) = value.as_str() {
@@ -182,22 +188,18 @@ pub async fn webhook_handler(
         Ok((status, response_headers, response_body).into_response())
     } else {
         // Return default 200 OK response
-        Ok((
-            StatusCode::OK,
-            [("Access-Control-Allow-Origin", "*")],
-            "",
-        ).into_response())
+        Ok((StatusCode::OK, [("Access-Control-Allow-Origin", "*")], "").into_response())
     }
 }
 
 /// Convert HeaderMap to JSON string
 fn headers_to_json(headers: &HeaderMap) -> String {
     let mut map = serde_json::Map::new();
-    
+
     for (name, value) in headers.iter() {
         let key = name.as_str().to_string();
         let val = value.to_str().unwrap_or("[binary]").to_string();
-        
+
         // If header appears multiple times, create an array
         match map.get_mut(&key) {
             Some(serde_json::Value::Array(arr)) => {
@@ -212,7 +214,7 @@ fn headers_to_json(headers: &HeaderMap) -> String {
             }
         }
     }
-    
+
     serde_json::to_string(&map).unwrap_or_else(|_| "{}".to_string())
 }
 
@@ -226,10 +228,10 @@ mod tests {
         let mut headers = HeaderMap::new();
         headers.insert("content-type", HeaderValue::from_static("application/json"));
         headers.insert("user-agent", HeaderValue::from_static("test-agent"));
-        
+
         let json = headers_to_json(&headers);
         let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
-        
+
         assert_eq!(parsed["content-type"], "application/json");
         assert_eq!(parsed["user-agent"], "test-agent");
     }
@@ -239,10 +241,10 @@ mod tests {
         let mut headers = HeaderMap::new();
         headers.append("x-custom", HeaderValue::from_static("value1"));
         headers.append("x-custom", HeaderValue::from_static("value2"));
-        
+
         let json = headers_to_json(&headers);
         let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
-        
+
         assert!(parsed["x-custom"].is_array());
         let arr = parsed["x-custom"].as_array().unwrap();
         assert_eq!(arr.len(), 2);

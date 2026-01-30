@@ -27,24 +27,24 @@ pub async fn init_pool(database_url: &str) -> Result<SqlitePool, sqlx::Error> {
 async fn run_migrations(pool: &SqlitePool) -> Result<(), sqlx::Error> {
     // Read migration file
     let migration_sql = include_str!("../../migrations/20240129_initial_schema.sql");
-    
+
     // Parse and execute SQL statements
     let mut current_statement = String::new();
-    
+
     for line in migration_sql.lines() {
         let trimmed = line.trim();
-        
+
         // Skip empty lines and standalone comments
         if trimmed.is_empty() || (trimmed.starts_with("--") && current_statement.is_empty()) {
             continue;
         }
-        
+
         // Append line to current statement
         if !trimmed.starts_with("--") {
             current_statement.push_str(line);
             current_statement.push('\n');
         }
-        
+
         // If line ends with semicolon, execute the statement
         if trimmed.ends_with(';') {
             let stmt = current_statement.trim().trim_end_matches(';').trim();
@@ -54,7 +54,7 @@ async fn run_migrations(pool: &SqlitePool) -> Result<(), sqlx::Error> {
             current_statement.clear();
         }
     }
-    
+
     // Execute any remaining statement
     if !current_statement.trim().is_empty() {
         let stmt = current_statement.trim().trim_end_matches(';').trim();
@@ -78,16 +78,18 @@ mod tests {
     #[tokio::test]
     async fn test_migrations() {
         let pool = init_pool("sqlite::memory:").await.unwrap();
-        
+
         // Verify tables exist
-        let result = sqlx::query("SELECT name FROM sqlite_master WHERE type='table' AND name='endpoints'")
-            .fetch_one(&pool)
-            .await;
+        let result =
+            sqlx::query("SELECT name FROM sqlite_master WHERE type='table' AND name='endpoints'")
+                .fetch_one(&pool)
+                .await;
         assert!(result.is_ok(), "Endpoints table should exist");
 
-        let result = sqlx::query("SELECT name FROM sqlite_master WHERE type='table' AND name='requests'")
-            .fetch_one(&pool)
-            .await;
+        let result =
+            sqlx::query("SELECT name FROM sqlite_master WHERE type='table' AND name='requests'")
+                .fetch_one(&pool)
+                .await;
         assert!(result.is_ok(), "Requests table should exist");
     }
 
@@ -96,15 +98,15 @@ mod tests {
         // Use a temporary file database for this test since :memory: doesn't support WAL
         let temp_file = format!("sqlite:/tmp/test_wal_{}.db", std::process::id());
         let pool = init_pool(&temp_file).await.unwrap();
-        
+
         // Verify WAL mode is enabled
         let row: (String,) = sqlx::query_as("PRAGMA journal_mode")
             .fetch_one(&pool)
             .await
             .unwrap();
-        
+
         assert_eq!(row.0.to_lowercase(), "wal", "WAL mode should be enabled");
-        
+
         // Clean up
         drop(pool);
         let _ = std::fs::remove_file(temp_file.replace("sqlite:", ""));

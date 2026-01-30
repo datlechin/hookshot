@@ -1,3 +1,3 @@
 pub mod manager;
 
-pub use manager::{WebSocketManager, WebSocketMessage, RequestData};
+pub use manager::{RequestData, WebSocketManager, WebSocketMessage};
