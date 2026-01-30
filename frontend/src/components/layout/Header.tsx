@@ -1,6 +1,6 @@
 import { Moon, Sun, Plus } from 'lucide-react';
 import { Button } from '@/components/ui';
-import { Theme } from '@/hooks/useTheme';
+import type { Theme } from '@/hooks/useTheme';
 
 interface HeaderProps {
   theme: Theme;

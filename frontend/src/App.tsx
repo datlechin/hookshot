@@ -1,9 +1,6 @@
 import { useState } from 'react';
-import { useTheme } from '@/hooks/useTheme';
-import { Header } from '@/components/layout/Header';
-import { Sidebar } from '@/components/layout/Sidebar';
-import { RequestList } from '@/components/layout/RequestList';
-import { DetailPanel } from '@/components/layout/DetailPanel';
+import { useTheme } from '@/hooks';
+import { Header, Sidebar, RequestList, DetailPanel } from '@/components/layout';
 
 function App() {
   const { theme, toggleTheme } = useTheme();
