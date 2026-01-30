@@ -6,13 +6,14 @@ interface HeaderProps {
   theme: Theme;
   onToggleTheme: () => void;
   onCreateEndpoint?: () => void;
+  connectionStatus?: 'connected' | 'connecting' | 'disconnected' | 'polling';
 }
 
 /**
  * Fixed header component with logo, actions, and theme toggle
  * Height: 64px, sticky at top
  */
-export function Header({ theme, onToggleTheme, onCreateEndpoint }: HeaderProps) {
+export function Header({ theme, onToggleTheme, onCreateEndpoint, connectionStatus = 'disconnected' }: HeaderProps) {
   return (
     <header className="fixed top-0 left-0 right-0 h-16 bg-[var(--surface)] border-b border-[var(--border)] z-50">
       <div className="flex items-center justify-between h-full px-4">
@@ -49,10 +50,50 @@ export function Header({ theme, onToggleTheme, onCreateEndpoint }: HeaderProps) 
           </Button>
 
           {/* Connection Status Indicator */}
-          <div className="hidden md:flex items-center space-x-2 px-3 py-1 rounded-full bg-[var(--accent-green)]/10 border border-[var(--accent-green)]/20">
-            <span className="w-2 h-2 bg-[var(--accent-green)] rounded-full animate-pulse"></span>
-            <span className="text-xs text-[var(--accent-green)] font-medium">Connected</span>
-          </div>
+          {connectionStatus !== 'disconnected' && (
+            <div
+              className={`hidden md:flex items-center space-x-2 px-3 py-1 rounded-full ${
+                connectionStatus === 'connected'
+                  ? 'bg-[var(--accent-green)]/10 border border-[var(--accent-green)]/20'
+                  : connectionStatus === 'connecting'
+                    ? 'bg-[var(--accent-yellow)]/10 border border-[var(--accent-yellow)]/20'
+                    : connectionStatus === 'polling'
+                      ? 'bg-[var(--accent-blue)]/10 border border-[var(--accent-blue)]/20'
+                      : 'bg-[var(--accent-red)]/10 border border-[var(--accent-red)]/20'
+              }`}
+            >
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  connectionStatus === 'connected'
+                    ? 'bg-[var(--accent-green)] animate-pulse'
+                    : connectionStatus === 'connecting'
+                      ? 'bg-[var(--accent-yellow)] animate-pulse'
+                      : connectionStatus === 'polling'
+                        ? 'bg-[var(--accent-blue)]'
+                        : 'bg-[var(--accent-red)]'
+                }`}
+              ></span>
+              <span
+                className={`text-xs font-medium ${
+                  connectionStatus === 'connected'
+                    ? 'text-[var(--accent-green)]'
+                    : connectionStatus === 'connecting'
+                      ? 'text-[var(--accent-yellow)]'
+                      : connectionStatus === 'polling'
+                        ? 'text-[var(--accent-blue)]'
+                        : 'text-[var(--accent-red)]'
+                }`}
+              >
+                {connectionStatus === 'connected'
+                  ? 'Connected'
+                  : connectionStatus === 'connecting'
+                    ? 'Connecting'
+                    : connectionStatus === 'polling'
+                      ? 'Polling'
+                      : 'Disconnected'}
+              </span>
+            </div>
+          )}
 
           {/* Theme Toggle */}
           <Button

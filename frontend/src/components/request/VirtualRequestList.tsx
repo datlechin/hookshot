@@ -9,6 +9,7 @@ interface VirtualRequestListProps {
   requests: Request[];
   onRequestClick?: (request: Request) => void;
   selectedRequestId?: number;
+  newRequestIds?: Set<number>;
 }
 
 /**
@@ -19,6 +20,7 @@ export function VirtualRequestList({
   requests,
   onRequestClick,
   selectedRequestId,
+  newRequestIds = new Set(),
 }: VirtualRequestListProps) {
   const parentRef = useRef<HTMLDivElement>(null);
 
@@ -67,6 +69,7 @@ export function VirtualRequestList({
                 request={request}
                 onClick={() => onRequestClick?.(request)}
                 isSelected={request.id === selectedRequestId}
+                isNew={newRequestIds.has(request.id)}
               />
             </div>
           );
