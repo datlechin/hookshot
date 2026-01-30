@@ -25,9 +25,9 @@ export function useWebSocket(endpointId: string | null): UseWebSocketReturn {
   const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null)
   const [usingPolling, setUsingPolling] = useState(false)
   const clientRef = useRef<WebSocketClient | null>(null)
-  const pollingIntervalRef = useRef<number>()
+  const pollingIntervalRef = useRef<number | undefined>(undefined)
   const lastRequestIdRef = useRef<number>(0)
-  const connectionTimeoutRef = useRef<number>()
+  const connectionTimeoutRef = useRef<number | undefined>(undefined)
 
   /**
    * Send a message through the WebSocket
