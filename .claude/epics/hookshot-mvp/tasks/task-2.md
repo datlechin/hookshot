@@ -1,7 +1,7 @@
 ---
 name: task-2
 title: Webhook capture handler with full request storage
-status: open
+status: completed
 github_issue: 3
 github_url: https://github.com/datlechin/hookshot/issues/3
 priority: critical

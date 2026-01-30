@@ -1,7 +1,7 @@
 ---
 name: task-5
 title: Frontend scaffolding with React, TypeScript, Vite, and shadcn/ui
-status: open
+status: completed
 github_issue: 6
 github_url: https://github.com/datlechin/hookshot/issues/6
 priority: high
