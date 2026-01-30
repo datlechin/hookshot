@@ -41,7 +41,7 @@ pub async fn list_endpoints(pool: &SqlitePool) -> Result<Vec<EndpointSummary>, s
 pub async fn get_endpoint(pool: &SqlitePool, id: &str) -> Result<Option<Endpoint>, sqlx::Error> {
     let endpoint = sqlx::query_as::<_, Endpoint>(
         r#"
-        SELECT id, created_at, custom_response_enabled, response_status, 
+        SELECT id, created_at, custom_response_enabled, response_status,
                response_headers, response_body, request_count
         FROM endpoints
         WHERE id = ?
@@ -52,6 +52,36 @@ pub async fn get_endpoint(pool: &SqlitePool, id: &str) -> Result<Option<Endpoint
     .await?;
 
     Ok(endpoint)
+}
+
+/// Update custom response configuration for an endpoint
+pub async fn update_response_config(
+    pool: &SqlitePool,
+    id: &str,
+    enabled: bool,
+    status: i32,
+    headers: Option<String>,
+    body: Option<String>,
+) -> Result<bool, sqlx::Error> {
+    let result = sqlx::query(
+        r#"
+        UPDATE endpoints
+        SET custom_response_enabled = ?,
+            response_status = ?,
+            response_headers = ?,
+            response_body = ?
+        WHERE id = ?
+        "#,
+    )
+    .bind(enabled)
+    .bind(status)
+    .bind(&headers)
+    .bind(&body)
+    .bind(id)
+    .execute(pool)
+    .await?;
+
+    Ok(result.rows_affected() > 0)
 }
 
 #[cfg(test)]
@@ -102,10 +132,55 @@ mod tests {
     #[tokio::test]
     async fn test_uuid_uniqueness() {
         let pool = init_pool("sqlite::memory:").await.unwrap();
-        
+
         let endpoint1 = create_endpoint(&pool).await.unwrap();
         let endpoint2 = create_endpoint(&pool).await.unwrap();
-        
+
         assert_ne!(endpoint1.id, endpoint2.id, "UUIDs should be unique");
+    }
+
+    #[tokio::test]
+    async fn test_update_response_config() {
+        let pool = init_pool("sqlite::memory:").await.unwrap();
+        let created = create_endpoint(&pool).await.unwrap();
+
+        // Update response config
+        let updated = update_response_config(
+            &pool,
+            &created.id,
+            true,
+            404,
+            Some(r#"{"x-custom":"value"}"#.to_string()),
+            Some(r#"{"error":"not found"}"#.to_string()),
+        )
+        .await
+        .unwrap();
+
+        assert!(updated, "Update should succeed");
+
+        // Verify update
+        let endpoint = get_endpoint(&pool, &created.id).await.unwrap().unwrap();
+        assert!(endpoint.custom_response_enabled);
+        assert_eq!(endpoint.response_status, 404);
+        assert_eq!(endpoint.response_headers, Some(r#"{"x-custom":"value"}"#.to_string()));
+        assert_eq!(endpoint.response_body, Some(r#"{"error":"not found"}"#.to_string()));
+    }
+
+    #[tokio::test]
+    async fn test_update_response_config_nonexistent() {
+        let pool = init_pool("sqlite::memory:").await.unwrap();
+
+        let updated = update_response_config(
+            &pool,
+            "nonexistent-id",
+            true,
+            404,
+            None,
+            None,
+        )
+        .await
+        .unwrap();
+
+        assert!(!updated, "Update should return false for nonexistent endpoint");
     }
 }

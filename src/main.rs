@@ -2,17 +2,20 @@ mod db;
 mod handlers;
 mod models;
 mod services;
+mod websocket;
 
 use axum::{
-    routing::{any, delete, get, post},
+    routing::{any, delete, get, post, put},
     Router,
 };
 use std::net::SocketAddr;
+use std::sync::Arc;
 use tower_http::{
     cors::{Any, CorsLayer},
     trace::TraceLayer,
 };
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use websocket::WebSocketManager;
 
 #[tokio::main]
 async fn main() {
@@ -35,6 +38,19 @@ async fn main() {
 
     tracing::info!("Database initialized successfully");
 
+    // Initialize WebSocket manager
+    let ws_manager = Arc::new(WebSocketManager::new());
+
+    // Start heartbeat task for WebSocket connections
+    let ws_manager_heartbeat = ws_manager.clone();
+    tokio::spawn(async move {
+        let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(30));
+        loop {
+            interval.tick().await;
+            ws_manager_heartbeat.send_heartbeat().await;
+        }
+    });
+
     // Configure CORS to allow all origins
     let cors = CorsLayer::new()
         .allow_origin(Any)
@@ -48,15 +64,18 @@ async fn main() {
         // API routes for endpoint management
         .route("/api/endpoints", post(handlers::endpoint::create_endpoint))
         .route("/api/endpoints", get(handlers::endpoint::list_endpoints))
+        .route("/api/endpoints/:id", delete(handlers::api::delete_endpoint))
+        .route("/api/endpoints/:id/response", put(handlers::api::update_endpoint_response))
         // API routes for request retrieval
         .route("/api/endpoints/:id/requests", get(handlers::api::get_endpoint_requests))
         .route("/api/requests/:id", get(handlers::api::get_request_by_id))
-        .route("/api/endpoints/:id", delete(handlers::api::delete_endpoint))
+        // WebSocket endpoint for real-time updates
+        .route("/ws/endpoints/:id", get(handlers::websocket::websocket_handler))
         // Webhook capture route - accepts all HTTP methods
         .route("/webhook/:id", any(handlers::webhook::webhook_handler))
         .layer(cors)
         .layer(TraceLayer::new_for_http())
-        .with_state(pool)
+        .with_state((pool, ws_manager))
         .into_make_service_with_connect_info::<SocketAddr>();
 
     // Start server
@@ -71,4 +90,3 @@ async fn main() {
         .await
         .expect("Server failed");
 }
-

@@ -71,6 +71,15 @@ pub struct RequestListResponse {
     pub limit: u32,
 }
 
+/// Request body for PUT /api/endpoints/:id/response
+#[derive(Debug, Deserialize)]
+pub struct UpdateResponseConfig {
+    pub enabled: bool,
+    pub status: i32,
+    pub headers: Option<String>,
+    pub body: Option<String>,
+}
+
 /// Request with decoded body for API responses
 #[derive(Debug, Serialize)]
 pub struct RequestResponse {
