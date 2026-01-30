@@ -45,9 +45,15 @@ async fn test_webhook_post_request() {
 
     // Create webhook handler with mock ConnectInfo
     let app = axum::Router::new()
-        .route("/webhook/:id", axum::routing::any(handlers::webhook::webhook_handler))
+        .route(
+            "/webhook/:id",
+            axum::routing::any(handlers::webhook::webhook_handler),
+        )
         .with_state(create_test_state(pool.clone()))
-        .layer(MockConnectInfo(std::net::SocketAddr::from(([127, 0, 0, 1], 8080))));
+        .layer(MockConnectInfo(std::net::SocketAddr::from((
+            [127, 0, 0, 1],
+            8080,
+        ))));
 
     // Send POST request
     let request = Request::builder()
@@ -70,13 +76,12 @@ async fn test_webhook_post_request() {
     tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
 
     // Verify request was captured
-    let captured: (i64, String, String, String) = sqlx::query_as(
-        "SELECT id, method, path, headers FROM requests WHERE endpoint_id = ?"
-    )
-    .bind(&endpoint_id)
-    .fetch_one(&pool)
-    .await
-    .expect("Failed to fetch captured request");
+    let captured: (i64, String, String, String) =
+        sqlx::query_as("SELECT id, method, path, headers FROM requests WHERE endpoint_id = ?")
+            .bind(&endpoint_id)
+            .fetch_one(&pool)
+            .await
+            .expect("Failed to fetch captured request");
 
     assert_eq!(captured.1, "POST");
     assert_eq!(captured.2, format!("/webhook/{}", endpoint_id));
@@ -98,9 +103,15 @@ async fn test_webhook_get_request() {
     let endpoint_id = create_test_endpoint(&pool).await;
 
     let app = axum::Router::new()
-        .route("/webhook/:id", axum::routing::any(handlers::webhook::webhook_handler))
+        .route(
+            "/webhook/:id",
+            axum::routing::any(handlers::webhook::webhook_handler),
+        )
         .with_state(create_test_state(pool.clone()))
-        .layer(MockConnectInfo(std::net::SocketAddr::from(([127, 0, 0, 1], 8080))));
+        .layer(MockConnectInfo(std::net::SocketAddr::from((
+            [127, 0, 0, 1],
+            8080,
+        ))));
 
     // Send GET request with query parameters
     let request = Request::builder()
@@ -120,13 +131,12 @@ async fn test_webhook_get_request() {
     tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
 
     // Verify query string was captured
-    let query_string: Option<String> = sqlx::query_scalar(
-        "SELECT query_string FROM requests WHERE endpoint_id = ?"
-    )
-    .bind(&endpoint_id)
-    .fetch_one(&pool)
-    .await
-    .expect("Failed to fetch captured request");
+    let query_string: Option<String> =
+        sqlx::query_scalar("SELECT query_string FROM requests WHERE endpoint_id = ?")
+            .bind(&endpoint_id)
+            .fetch_one(&pool)
+            .await
+            .expect("Failed to fetch captured request");
 
     assert_eq!(query_string, Some("key=value&foo=bar".to_string()));
 }
@@ -137,9 +147,15 @@ async fn test_webhook_invalid_endpoint() {
     let invalid_id = uuid::Uuid::new_v4().to_string();
 
     let app = axum::Router::new()
-        .route("/webhook/:id", axum::routing::any(handlers::webhook::webhook_handler))
+        .route(
+            "/webhook/:id",
+            axum::routing::any(handlers::webhook::webhook_handler),
+        )
         .with_state(create_test_state(pool.clone()))
-        .layer(MockConnectInfo(std::net::SocketAddr::from(([127, 0, 0, 1], 8080))));
+        .layer(MockConnectInfo(std::net::SocketAddr::from((
+            [127, 0, 0, 1],
+            8080,
+        ))));
 
     let request = Request::builder()
         .method(Method::POST)
@@ -161,13 +177,19 @@ async fn test_webhook_payload_too_large() {
     let endpoint_id = create_test_endpoint(&pool).await;
 
     let app = axum::Router::new()
-        .route("/webhook/:id", axum::routing::any(handlers::webhook::webhook_handler))
+        .route(
+            "/webhook/:id",
+            axum::routing::any(handlers::webhook::webhook_handler),
+        )
         .with_state(create_test_state(pool.clone()))
-        .layer(MockConnectInfo(std::net::SocketAddr::from(([127, 0, 0, 1], 8080))));
+        .layer(MockConnectInfo(std::net::SocketAddr::from((
+            [127, 0, 0, 1],
+            8080,
+        ))));
 
     // Create 11MB payload
     let large_payload = "x".repeat(11 * 1024 * 1024);
-    
+
     let request = Request::builder()
         .method(Method::POST)
         .uri(format!("/webhook/{}", endpoint_id))
@@ -199,9 +221,15 @@ async fn test_webhook_all_http_methods() {
 
     for method in methods {
         let app = axum::Router::new()
-            .route("/webhook/:id", axum::routing::any(handlers::webhook::webhook_handler))
+            .route(
+                "/webhook/:id",
+                axum::routing::any(handlers::webhook::webhook_handler),
+            )
             .with_state(create_test_state(pool.clone()))
-            .layer(MockConnectInfo(std::net::SocketAddr::from(([127, 0, 0, 1], 8080))));
+            .layer(MockConnectInfo(std::net::SocketAddr::from((
+                [127, 0, 0, 1],
+                8080,
+            ))));
 
         let request = Request::builder()
             .method(method.clone())
@@ -241,13 +269,19 @@ async fn test_webhook_binary_body() {
     let endpoint_id = create_test_endpoint(&pool).await;
 
     let app = axum::Router::new()
-        .route("/webhook/:id", axum::routing::any(handlers::webhook::webhook_handler))
+        .route(
+            "/webhook/:id",
+            axum::routing::any(handlers::webhook::webhook_handler),
+        )
         .with_state(create_test_state(pool.clone()))
-        .layer(MockConnectInfo(std::net::SocketAddr::from(([127, 0, 0, 1], 8080))));
+        .layer(MockConnectInfo(std::net::SocketAddr::from((
+            [127, 0, 0, 1],
+            8080,
+        ))));
 
     // Send binary data
     let binary_data = vec![0u8, 1, 2, 3, 255, 254, 253];
-    
+
     let request = Request::builder()
         .method(Method::POST)
         .uri(format!("/webhook/{}", endpoint_id))
@@ -266,13 +300,12 @@ async fn test_webhook_binary_body() {
     tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
 
     // Verify binary body was stored correctly
-    let stored_body: Option<Vec<u8>> = sqlx::query_scalar(
-        "SELECT body FROM requests WHERE endpoint_id = ?"
-    )
-    .bind(&endpoint_id)
-    .fetch_one(&pool)
-    .await
-    .expect("Failed to fetch captured request");
+    let stored_body: Option<Vec<u8>> =
+        sqlx::query_scalar("SELECT body FROM requests WHERE endpoint_id = ?")
+            .bind(&endpoint_id)
+            .fetch_one(&pool)
+            .await
+            .expect("Failed to fetch captured request");
 
     assert_eq!(stored_body, Some(binary_data));
 }
@@ -283,9 +316,15 @@ async fn test_webhook_empty_body() {
     let endpoint_id = create_test_endpoint(&pool).await;
 
     let app = axum::Router::new()
-        .route("/webhook/:id", axum::routing::any(handlers::webhook::webhook_handler))
+        .route(
+            "/webhook/:id",
+            axum::routing::any(handlers::webhook::webhook_handler),
+        )
         .with_state(create_test_state(pool.clone()))
-        .layer(MockConnectInfo(std::net::SocketAddr::from(([127, 0, 0, 1], 8080))));
+        .layer(MockConnectInfo(std::net::SocketAddr::from((
+            [127, 0, 0, 1],
+            8080,
+        ))));
 
     let request = Request::builder()
         .method(Method::POST)
@@ -304,13 +343,12 @@ async fn test_webhook_empty_body() {
     tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
 
     // Verify empty body is stored as NULL
-    let stored_body: Option<Vec<u8>> = sqlx::query_scalar(
-        "SELECT body FROM requests WHERE endpoint_id = ?"
-    )
-    .bind(&endpoint_id)
-    .fetch_one(&pool)
-    .await
-    .expect("Failed to fetch captured request");
+    let stored_body: Option<Vec<u8>> =
+        sqlx::query_scalar("SELECT body FROM requests WHERE endpoint_id = ?")
+            .bind(&endpoint_id)
+            .fetch_one(&pool)
+            .await
+            .expect("Failed to fetch captured request");
 
     assert_eq!(stored_body, None);
 }
@@ -321,9 +359,15 @@ async fn test_webhook_cors_headers() {
     let endpoint_id = create_test_endpoint(&pool).await;
 
     let app = axum::Router::new()
-        .route("/webhook/:id", axum::routing::any(handlers::webhook::webhook_handler))
+        .route(
+            "/webhook/:id",
+            axum::routing::any(handlers::webhook::webhook_handler),
+        )
         .with_state(create_test_state(pool.clone()))
-        .layer(MockConnectInfo(std::net::SocketAddr::from(([127, 0, 0, 1], 8080))));
+        .layer(MockConnectInfo(std::net::SocketAddr::from((
+            [127, 0, 0, 1],
+            8080,
+        ))));
 
     let request = Request::builder()
         .method(Method::POST)
@@ -365,9 +409,15 @@ async fn test_webhook_custom_response() {
     .expect("Failed to create test endpoint with custom response");
 
     let app = axum::Router::new()
-        .route("/webhook/:id", axum::routing::any(handlers::webhook::webhook_handler))
+        .route(
+            "/webhook/:id",
+            axum::routing::any(handlers::webhook::webhook_handler),
+        )
         .with_state(create_test_state(pool.clone()))
-        .layer(MockConnectInfo(std::net::SocketAddr::from(([127, 0, 0, 1], 8080))));
+        .layer(MockConnectInfo(std::net::SocketAddr::from((
+            [127, 0, 0, 1],
+            8080,
+        ))));
 
     let request = Request::builder()
         .method(Method::POST)

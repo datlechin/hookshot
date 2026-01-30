@@ -11,12 +11,6 @@ function AppContent() {
   const [connectionStatus, setConnectionStatus] = useState<
     'connected' | 'connecting' | 'disconnected' | 'polling'
   >('disconnected')
-
-  const handleCreateEndpoint = () => {
-    // Placeholder - will be implemented in later tasks
-    console.log('Create endpoint clicked')
-  }
-
   const handleCloseDetailPanel = () => {
     setSelectedRequest(null)
   }

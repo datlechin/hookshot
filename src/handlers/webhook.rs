@@ -138,14 +138,17 @@ pub async fn webhook_handler(
         );
 
         // Parse headers JSON string into serde_json::Value
-        let headers_value = serde_json::from_str(&headers_json)
-            .unwrap_or_else(|_| serde_json::json!({}));
+        let headers_value =
+            serde_json::from_str(&headers_json).unwrap_or_else(|_| serde_json::json!({}));
 
         // Parse query string into object
         let query_params_value = if let Some(qs) = &query_string {
             let mut params = serde_json::Map::new();
             for (key, value) in form_urlencoded::parse(qs.as_bytes()) {
-                params.insert(key.into_owned(), serde_json::Value::String(value.into_owned()));
+                params.insert(
+                    key.into_owned(),
+                    serde_json::Value::String(value.into_owned()),
+                );
             }
             serde_json::Value::Object(params)
         } else {

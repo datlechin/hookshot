@@ -98,14 +98,16 @@ pub struct RequestResponse {
 impl From<Request> for RequestResponse {
     fn from(req: Request) -> Self {
         // Parse headers JSON string into serde_json::Value
-        let headers = serde_json::from_str(&req.headers)
-            .unwrap_or_else(|_| serde_json::json!({}));
+        let headers = serde_json::from_str(&req.headers).unwrap_or_else(|_| serde_json::json!({}));
 
         // Parse query string into object
         let query_params = if let Some(qs) = req.query_string {
             let mut params = serde_json::Map::new();
             for (key, value) in form_urlencoded::parse(qs.as_bytes()) {
-                params.insert(key.into_owned(), serde_json::Value::String(value.into_owned()));
+                params.insert(
+                    key.into_owned(),
+                    serde_json::Value::String(value.into_owned()),
+                );
             }
             serde_json::Value::Object(params)
         } else {

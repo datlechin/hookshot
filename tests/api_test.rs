@@ -1,7 +1,13 @@
-use hookshot::{db, handlers::api, handlers::endpoint, models::{RequestQueryParams, UpdateResponseConfig}, websocket::WebSocketManager};
 use axum::{
     extract::{Path, Query, State},
     Json,
+};
+use hookshot::{
+    db,
+    handlers::api,
+    handlers::endpoint,
+    models::{RequestQueryParams, UpdateResponseConfig},
+    websocket::WebSocketManager,
 };
 use sqlx::SqlitePool;
 use std::sync::Arc;
@@ -74,24 +80,34 @@ async fn test_get_endpoint_requests_pagination() {
     }
 
     // Page 1
-    let params = RequestQueryParams { page: 1, limit: 50, method: None };
+    let params = RequestQueryParams {
+        page: 1,
+        limit: 50,
+        method: None,
+    };
     let result = api::get_endpoint_requests(
         Path(endpoint_id.clone()),
         Query(params),
         State(state.clone()),
-    ).await.unwrap().0;
+    )
+    .await
+    .unwrap()
+    .0;
 
     assert_eq!(result.requests.len(), 50);
     assert_eq!(result.total, 75);
     assert_eq!(result.page, 1);
 
     // Page 2
-    let params = RequestQueryParams { page: 2, limit: 50, method: None };
-    let result = api::get_endpoint_requests(
-        Path(endpoint_id),
-        Query(params),
-        State(state),
-    ).await.unwrap().0;
+    let params = RequestQueryParams {
+        page: 2,
+        limit: 50,
+        method: None,
+    };
+    let result = api::get_endpoint_requests(Path(endpoint_id), Query(params), State(state))
+        .await
+        .unwrap()
+        .0;
 
     assert_eq!(result.requests.len(), 25);
     assert_eq!(result.page, 2);
@@ -103,27 +119,41 @@ async fn test_get_endpoint_requests_method_filter() {
     let endpoint_id = create_endpoint(&state).await;
 
     // Create mixed requests
-    for _ in 0..10 { create_request(&state.0, &endpoint_id, "POST").await; }
-    for _ in 0..5 { create_request(&state.0, &endpoint_id, "GET").await; }
+    for _ in 0..10 {
+        create_request(&state.0, &endpoint_id, "POST").await;
+    }
+    for _ in 0..5 {
+        create_request(&state.0, &endpoint_id, "GET").await;
+    }
 
     // Filter by POST
-    let params = RequestQueryParams { page: 1, limit: 50, method: Some("POST".to_string()) };
+    let params = RequestQueryParams {
+        page: 1,
+        limit: 50,
+        method: Some("POST".to_string()),
+    };
     let result = api::get_endpoint_requests(
         Path(endpoint_id.clone()),
         Query(params),
         State(state.clone()),
-    ).await.unwrap().0;
+    )
+    .await
+    .unwrap()
+    .0;
 
     assert_eq!(result.requests.len(), 10);
     assert!(result.requests.iter().all(|r| r.method == "POST"));
 
     // Filter by multiple methods
-    let params = RequestQueryParams { page: 1, limit: 50, method: Some("POST,GET".to_string()) };
-    let result = api::get_endpoint_requests(
-        Path(endpoint_id),
-        Query(params),
-        State(state),
-    ).await.unwrap().0;
+    let params = RequestQueryParams {
+        page: 1,
+        limit: 50,
+        method: Some("POST,GET".to_string()),
+    };
+    let result = api::get_endpoint_requests(Path(endpoint_id), Query(params), State(state))
+        .await
+        .unwrap()
+        .0;
 
     assert_eq!(result.requests.len(), 15);
 }
@@ -134,7 +164,10 @@ async fn test_get_request_by_id() {
     let endpoint_id = create_endpoint(&state).await;
     let request_id = create_request(&state.0, &endpoint_id, "POST").await;
 
-    let result = api::get_request_by_id(Path(request_id), State(state)).await.unwrap().0;
+    let result = api::get_request_by_id(Path(request_id), State(state))
+        .await
+        .unwrap()
+        .0;
 
     assert_eq!(result.id, request_id);
     assert_eq!(result.method, "POST");
@@ -193,7 +226,8 @@ async fn test_update_endpoint_response() {
         Path(endpoint_id.clone()),
         State(state.clone()),
         Json(config),
-    ).await;
+    )
+    .await;
 
     assert_eq!(result.unwrap(), axum::http::StatusCode::NO_CONTENT);
 
@@ -208,7 +242,10 @@ async fn test_update_endpoint_response() {
 
     assert!(endpoint.custom_response_enabled);
     assert_eq!(endpoint.response_status, 404);
-    assert_eq!(endpoint.response_headers, Some(r#"{"x-custom":"value"}"#.to_string()));
+    assert_eq!(
+        endpoint.response_headers,
+        Some(r#"{"x-custom":"value"}"#.to_string())
+    );
 }
 
 #[tokio::test]
@@ -218,16 +255,36 @@ async fn test_update_endpoint_response_invalid_status() {
 
     // Test invalid status codes
     for status in [99, 600, 0, 1000] {
-        let config = UpdateResponseConfig { enabled: true, status, headers: None, body: None };
-        let result = api::update_endpoint_response(Path(endpoint_id.clone()), State(state.clone()), Json(config)).await;
+        let config = UpdateResponseConfig {
+            enabled: true,
+            status,
+            headers: None,
+            body: None,
+        };
+        let result = api::update_endpoint_response(
+            Path(endpoint_id.clone()),
+            State(state.clone()),
+            Json(config),
+        )
+        .await;
         assert!(result.is_err());
         assert_eq!(result.unwrap_err().0, axum::http::StatusCode::BAD_REQUEST);
     }
 
     // Test valid status codes
     for status in [100, 200, 404, 500, 599] {
-        let config = UpdateResponseConfig { enabled: true, status, headers: None, body: None };
-        let result = api::update_endpoint_response(Path(endpoint_id.clone()), State(state.clone()), Json(config)).await;
+        let config = UpdateResponseConfig {
+            enabled: true,
+            status,
+            headers: None,
+            body: None,
+        };
+        let result = api::update_endpoint_response(
+            Path(endpoint_id.clone()),
+            State(state.clone()),
+            Json(config),
+        )
+        .await;
         assert!(result.is_ok());
     }
 }
@@ -254,8 +311,15 @@ async fn test_update_endpoint_response_invalid_json() {
 #[tokio::test]
 async fn test_update_endpoint_response_not_found() {
     let state = setup().await;
-    let config = UpdateResponseConfig { enabled: true, status: 200, headers: None, body: None };
-    let result = api::update_endpoint_response(Path("nonexistent".to_string()), State(state), Json(config)).await;
+    let config = UpdateResponseConfig {
+        enabled: true,
+        status: 200,
+        headers: None,
+        body: None,
+    };
+    let result =
+        api::update_endpoint_response(Path("nonexistent".to_string()), State(state), Json(config))
+            .await;
     assert_eq!(result.unwrap_err().0, axum::http::StatusCode::NOT_FOUND);
 }
 
@@ -269,13 +333,31 @@ async fn test_pagination_limits() {
     }
 
     // Test limit > 100 should be capped
-    let params = RequestQueryParams { page: 1, limit: 200, method: None };
-    let result = api::get_endpoint_requests(Path(endpoint_id.clone()), Query(params), State(state.clone())).await.unwrap().0;
+    let params = RequestQueryParams {
+        page: 1,
+        limit: 200,
+        method: None,
+    };
+    let result = api::get_endpoint_requests(
+        Path(endpoint_id.clone()),
+        Query(params),
+        State(state.clone()),
+    )
+    .await
+    .unwrap()
+    .0;
     assert_eq!(result.limit, 100);
 
     // Test page 0 should default to 1
-    let params = RequestQueryParams { page: 0, limit: 50, method: None };
-    let result = api::get_endpoint_requests(Path(endpoint_id), Query(params), State(state)).await.unwrap().0;
+    let params = RequestQueryParams {
+        page: 0,
+        limit: 50,
+        method: None,
+    };
+    let result = api::get_endpoint_requests(Path(endpoint_id), Query(params), State(state))
+        .await
+        .unwrap()
+        .0;
     assert_eq!(result.page, 1);
 }
 
@@ -286,13 +368,24 @@ async fn test_json_response_format() {
     create_request(&state.0, &endpoint_id, "POST").await;
 
     // Test list response
-    let list_result = endpoint::list_endpoints(State(state.clone())).await.unwrap().0;
+    let list_result = endpoint::list_endpoints(State(state.clone()))
+        .await
+        .unwrap()
+        .0;
     let list_json = serde_json::to_value(&list_result).unwrap();
     assert!(list_json.is_array());
 
     // Test request list response
-    let params = RequestQueryParams { page: 1, limit: 50, method: None };
-    let requests_result = api::get_endpoint_requests(Path(endpoint_id), Query(params), State(state)).await.unwrap().0;
+    let params = RequestQueryParams {
+        page: 1,
+        limit: 50,
+        method: None,
+    };
+    let requests_result =
+        api::get_endpoint_requests(Path(endpoint_id), Query(params), State(state))
+            .await
+            .unwrap()
+            .0;
     let requests_json = serde_json::to_value(&requests_result).unwrap();
     assert!(requests_json.get("requests").unwrap().is_array());
     assert!(requests_json.get("total").is_some());
