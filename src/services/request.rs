@@ -15,10 +15,7 @@ pub struct StoreRequestData {
 
 /// Store a captured request in the database
 #[allow(dead_code)]
-pub async fn store_request(
-    pool: &SqlitePool,
-    data: StoreRequestData,
-) -> Result<i64, sqlx::Error> {
+pub async fn store_request(pool: &SqlitePool, data: StoreRequestData) -> Result<i64, sqlx::Error> {
     let result = sqlx::query(
         r#"
         INSERT INTO requests (endpoint_id, method, path, query_string, headers, body, content_type, received_at, ip_address)
