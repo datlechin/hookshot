@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { Clock, ChevronDown, ChevronRight } from 'lucide-react';
 import type { Request } from '@/types';
@@ -12,15 +12,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { FilterBar } from '@/components/FilterBar';
+import { RequestDetail } from '@/components/RequestDetail';
 
 interface RequestListProps {
   requests: Request[];
@@ -63,6 +56,8 @@ export function RequestList({
 }: RequestListProps) {
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [selectedMethods, setSelectedMethods] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState('');
 
   const toggleRow = (requestId: string) => {
     const newExpanded = new Set(expandedRows);
@@ -73,6 +68,63 @@ export function RequestList({
     }
     setExpandedRows(newExpanded);
   };
+
+  const handleMethodToggle = (method: string) => {
+    const newMethods = new Set(selectedMethods);
+    if (newMethods.has(method)) {
+      newMethods.delete(method);
+    } else {
+      newMethods.add(method);
+    }
+    setSelectedMethods(newMethods);
+  };
+
+  const handleClearFilters = () => {
+    setSelectedMethods(new Set());
+    setSearchQuery('');
+  };
+
+  // Filter and search requests
+  const filteredRequests = useMemo(() => {
+    let filtered = requests;
+
+    // Filter by method
+    if (selectedMethods.size > 0) {
+      filtered = filtered.filter((req) =>
+        selectedMethods.has(req.method.toUpperCase())
+      );
+    }
+
+    // Search in headers and body
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter((req) => {
+        // Search in headers (keys and values)
+        const headersMatch = Object.entries(req.headers).some(
+          ([key, value]) =>
+            key.toLowerCase().includes(query) ||
+            value.toLowerCase().includes(query)
+        );
+
+        // Search in body
+        const bodyMatch = req.body?.toLowerCase().includes(query) || false;
+
+        // Search in query params
+        const queryParamsMatch = Object.entries(req.query_params).some(
+          ([key, value]) =>
+            key.toLowerCase().includes(query) ||
+            value.toLowerCase().includes(query)
+        );
+
+        return headersMatch || bodyMatch || queryParamsMatch;
+      });
+    }
+
+    return filtered;
+  }, [requests, selectedMethods, searchQuery]);
+
+  const hasFilters = selectedMethods.size > 0 || searchQuery.trim() !== '';
+  const showNoResults = hasFilters && filteredRequests.length === 0;
 
   if (requests.length === 0) {
     return (
@@ -88,6 +140,16 @@ export function RequestList({
   return (
     <>
       <div className="space-y-4">
+        <FilterBar
+          selectedMethods={selectedMethods}
+          searchQuery={searchQuery}
+          onMethodToggle={handleMethodToggle}
+          onSearchChange={setSearchQuery}
+          onClear={handleClearFilters}
+          totalRequests={requests.length}
+          filteredCount={filteredRequests.length}
+        />
+
         {newRequestCount > 0 && (
           <div className="bg-primary/10 border border-primary/20 rounded-md p-3 flex items-center justify-between animate-in fade-in slide-in-from-top-2">
             <span className="text-sm font-medium">
@@ -99,19 +161,35 @@ export function RequestList({
           </div>
         )}
 
-        <div className="border rounded-lg">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-12"></TableHead>
-                <TableHead>Method</TableHead>
-                <TableHead>Time</TableHead>
-                <TableHead>Size</TableHead>
-                <TableHead className="text-right">Headers</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {requests.map((request, index) => {
+        {showNoResults && (
+          <div className="text-center py-12 border rounded-lg bg-muted/50">
+            <Clock className="h-12 w-12 mx-auto text-muted-foreground mb-4 opacity-50" />
+            <p className="text-muted-foreground text-lg font-medium mb-2">
+              No matching requests
+            </p>
+            <p className="text-muted-foreground text-sm mb-4">
+              Try adjusting your filters or search query
+            </p>
+            <Button variant="outline" onClick={handleClearFilters}>
+              Clear Filters
+            </Button>
+          </div>
+        )}
+
+        {!showNoResults && (
+          <div className="border rounded-lg">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-12"></TableHead>
+                  <TableHead>Method</TableHead>
+                  <TableHead>Time</TableHead>
+                  <TableHead>Size</TableHead>
+                  <TableHead className="text-right">Headers</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredRequests.map((request, index) => {
                 const isExpanded = expandedRows.has(request.id);
                 const isNew = index < newRequestCount;
                 const bodySize = request.body
@@ -206,8 +284,9 @@ export function RequestList({
             </TableBody>
           </Table>
         </div>
+        )}
 
-        {hasMore && (
+        {hasMore && !showNoResults && (
           <div className="flex justify-center pt-4">
             <Button
               variant="outline"
@@ -220,85 +299,10 @@ export function RequestList({
         )}
       </div>
 
-      {selectedRequest && (
-        <Dialog open={!!selectedRequest} onOpenChange={() => setSelectedRequest(null)}>
-          <DialogContent className="max-w-4xl max-h-[80vh]">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Badge variant={getMethodColor(selectedRequest.method)}>
-                  {selectedRequest.method}
-                </Badge>
-                Request Details
-              </DialogTitle>
-              <DialogDescription>
-                {new Date(selectedRequest.received_at).toLocaleString()}
-              </DialogDescription>
-            </DialogHeader>
-
-            <Tabs defaultValue="headers" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="headers">
-                  Headers ({Object.keys(selectedRequest.headers).length})
-                </TabsTrigger>
-                <TabsTrigger value="body">Body</TabsTrigger>
-                <TabsTrigger value="query">
-                  Query ({Object.keys(selectedRequest.query_params).length})
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="headers" className="space-y-2">
-                <ScrollArea className="h-[400px] w-full rounded-md border p-4">
-                  {Object.entries(selectedRequest.headers).length === 0 ? (
-                    <p className="text-muted-foreground text-sm">No headers</p>
-                  ) : (
-                    <div className="space-y-3">
-                      {Object.entries(selectedRequest.headers).map(([key, value]) => (
-                        <div key={key} className="space-y-1">
-                          <code className="text-sm font-medium">{key}</code>
-                          <div className="text-sm text-muted-foreground bg-muted p-2 rounded">
-                            {value}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </ScrollArea>
-              </TabsContent>
-
-              <TabsContent value="body">
-                <ScrollArea className="h-[400px] w-full rounded-md border p-4">
-                  {selectedRequest.body ? (
-                    <pre className="text-sm whitespace-pre-wrap break-words">
-                      {selectedRequest.body}
-                    </pre>
-                  ) : (
-                    <p className="text-muted-foreground text-sm">No body</p>
-                  )}
-                </ScrollArea>
-              </TabsContent>
-
-              <TabsContent value="query">
-                <ScrollArea className="h-[400px] w-full rounded-md border p-4">
-                  {Object.entries(selectedRequest.query_params).length === 0 ? (
-                    <p className="text-muted-foreground text-sm">No query parameters</p>
-                  ) : (
-                    <div className="space-y-3">
-                      {Object.entries(selectedRequest.query_params).map(([key, value]) => (
-                        <div key={key} className="space-y-1">
-                          <code className="text-sm font-medium">{key}</code>
-                          <div className="text-sm text-muted-foreground bg-muted p-2 rounded">
-                            {value}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </ScrollArea>
-              </TabsContent>
-            </Tabs>
-          </DialogContent>
-        </Dialog>
-      )}
+      <RequestDetail
+        request={selectedRequest}
+        onClose={() => setSelectedRequest(null)}
+      />
     </>
   );
 }
