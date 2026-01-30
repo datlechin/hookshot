@@ -15,7 +15,7 @@ path = "src/main.rs"
 # Web framework
 axum = { version = "0.7", features = ["ws"] }
 tower = { version = "0.4", features = ["util"] }
-tower-http = { version = "0.5", features = ["cors", "trace"] }
+tower-http = { version = "0.5", features = ["cors", "trace", "fs", "compression-gzip"] }
 
 # Async runtime
 tokio = { version = "1", features = ["full"] }
@@ -40,3 +40,11 @@ chrono = { version = "0.4", features = ["serde"] }
 # Logging
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Static file embedding
+include_dir = "0.7"
+mime_guess = "2.0"
+
+[build-dependencies]
+# For running frontend build
+walkdir = "2"
