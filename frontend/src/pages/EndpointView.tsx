@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { RequestList } from '@/components/RequestList';
+import { ResponseConfig } from '@/components/ResponseConfig';
 import type { Request } from '@/types';
 
 const REQUESTS_PER_PAGE = 50;
@@ -23,7 +24,7 @@ export default function EndpointView() {
   const [copiedUrl, setCopiedUrl] = useState(false);
   const [displayCount, setDisplayCount] = useState(REQUESTS_PER_PAGE);
 
-  const { data: endpoint, isLoading: isLoadingEndpoint } = useEndpoint(id);
+  const { data: endpoint, isLoading: isLoadingEndpoint, refetch: refetchEndpoint } = useEndpoint(id);
   const { data: requests, isLoading: isLoadingRequests } = useRequests(id);
   const { isConnected, newRequests, clearNewRequests } = useWebSocket(id);
 
@@ -138,6 +139,8 @@ export default function EndpointView() {
           </p>
         </CardContent>
       </Card>
+
+      <ResponseConfig endpoint={endpoint} onUpdate={refetchEndpoint} />
 
       <Card>
         <CardHeader>
