@@ -1,35 +1,35 @@
-import { useState } from 'react';
-import { useTheme } from '@/hooks';
-import { Header, Sidebar, RequestList, DetailPanel } from '@/components/layout';
-import { EndpointProvider, useSelectedEndpoint } from '@/contexts/EndpointContext';
-import type { Request } from '@/lib/types';
+import { useState } from 'react'
+import { useTheme } from '@/hooks'
+import { Header, Sidebar, RequestList, DetailPanel } from '@/components/layout'
+import { EndpointProvider, useSelectedEndpoint } from '@/contexts/EndpointContext'
+import type { Request } from '@/lib/types'
 
 function AppContent() {
-  const { theme, toggleTheme } = useTheme();
-  const { selectedEndpointId } = useSelectedEndpoint();
-  const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
+  const { theme, toggleTheme } = useTheme()
+  const { selectedEndpointId } = useSelectedEndpoint()
+  const [selectedRequest, setSelectedRequest] = useState<Request | null>(null)
   const [connectionStatus, setConnectionStatus] = useState<
     'connected' | 'connecting' | 'disconnected' | 'polling'
-  >('disconnected');
+  >('disconnected')
 
   const handleCreateEndpoint = () => {
     // Placeholder - will be implemented in later tasks
-    console.log('Create endpoint clicked');
-  };
+    console.log('Create endpoint clicked')
+  }
 
   const handleCloseDetailPanel = () => {
-    setSelectedRequest(null);
-  };
+    setSelectedRequest(null)
+  }
 
   const handleConnectionStatusChange = (
     status: 'connected' | 'connecting' | 'disconnected' | 'polling'
   ) => {
-    setConnectionStatus(status);
-  };
+    setConnectionStatus(status)
+  }
 
   const handleRequestSelect = (request: Request) => {
-    setSelectedRequest(request);
-  };
+    setSelectedRequest(request)
+  }
 
   return (
     <div className={theme}>
@@ -57,9 +57,7 @@ function AppContent() {
         </div>
       </div>
     </div>
-  );
-}
-
+  )
 }
 
 export default function App() {
@@ -67,5 +65,5 @@ export default function App() {
     <EndpointProvider>
       <AppContent />
     </EndpointProvider>
-  );
+  )
 }
