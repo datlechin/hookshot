@@ -1,11 +1,13 @@
 use axum::{
     body::Bytes,
     extract::{ConnectInfo, Path, State},
-    http::{HeaderMap, Method, StatusCode, Uri},
+    http::{HeaderMap, HeaderName, HeaderValue, Method, StatusCode, Uri},
     response::{IntoResponse, Response},
 };
+use crate::models::Endpoint;
 use sqlx::SqlitePool;
 use std::net::SocketAddr;
+use std::str::FromStr;
 use tracing::{error, info};
 
 const MAX_BODY_SIZE: usize = 10 * 1024 * 1024; // 10MB
@@ -31,26 +33,24 @@ pub async fn webhook_handler(
         return Err(StatusCode::PAYLOAD_TOO_LARGE);
     }
 
-    // Validate endpoint exists in database
-    let endpoint_exists = match sqlx::query_scalar::<_, i32>(
-        "SELECT 1 FROM endpoints WHERE id = ? LIMIT 1"
+    // Fetch endpoint from database
+    let endpoint = match sqlx::query_as::<_, Endpoint>(
+        "SELECT id, created_at, custom_response_enabled, response_status, response_headers, response_body, request_count FROM endpoints WHERE id = ? LIMIT 1"
     )
     .bind(&endpoint_id)
     .fetch_optional(&pool)
     .await
     {
-        Ok(Some(_)) => true,
-        Ok(None) => false,
+        Ok(Some(ep)) => ep,
+        Ok(None) => {
+            info!("Request to non-existent endpoint: {}", endpoint_id);
+            return Err(StatusCode::NOT_FOUND);
+        }
         Err(e) => {
             error!("Database error checking endpoint {}: {}", endpoint_id, e);
             return Err(StatusCode::INTERNAL_SERVER_ERROR);
         }
     };
-
-    if !endpoint_exists {
-        info!("Request to non-existent endpoint: {}", endpoint_id);
-        return Err(StatusCode::NOT_FOUND);
-    }
 
     // Extract request data
     let http_method = method.as_str();
@@ -126,12 +126,45 @@ pub async fn webhook_handler(
         );
     });
 
-    // Return 200 OK immediately (non-blocking response)
-    Ok((
-        StatusCode::OK,
-        [("Access-Control-Allow-Origin", "*")],
-        "",
-    ).into_response())
+    // Build response based on custom configuration
+    if endpoint.custom_response_enabled {
+        // Parse custom status code
+        let status = StatusCode::from_u16(endpoint.response_status as u16)
+            .unwrap_or(StatusCode::OK);
+
+        // Parse custom headers if provided
+        let mut response_headers = HeaderMap::new();
+        response_headers.insert(
+            "Access-Control-Allow-Origin",
+            HeaderValue::from_static("*")
+        );
+
+        if let Some(headers_json) = endpoint.response_headers {
+            if let Ok(headers_map) = serde_json::from_str::<serde_json::Map<String, serde_json::Value>>(&headers_json) {
+                for (key, value) in headers_map {
+                    if let Ok(header_name) = HeaderName::from_str(&key) {
+                        if let Some(val_str) = value.as_str() {
+                            if let Ok(header_value) = HeaderValue::from_str(val_str) {
+                                response_headers.insert(header_name, header_value);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Build response body
+        let response_body = endpoint.response_body.unwrap_or_default();
+
+        Ok((status, response_headers, response_body).into_response())
+    } else {
+        // Return default 200 OK response
+        Ok((
+            StatusCode::OK,
+            [("Access-Control-Allow-Origin", "*")],
+            "",
+        ).into_response())
+    }
 }
 
 /// Convert HeaderMap to JSON string
@@ -163,7 +196,7 @@ fn headers_to_json(headers: &HeaderMap) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use axum::http::{HeaderName, HeaderValue};
+    use axum::http::HeaderValue;
 
     #[test]
     fn test_headers_to_json() {
