@@ -3,8 +3,9 @@ use axum::{
     extract::connect_info::MockConnectInfo,
     http::{Method, Request, StatusCode},
 };
-use hookshot::{db, handlers};
+use hookshot::{db, handlers, websocket::WebSocketManager};
 use sqlx::SqlitePool;
+use std::sync::Arc;
 use tower::util::ServiceExt;
 
 /// Helper to create test database pool
@@ -13,6 +14,11 @@ async fn create_test_pool() -> SqlitePool {
         .await
         .expect("Failed to create test pool");
     pool
+}
+
+/// Helper to create test state
+fn create_test_state(pool: SqlitePool) -> (SqlitePool, Arc<WebSocketManager>) {
+    (pool, Arc::new(WebSocketManager::new()))
 }
 
 /// Helper to create a test endpoint
@@ -28,7 +34,7 @@ async fn create_test_endpoint(pool: &SqlitePool) -> String {
     .execute(pool)
     .await
     .expect("Failed to create test endpoint");
-    
+
     endpoint_id
 }
 
@@ -40,7 +46,7 @@ async fn test_webhook_post_request() {
     // Create webhook handler with mock ConnectInfo
     let app = axum::Router::new()
         .route("/webhook/:id", axum::routing::any(handlers::webhook::webhook_handler))
-        .with_state(pool.clone())
+        .with_state(create_test_state(pool.clone()))
         .layer(MockConnectInfo(std::net::SocketAddr::from(([127, 0, 0, 1], 8080))));
 
     // Send POST request
@@ -93,7 +99,7 @@ async fn test_webhook_get_request() {
 
     let app = axum::Router::new()
         .route("/webhook/:id", axum::routing::any(handlers::webhook::webhook_handler))
-        .with_state(pool.clone())
+        .with_state(create_test_state(pool.clone()))
         .layer(MockConnectInfo(std::net::SocketAddr::from(([127, 0, 0, 1], 8080))));
 
     // Send GET request with query parameters
@@ -132,7 +138,7 @@ async fn test_webhook_invalid_endpoint() {
 
     let app = axum::Router::new()
         .route("/webhook/:id", axum::routing::any(handlers::webhook::webhook_handler))
-        .with_state(pool.clone())
+        .with_state(create_test_state(pool.clone()))
         .layer(MockConnectInfo(std::net::SocketAddr::from(([127, 0, 0, 1], 8080))));
 
     let request = Request::builder()
@@ -156,7 +162,7 @@ async fn test_webhook_payload_too_large() {
 
     let app = axum::Router::new()
         .route("/webhook/:id", axum::routing::any(handlers::webhook::webhook_handler))
-        .with_state(pool.clone())
+        .with_state(create_test_state(pool.clone()))
         .layer(MockConnectInfo(std::net::SocketAddr::from(([127, 0, 0, 1], 8080))));
 
     // Create 11MB payload
@@ -194,7 +200,7 @@ async fn test_webhook_all_http_methods() {
     for method in methods {
         let app = axum::Router::new()
             .route("/webhook/:id", axum::routing::any(handlers::webhook::webhook_handler))
-            .with_state(pool.clone())
+            .with_state(create_test_state(pool.clone()))
             .layer(MockConnectInfo(std::net::SocketAddr::from(([127, 0, 0, 1], 8080))));
 
         let request = Request::builder()
@@ -236,7 +242,7 @@ async fn test_webhook_binary_body() {
 
     let app = axum::Router::new()
         .route("/webhook/:id", axum::routing::any(handlers::webhook::webhook_handler))
-        .with_state(pool.clone())
+        .with_state(create_test_state(pool.clone()))
         .layer(MockConnectInfo(std::net::SocketAddr::from(([127, 0, 0, 1], 8080))));
 
     // Send binary data
@@ -278,7 +284,7 @@ async fn test_webhook_empty_body() {
 
     let app = axum::Router::new()
         .route("/webhook/:id", axum::routing::any(handlers::webhook::webhook_handler))
-        .with_state(pool.clone())
+        .with_state(create_test_state(pool.clone()))
         .layer(MockConnectInfo(std::net::SocketAddr::from(([127, 0, 0, 1], 8080))));
 
     let request = Request::builder()
@@ -316,7 +322,7 @@ async fn test_webhook_cors_headers() {
 
     let app = axum::Router::new()
         .route("/webhook/:id", axum::routing::any(handlers::webhook::webhook_handler))
-        .with_state(pool.clone())
+        .with_state(create_test_state(pool.clone()))
         .layer(MockConnectInfo(std::net::SocketAddr::from(([127, 0, 0, 1], 8080))));
 
     let request = Request::builder()
@@ -360,7 +366,7 @@ async fn test_webhook_custom_response() {
 
     let app = axum::Router::new()
         .route("/webhook/:id", axum::routing::any(handlers::webhook::webhook_handler))
-        .with_state(pool.clone())
+        .with_state(create_test_state(pool.clone()))
         .layer(MockConnectInfo(std::net::SocketAddr::from(([127, 0, 0, 1], 8080))));
 
     let request = Request::builder()

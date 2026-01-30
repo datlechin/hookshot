@@ -1,12 +1,16 @@
-use hookshot::{db, handlers::api, models::RequestQueryParams};
+use hookshot::{db, handlers::api, models::RequestQueryParams, websocket::WebSocketManager};
 use axum::{
     extract::{Path, Query, State},
 };
 use sqlx::SqlitePool;
-use std::time::Instant;
+use std::{sync::Arc, time::Instant};
 
 async fn setup_test_db() -> SqlitePool {
     db::init_pool("sqlite::memory:").await.unwrap()
+}
+
+fn create_test_state(pool: SqlitePool) -> (SqlitePool, Arc<WebSocketManager>) {
+    (pool, Arc::new(WebSocketManager::new()))
 }
 
 async fn create_test_endpoint(pool: &SqlitePool) -> String {
@@ -63,7 +67,7 @@ async fn test_pagination_with_150_requests() {
     let result = api::get_endpoint_requests(
         Path(endpoint_id.clone()),
         Query(params),
-        State(pool.clone()),
+        State(create_test_state(pool.clone())),
     )
     .await;
     assert!(result.is_ok());
@@ -81,7 +85,7 @@ async fn test_pagination_with_150_requests() {
     let result = api::get_endpoint_requests(
         Path(endpoint_id.clone()),
         Query(params),
-        State(pool.clone()),
+        State(create_test_state(pool.clone())),
     )
     .await;
     assert!(result.is_ok());
@@ -99,7 +103,7 @@ async fn test_pagination_with_150_requests() {
     let result = api::get_endpoint_requests(
         Path(endpoint_id.clone()),
         Query(params),
-        State(pool.clone()),
+        State(create_test_state(pool.clone())),
     )
     .await;
     assert!(result.is_ok());
@@ -117,7 +121,7 @@ async fn test_pagination_with_150_requests() {
     let result = api::get_endpoint_requests(
         Path(endpoint_id),
         Query(params),
-        State(pool),
+        State(create_test_state(pool)),
     )
     .await;
     assert!(result.is_ok());
@@ -155,7 +159,7 @@ async fn test_method_filtering_with_mixed_methods() {
     let result = api::get_endpoint_requests(
         Path(endpoint_id.clone()),
         Query(params),
-        State(pool.clone()),
+        State(create_test_state(pool.clone())),
     )
     .await;
     assert!(result.is_ok());
@@ -173,7 +177,7 @@ async fn test_method_filtering_with_mixed_methods() {
     let result = api::get_endpoint_requests(
         Path(endpoint_id.clone()),
         Query(params),
-        State(pool.clone()),
+        State(create_test_state(pool.clone())),
     )
     .await;
     assert!(result.is_ok());
@@ -190,7 +194,7 @@ async fn test_method_filtering_with_mixed_methods() {
     let result = api::get_endpoint_requests(
         Path(endpoint_id),
         Query(params),
-        State(pool),
+        State(create_test_state(pool)),
     )
     .await;
     assert!(result.is_ok());
@@ -209,7 +213,7 @@ async fn test_binary_body_encoding() {
     let request_id = create_test_request(&pool, &endpoint_id, "POST", Some(binary_body.clone())).await;
 
     // Retrieve request
-    let result = api::get_request_by_id(Path(request_id), State(pool)).await;
+    let result = api::get_request_by_id(Path(request_id), State(create_test_state(pool))).await;
     assert!(result.is_ok());
     let response = result.unwrap().0;
 
@@ -233,7 +237,7 @@ async fn test_utf8_body_encoding() {
     let request_id = create_test_request(&pool, &endpoint_id, "POST", Some(utf8_body.clone())).await;
 
     // Retrieve request
-    let result = api::get_request_by_id(Path(request_id), State(pool)).await;
+    let result = api::get_request_by_id(Path(request_id), State(create_test_state(pool))).await;
     assert!(result.is_ok());
     let response = result.unwrap().0;
 
@@ -262,7 +266,7 @@ async fn test_cascade_delete_with_many_requests() {
     assert_eq!(count_before, 100);
 
     // Delete endpoint
-    let result = api::delete_endpoint(Path(endpoint_id.clone()), State(pool.clone())).await;
+    let result = api::delete_endpoint(Path(endpoint_id.clone()), State(create_test_state(pool.clone()))).await;
     assert!(result.is_ok());
 
     // Verify all requests are deleted
@@ -332,7 +336,7 @@ async fn test_performance_query_10k_requests() {
     let result = api::get_endpoint_requests(
         Path(endpoint_id.clone()),
         Query(params),
-        State(pool.clone()),
+        State(create_test_state(pool.clone())),
     )
     .await;
     let query_duration = start.elapsed();
@@ -360,7 +364,7 @@ async fn test_performance_query_10k_requests() {
     let result = api::get_endpoint_requests(
         Path(endpoint_id.clone()),
         Query(params),
-        State(pool.clone()),
+        State(create_test_state(pool.clone())),
     )
     .await;
     let filter_query_duration = start.elapsed();
@@ -389,7 +393,7 @@ async fn test_performance_query_10k_requests() {
     let result = api::get_endpoint_requests(
         Path(endpoint_id),
         Query(params),
-        State(pool),
+        State(create_test_state(pool)),
     )
     .await;
     let pagination_duration = start.elapsed();
@@ -419,7 +423,7 @@ async fn test_invalid_endpoint_returns_404() {
     let result = api::get_endpoint_requests(
         Path("nonexistent-endpoint-id".to_string()),
         Query(params),
-        State(pool),
+        State(create_test_state(pool)),
     )
     .await;
 
@@ -446,7 +450,7 @@ async fn test_pagination_limits() {
     let result = api::get_endpoint_requests(
         Path(endpoint_id.clone()),
         Query(params),
-        State(pool.clone()),
+        State(create_test_state(pool.clone())),
     )
     .await;
     assert!(result.is_ok());
@@ -462,7 +466,7 @@ async fn test_pagination_limits() {
     let result = api::get_endpoint_requests(
         Path(endpoint_id),
         Query(params),
-        State(pool),
+        State(create_test_state(pool)),
     )
     .await;
     assert!(result.is_ok());
