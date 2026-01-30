@@ -2,6 +2,8 @@
  * Hooks barrel export
  */
 
-export { useTheme, type Theme } from './useTheme';
-export { useRequests } from './useRequests';
-export { useEndpoints } from './useEndpoints';
+export { useTheme, type Theme } from './useTheme'
+export { useEndpoints } from './useEndpoints'
+export { useRequests, type UseRequestsReturn } from './useRequests'
+export { useWebSocket, type UseWebSocketReturn } from './useWebSocket'
+export { useLocalStorage } from './useLocalStorage'
