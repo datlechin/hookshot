@@ -89,9 +89,11 @@ export function useWebSocket(endpointId: string | null): UseWebSocketReturn {
       return
     }
 
-    // Determine WebSocket URL based on current location
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    const wsUrl = `${protocol}//${window.location.host}/api/ws/${endpointId}`
+    // Determine WebSocket URL
+    const wsBaseUrl = import.meta.env.VITE_WS_BASE_URL
+    const wsUrl = wsBaseUrl
+      ? `${wsBaseUrl}/api/ws/${endpointId}`
+      : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/api/ws/${endpointId}`
 
     console.log('[useWebSocket] Attempting WebSocket connection to', wsUrl)
 

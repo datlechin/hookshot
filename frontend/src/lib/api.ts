@@ -5,7 +5,7 @@
 import { ApiError } from './types'
 import type { Endpoint, Request, EndpointConfig } from './types'
 
-const API_BASE = import.meta.env.VITE_API_URL || ''
+const API_BASE = import.meta.env.VITE_API_BASE_URL || ''
 const DEFAULT_TIMEOUT = 30000 // 30 seconds
 
 /**
