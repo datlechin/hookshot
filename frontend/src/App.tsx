@@ -28,12 +28,7 @@ function AppContent() {
   return (
     <div className={theme}>
       <div className="min-h-screen bg-[var(--background)] text-[var(--text-primary)]">
-        <Header
-          theme={theme}
-          onToggleTheme={toggleTheme}
-          onCreateEndpoint={handleCreateEndpoint}
-          connectionStatus={connectionStatus}
-        />
+        <Header theme={theme} onToggleTheme={toggleTheme} connectionStatus={connectionStatus} />
 
         {/* Main 3-panel layout - offset by header height (64px) */}
         <div className="flex h-[calc(100vh-64px)] mt-16">
