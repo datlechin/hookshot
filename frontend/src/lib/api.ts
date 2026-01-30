@@ -1,6 +1,8 @@
 import type { Endpoint, Request, CreateEndpointRequest, UpdateEndpointRequest } from '@/types';
 
-const API_BASE = '/api';
+// Use environment variable or default to relative path (works with Vite proxy in dev)
+// In production with embedded frontend, the backend serves at the same origin
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 async function fetchJSON<T>(url: string, options?: RequestInit): Promise<T> {
   const response = await fetch(url, {
