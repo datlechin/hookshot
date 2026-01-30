@@ -1,18 +1,23 @@
 use sqlx::SqlitePool;
 
+/// Request data for storing in database
+pub struct StoreRequestData {
+    pub endpoint_id: String,
+    pub method: String,
+    pub path: String,
+    pub query_string: Option<String>,
+    pub headers: String,
+    pub body: Option<Vec<u8>>,
+    pub content_type: Option<String>,
+    pub received_at: String,
+    pub ip_address: String,
+}
+
 /// Store a captured request in the database
 #[allow(dead_code)]
 pub async fn store_request(
     pool: &SqlitePool,
-    endpoint_id: &str,
-    method: &str,
-    path: &str,
-    query_string: Option<String>,
-    headers: String,
-    body: Option<Vec<u8>>,
-    content_type: Option<String>,
-    received_at: String,
-    ip_address: String,
+    data: StoreRequestData,
 ) -> Result<i64, sqlx::Error> {
     let result = sqlx::query(
         r#"
@@ -20,15 +25,15 @@ pub async fn store_request(
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         "#
     )
-    .bind(endpoint_id)
-    .bind(method)
-    .bind(path)
-    .bind(&query_string)
-    .bind(&headers)
-    .bind(&body)
-    .bind(&content_type)
-    .bind(&received_at)
-    .bind(&ip_address)
+    .bind(&data.endpoint_id)
+    .bind(&data.method)
+    .bind(&data.path)
+    .bind(&data.query_string)
+    .bind(&data.headers)
+    .bind(&data.body)
+    .bind(&data.content_type)
+    .bind(&data.received_at)
+    .bind(&data.ip_address)
     .execute(pool)
     .await?;
 
@@ -74,15 +79,17 @@ mod tests {
 
         let request_id = store_request(
             &pool,
-            endpoint_id,
-            "POST",
-            "/webhook/test",
-            Some("key=value".to_string()),
-            headers.clone(),
-            body.clone(),
-            Some("application/json".to_string()),
-            received_at.clone(),
-            "127.0.0.1".to_string(),
+            StoreRequestData {
+                endpoint_id: endpoint_id.to_string(),
+                method: "POST".to_string(),
+                path: "/webhook/test".to_string(),
+                query_string: Some("key=value".to_string()),
+                headers: headers.clone(),
+                body: body.clone(),
+                content_type: Some("application/json".to_string()),
+                received_at: received_at.clone(),
+                ip_address: "127.0.0.1".to_string(),
+            },
         )
         .await
         .unwrap();

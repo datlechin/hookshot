@@ -33,7 +33,7 @@ fn build_frontend() {
     if !node_modules.exists() {
         println!("cargo:warning=Installing frontend dependencies...");
         let status = Command::new("npm")
-            .args(&["install"])
+            .args(["install"])
             .current_dir(frontend_dir)
             .status();
 
@@ -47,7 +47,7 @@ fn build_frontend() {
     // Run npm run build
     println!("cargo:warning=Running npm build...");
     let status = Command::new("npm")
-        .args(&["run", "build"])
+        .args(["run", "build"])
         .current_dir(frontend_dir)
         .status();
 

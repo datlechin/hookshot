@@ -45,10 +45,22 @@ export const endpointsApi = {
     }),
 };
 
+// Request list response from backend
+interface RequestListResponse {
+  requests: Request[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 // Request API functions
 export const requestsApi = {
-  list: (endpointId: string) =>
-    fetchJSON<Request[]>(`${API_BASE}/endpoints/${endpointId}/requests`),
+  list: async (endpointId: string): Promise<Request[]> => {
+    const response = await fetchJSON<RequestListResponse>(
+      `${API_BASE}/endpoints/${endpointId}/requests`
+    );
+    return response.requests;
+  },
 
   get: (endpointId: string, requestId: string) =>
     fetchJSON<Request>(`${API_BASE}/endpoints/${endpointId}/requests/${requestId}`),

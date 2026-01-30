@@ -17,7 +17,7 @@ pub async fn get_endpoint_requests(
 ) -> Result<Json<RequestListResponse>, StatusCode> {
     // Validate pagination parameters
     let page = params.page.max(1);
-    let limit = params.limit.min(100).max(1); // Cap at 100 to prevent abuse
+    let limit = params.limit.clamp(1, 100); // Cap between 1 and 100
     let offset = (page - 1) * limit;
 
     // Check if endpoint exists
