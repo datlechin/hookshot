@@ -53,27 +53,283 @@ Modern frontend for Hookshot webhook testing tool, built with Vite, React, TypeS
 - `npm run preview` - Preview production build locally
 - `npm run lint` - Run ESLint
 - `npm run format` - Format code with Prettier
+- `npm run test` - Run all tests with Vitest
+- `npm run test:ui` - Run tests with interactive UI
+- `npm run test:coverage` - Generate test coverage report
 
 ## Project Structure
 
 ```
 src/
 ├── components/
-│   ├── layout/         # Layout components (Header, Footer, etc.)
-│   ├── endpoint/       # Endpoint-related components
-│   ├── request/        # Request list and filtering components
-│   ├── detail/         # Request detail view components
-│   └── ui/             # Reusable UI components (Button, etc.)
-├── hooks/              # Custom React hooks
+│   ├── layout/         # Layout components (Sidebar, RequestList, DetailPanel)
+│   ├── endpoint/       # Endpoint-related components (EndpointItem, EndpointConfig)
+│   ├── detail/         # Request detail view components (tabs, export menu)
+│   └── ui/             # Reusable UI components (Button, Tabs, etc.)
+├── contexts/           # React Context providers (EndpointContext)
+├── hooks/              # Custom React hooks (useEndpoints, useKeyboard, useToast)
 ├── lib/                # Utilities and API clients
 │   ├── api.ts          # REST API client
 │   ├── websocket.ts    # WebSocket client
 │   ├── types.ts        # TypeScript type definitions
 │   └── utils.ts        # Helper functions
+├── pages/              # Page components (NotFound)
 ├── App.tsx             # Main app component
 ├── main.tsx            # App entry point
 └── index.css           # Global styles with Tailwind
 ```
+
+## Architecture
+
+### Component Architecture
+
+The application follows a **modular component architecture** with clear separation of concerns:
+
+#### Layout Components (`components/layout/`)
+
+The main application uses a **3-panel layout**:
+
+1. **Sidebar** (280px, left panel)
+   - Displays list of webhook endpoints
+   - Create/delete endpoint actions
+   - Endpoint selection and configuration
+
+2. **RequestList** (flex-1, center panel)
+   - Shows requests for selected endpoint
+   - Search and filter functionality
+   - Virtual scrolling for performance
+   - Real-time updates via WebSocket
+
+3. **DetailPanel** (480px, right panel, collapsible)
+   - Displays detailed request information
+   - Tabbed interface (Overview, Headers, Body, Metadata)
+   - Export and copy actions
+   - Closes with ESC key or X button
+
+```
+┌─────────┬──────────────┬─────────────┐
+│ Sidebar │ RequestList  │ DetailPanel │
+│ (280px) │   (flex-1)   │   (480px)   │
+│         │              │             │
+│ [New]   │ Search...    │ [X] Close   │
+│         │              │             │
+│ • EP1   │ ┌──────────┐ │ ┌─────────┐ │
+│ • EP2   │ │ Request  │ │ │ Headers │ │
+│ • EP3   │ │ Details  │ │ │ Body    │ │
+│         │ └──────────┘ │ │ Meta    │ │
+│         │              │ └─────────┘ │
+└─────────┴──────────────┴─────────────┘
+```
+
+#### State Management
+
+**Context-based State:**
+- `EndpointContext` - Global endpoint selection state
+- Shared across Sidebar, RequestList, and DetailPanel
+- Prevents prop drilling
+
+**Local Component State:**
+- Each component manages its own UI state
+- Examples: modal visibility, loading states, form data
+
+**Server State:**
+- Custom hooks for data fetching (`useEndpoints`)
+- WebSocket for real-time updates
+- No complex state management library needed
+
+#### Data Flow
+
+```
+User Action → Component → API/WebSocket → Backend
+                ↓                           ↓
+         Update UI State ← Real-time Update
+```
+
+**Example Flow: Creating an Endpoint**
+1. User clicks "New" button in Sidebar
+2. `handleCreateEndpoint()` calls `createEndpoint()` hook
+3. API request sent to backend
+4. Backend creates endpoint and returns data
+5. Hook updates local state
+6. Sidebar re-renders with new endpoint
+7. Toast notification shows success
+
+**Example Flow: Real-time Request Updates**
+1. Backend receives webhook request
+2. WebSocket broadcasts message to connected clients
+3. `RequestList` component receives message
+4. New request added to list automatically
+5. Virtual scrolling updates view
+
+### Custom Hooks
+
+#### `useEndpoints()`
+Manages endpoint CRUD operations:
+```typescript
+const {
+  endpoints,        // List of all endpoints
+  loading,          // Loading state
+  error,            // Error state
+  createEndpoint,   // Create new endpoint
+  deleteEndpoint,   // Delete endpoint
+  updateConfig      // Update endpoint config
+} = useEndpoints()
+```
+
+#### `useKeyboard(shortcuts)`
+Handles keyboard shortcuts:
+```typescript
+useKeyboard([
+  { key: 'n', handler: createEndpoint, description: 'New endpoint' },
+  { key: '/', handler: focusSearch, description: 'Search' }
+])
+```
+
+#### `useToast()`
+Manages toast notifications:
+```typescript
+const { success, error, info } = useToast()
+success('Endpoint created!')
+error('Failed to delete endpoint')
+```
+
+### API Layer
+
+#### REST API (`lib/api.ts`)
+
+Centralized API client with typed methods:
+
+```typescript
+export const api = {
+  endpoints: {
+    list: () => get<Endpoint[]>('/api/endpoints'),
+    create: () => post<Endpoint>('/api/endpoints'),
+    delete: (id: string) => del(`/api/endpoints/${id}`),
+    updateConfig: (id: string, config: EndpointConfig) =>
+      put(`/api/endpoints/${id}/config`, config)
+  },
+  requests: {
+    list: (endpointId: string) =>
+      get<WebhookRequest[]>(`/api/endpoints/${endpointId}/requests`),
+    delete: (id: number) => del(`/api/requests/${id}`)
+  }
+}
+```
+
+**Features:**
+- Automatic error handling
+- TypeScript type safety
+- Configurable base URL via environment variables
+- Async/await based
+
+#### WebSocket Client (`lib/websocket.ts`)
+
+Real-time updates for incoming webhook requests:
+
+```typescript
+const ws = new WebSocketClient(endpointId)
+ws.connect()
+ws.subscribe((message) => {
+  if (message.type === 'new_request') {
+    // Add new request to list
+  }
+})
+```
+
+**Features:**
+- Automatic reconnection on disconnect
+- Event subscription system
+- Per-endpoint connections
+- Connection lifecycle management
+
+### TypeScript Types
+
+All data structures are strongly typed in `lib/types.ts`:
+
+```typescript
+interface Endpoint {
+  id: string
+  created_at: string
+  custom_response_enabled: boolean
+  response_status: number
+  response_headers: Record<string, string>
+  response_body: string
+  forward_url: string | null
+  max_requests: number
+  rate_limit_per_minute: number | null
+}
+
+interface WebhookRequest {
+  id: number
+  endpoint_id: string
+  method: string
+  path: string
+  query_string: string
+  headers: Record<string, string>
+  body: string
+  content_type: string
+  received_at: string
+  ip_address: string
+}
+```
+
+### Performance Patterns
+
+#### Lazy Loading
+Major layout components are lazy-loaded to reduce initial bundle size:
+
+```typescript
+const Sidebar = lazy(() => import('@/components/layout/Sidebar'))
+const RequestList = lazy(() => import('@/components/layout/RequestList'))
+const DetailPanel = lazy(() => import('@/components/layout/DetailPanel'))
+```
+
+#### Virtual Scrolling
+Request list uses `@tanstack/react-virtual` for efficient rendering of large lists:
+- Only renders visible items + buffer
+- Smooth scrolling with thousands of requests
+- Minimal memory footprint
+
+#### Optimized Re-renders
+- `React.memo()` for expensive components
+- `useCallback()` for stable function references
+- Context selectors to prevent unnecessary re-renders
+
+### Error Handling
+
+**Component Level:**
+- `ErrorBoundary` wraps the entire app
+- Catches and displays React errors gracefully
+- Prevents white screen of death
+
+**API Level:**
+- All API calls wrapped in try/catch
+- User-friendly error messages
+- Toast notifications for errors
+
+**WebSocket Level:**
+- Automatic reconnection on disconnect
+- Connection status indicators
+- Fallback to polling if WebSocket unavailable
+
+### Testing Strategy
+
+**Unit Tests:**
+- UI component behavior
+- Utility functions
+- Custom hooks
+
+**Accessibility Tests:**
+- WCAG 2.1 AA compliance
+- Keyboard navigation
+- Screen reader support
+
+**Integration Tests:**
+- API client
+- WebSocket client
+- End-to-end user flows
+
+See accessibility tests in `*.a11y.test.tsx` files.
 
 ## Styling
 
@@ -283,6 +539,137 @@ Run Lighthouse audit:
 2. Preview: `npm run preview`
 3. Open Chrome DevTools → Lighthouse
 4. Run audit on http://localhost:4173
+
+## Accessibility (a11y)
+
+This application is built with accessibility as a core principle, targeting **WCAG 2.1 Level AA compliance**.
+
+### Key Accessibility Features
+
+1. **Keyboard Navigation**
+   - All interactive elements are keyboard accessible
+   - Tab order follows logical visual flow
+   - Keyboard shortcuts for common actions (see Keyboard Shortcuts section)
+   - Focus indicators visible on all interactive elements
+
+2. **Screen Reader Support**
+   - Semantic HTML structure (header, nav, main, aside, etc.)
+   - Proper ARIA labels and descriptions
+   - Live regions for real-time updates
+   - Alternative text for all icons and images
+
+3. **Color and Contrast**
+   - All text meets WCAG AA contrast ratios (4.5:1 for normal text, 3:1 for large text)
+   - Information not conveyed by color alone
+   - Theme switcher for user preference (dark/light mode)
+
+4. **Responsive Design**
+   - Mobile-first approach
+   - Touch targets at least 44x44px
+   - Responsive layouts work across all screen sizes
+   - Text scales properly with zoom up to 200%
+
+5. **Form Controls**
+   - All inputs have associated labels
+   - Error messages linked to form fields
+   - Clear focus states
+   - Validation feedback accessible to screen readers
+
+### Accessibility Testing
+
+#### Automated Testing
+
+We use **@axe-core/react** for automated accessibility testing in development mode:
+
+```typescript
+// Runs automatically in development
+// Check browser console for accessibility violations
+```
+
+Run accessibility tests:
+```bash
+npm run test -- --grep "a11y|accessibility"
+```
+
+Example accessibility tests are available in:
+- `src/components/endpoint/EndpointItem.a11y.test.tsx`
+- `src/components/layout/DetailPanel.a11y.test.tsx`
+
+#### Manual Testing Checklist
+
+1. **Keyboard Navigation**
+   - [ ] Tab through all interactive elements
+   - [ ] Use arrow keys in lists and menus
+   - [ ] Escape key closes modals/panels
+   - [ ] Enter/Space activates buttons
+
+2. **Screen Reader Testing**
+   - [ ] Test with NVDA (Windows) or VoiceOver (macOS)
+   - [ ] All content is announced properly
+   - [ ] Landmarks are correctly identified
+   - [ ] Dynamic updates are announced
+
+3. **Visual Testing**
+   - [ ] Zoom to 200% - content remains readable
+   - [ ] Test with reduced motion preference
+   - [ ] Check focus indicators are visible
+   - [ ] Verify color contrast ratios
+
+4. **Tools for Testing**
+   - Chrome DevTools Lighthouse (Accessibility audit)
+   - axe DevTools browser extension
+   - WAVE browser extension
+   - Screen reader (NVDA/VoiceOver/JAWS)
+
+### Keyboard Shortcuts
+
+The application supports keyboard shortcuts for efficient navigation:
+
+| Shortcut | Action |
+|----------|--------|
+| `n` | Create new endpoint |
+| `/` | Focus search/filter |
+| `c` | Copy selected request as cURL |
+| `e` | Export selected request |
+| `Esc` | Close detail panel or modal |
+| `?` | Show keyboard shortcuts help |
+
+All shortcuts are documented in the app via the `?` shortcut.
+
+### Accessibility Guidelines for Contributors
+
+When adding new features or components:
+
+1. **Use semantic HTML** - Use appropriate elements (button, nav, main, etc.)
+2. **Add ARIA labels** - Provide accessible names for all interactive elements
+3. **Test keyboard navigation** - Ensure all functionality works without a mouse
+4. **Check color contrast** - Use tools to verify contrast ratios
+5. **Write accessibility tests** - Add `.a11y.test.tsx` files for new components
+6. **Test with screen readers** - Verify content is properly announced
+7. **Document keyboard shortcuts** - Update docs when adding new shortcuts
+
+Example of accessible component:
+
+```tsx
+<button
+  onClick={handleClick}
+  aria-label="Delete endpoint"
+  className="..."
+>
+  <Trash2 className="w-4 h-4" />
+</button>
+```
+
+### Known Accessibility Issues
+
+None currently identified. Please report any accessibility issues you encounter.
+
+### Resources
+
+- [WCAG 2.1 Guidelines](https://www.w3.org/WAI/WCAG21/quickref/)
+- [WAI-ARIA Practices](https://www.w3.org/WAI/ARIA/apg/)
+- [axe DevTools](https://www.deque.com/axe/devtools/)
+- [WebAIM Contrast Checker](https://webaim.org/resources/contrastchecker/)
 
 ## Contributing
 
