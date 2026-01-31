@@ -6,10 +6,10 @@ import { Toaster } from '@/components/ui/toaster'
 import type { Request } from '@/lib/types'
 
 // Lazy load layout components for better code splitting
-const Header = lazy(() => import('@/components/layout/Header'))
-const Sidebar = lazy(() => import('@/components/layout/Sidebar'))
-const RequestList = lazy(() => import('@/components/layout/RequestList'))
-const DetailPanel = lazy(() => import('@/components/layout/DetailPanel'))
+const Header = lazy(() => import('@/components/layout/Header').then(module => ({ default: module.Header })))
+const Sidebar = lazy(() => import('@/components/layout/Sidebar').then(module => ({ default: module.Sidebar })))
+const RequestList = lazy(() => import('@/components/layout/RequestList').then(module => ({ default: module.RequestList })))
+const DetailPanel = lazy(() => import('@/components/layout/DetailPanel').then(module => ({ default: module.DetailPanel })))
 
 // Loading fallback component
 function LoadingFallback() {
