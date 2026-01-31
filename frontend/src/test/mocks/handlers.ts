@@ -62,14 +62,19 @@ export const handlers = [
 
   http.put('/api/endpoints/:id/response', async ({ request, params }) => {
     const { id } = params
-    const config = await request.json()
+    const config = (await request.json()) as {
+      enabled: boolean
+      status: number
+      headers: string
+      body: string
+    }
     return HttpResponse.json({
       ...mockEndpoint,
       id: id as string,
-      custom_response_enabled: (config as any).enabled,
-      response_status: (config as any).status,
-      response_headers: (config as any).headers,
-      response_body: (config as any).body,
+      custom_response_enabled: config.enabled,
+      response_status: config.status,
+      response_headers: config.headers,
+      response_body: config.body,
     })
   }),
 

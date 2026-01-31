@@ -83,6 +83,7 @@ export function useWebSocket(endpointId: string | null): UseWebSocketReturn {
 
   useEffect(() => {
     if (!endpointId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setConnected(false)
       setLastMessage(null)
       stopPolling()

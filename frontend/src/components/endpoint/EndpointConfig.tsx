@@ -79,6 +79,7 @@ export function EndpointConfig({ endpoint, onSave, onCancel }: EndpointConfigPro
   // Check if custom status code is being used
   useEffect(() => {
     const isCommon = STATUS_CODES.some((sc) => sc.value.toString() === statusCode)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCustomStatus(!isCommon)
   }, [statusCode])
 
@@ -87,6 +88,7 @@ export function EndpointConfig({ endpoint, onSave, onCancel }: EndpointConfigPro
     const contentType = headers.find((h) => h.key.toLowerCase() === 'content-type')?.value
     if (contentType?.toLowerCase().includes('application/json') && body.trim()) {
       const error = validateJSON(body)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setJsonError(error)
     } else {
       setJsonError(null)
@@ -104,6 +106,7 @@ export function EndpointConfig({ endpoint, onSave, onCancel }: EndpointConfigPro
         }
       }
     })
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setHeaderErrors(errors)
   }, [headers])
 

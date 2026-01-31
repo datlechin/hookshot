@@ -46,6 +46,7 @@ export const DetailPanel = forwardRef<DetailPanelHandle, DetailPanelProps>(
     // Reset to overview tab when request changes
     useEffect(() => {
       if (selectedRequest) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setActiveTab('overview')
       }
     }, [selectedRequest])

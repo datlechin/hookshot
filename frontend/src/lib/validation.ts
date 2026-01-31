@@ -14,7 +14,7 @@ export function validateJSON(value: string): string | null {
   try {
     JSON.parse(value);
     return null;
-  } catch (err) {
+  } catch {
     return 'Invalid JSON syntax';
   }
 }
@@ -31,6 +31,7 @@ export function validateHeaderName(name: string): string | null {
 
 export function validateHeaderValue(value: string): string | null {
   // Header values can contain most ASCII characters except control characters
+  // eslint-disable-next-line no-control-regex
   if (/[\x00-\x1F\x7F]/.test(value)) {
     return 'Header value contains invalid control characters';
   }
@@ -44,7 +45,7 @@ export function validateURL(url: string): string | null {
   try {
     new URL(url);
     return null;
-  } catch (err) {
+  } catch {
     return 'Invalid URL format';
   }
 }

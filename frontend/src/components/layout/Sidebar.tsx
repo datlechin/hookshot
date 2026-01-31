@@ -14,7 +14,7 @@ import type { SidebarHandle } from '@/App'
  * Sidebar component for displaying endpoint list
  * Width: 280px, always visible
  */
-export const Sidebar = forwardRef<SidebarHandle, {}>((_, ref) => {
+export const Sidebar = forwardRef<SidebarHandle, Record<string, never>>((_, ref) => {
   const { endpoints, loading, error, deleteEndpoint, createEndpoint, updateConfig } = useEndpoints()
   const { selectedEndpointId, setSelectedEndpointId } = useSelectedEndpoint()
   const [configuringEndpoint, setConfiguringEndpoint] = useState<Endpoint | null>(null)

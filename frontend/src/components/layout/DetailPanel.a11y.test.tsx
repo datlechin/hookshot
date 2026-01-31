@@ -138,11 +138,11 @@ describe('DetailPanel Accessibility', () => {
   })
 
   it('should support screen readers with proper labels', () => {
-    const { getByRole } = render(<DetailPanel {...defaultProps} />)
+    const { container } = render(<DetailPanel {...defaultProps} />)
 
     // All interactive elements should have accessible names
-    const buttons = getAllByRole(getByRole as any, 'button')
-    buttons.forEach((button: Element) => {
+    const buttons = container.querySelectorAll('button')
+    buttons.forEach((button) => {
       expect(button.getAttribute('aria-label') || button.textContent).toBeTruthy()
     })
   })
@@ -165,11 +165,3 @@ describe('DetailPanel Accessibility', () => {
     expect(results).toHaveNoViolations()
   })
 })
-
-function getAllByRole(getByRole: any, role: string) {
-  try {
-    return [getByRole(role)]
-  } catch {
-    return []
-  }
-}

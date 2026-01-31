@@ -3,10 +3,8 @@
  * Provides a fake WebSocket implementation for tests
  */
 
-import { vi } from 'vitest'
 import type { WebSocketMessage } from '@/lib/types'
 
-type MessageHandler = (data: WebSocketMessage) => void
 type EventHandler = (event: Event) => void
 
 export class MockWebSocket {
@@ -48,7 +46,7 @@ export class MockWebSocket {
     }
   }
 
-  send(data: string | ArrayBufferLike | Blob | ArrayBufferView) {
+  send() {
     if (this.readyState !== WebSocket.OPEN) {
       throw new Error('WebSocket is not open')
     }
@@ -72,20 +70,20 @@ export class MockWebSocket {
   }
 
   // Helper to simulate error
-  simulateError(error?: string) {
+  simulateError() {
     if (this.onerror) {
       this.onerror(new Event('error'))
     }
   }
 
-  addEventListener(type: string, listener: any) {
-    if (type === 'open') this.onopen = listener
-    if (type === 'close') this.onclose = listener
-    if (type === 'error') this.onerror = listener
-    if (type === 'message') this.onmessage = listener
+  addEventListener(type: string, listener: EventListener) {
+    if (type === 'open') this.onopen = listener as EventHandler
+    if (type === 'close') this.onclose = listener as EventHandler
+    if (type === 'error') this.onerror = listener as EventHandler
+    if (type === 'message') this.onmessage = listener as (event: MessageEvent) => void
   }
 
-  removeEventListener(type: string, listener: any) {
+  removeEventListener(type: string, listener: EventListener) {
     if (type === 'open' && this.onopen === listener) this.onopen = null
     if (type === 'close' && this.onclose === listener) this.onclose = null
     if (type === 'error' && this.onerror === listener) this.onerror = null

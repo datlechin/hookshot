@@ -11,9 +11,9 @@ import React from 'react'
 
 // Mock react-syntax-highlighter to avoid ESM/CJS compatibility issues
 vi.mock('react-syntax-highlighter', () => ({
-  Prism: ({ children, ...props }: any) =>
+  Prism: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) =>
     React.createElement('pre', { 'data-testid': 'syntax-highlighter', ...props }, children),
-  Light: ({ children, ...props }: any) =>
+  Light: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) =>
     React.createElement('pre', { 'data-testid': 'syntax-highlighter', ...props }, children),
 }))
 
@@ -65,7 +65,7 @@ global.IntersectionObserver = class IntersectionObserver {
     return []
   }
   unobserve() {}
-} as any
+} as unknown as typeof IntersectionObserver
 
 // Mock ResizeObserver
 global.ResizeObserver = class ResizeObserver {
@@ -73,7 +73,7 @@ global.ResizeObserver = class ResizeObserver {
   disconnect() {}
   observe() {}
   unobserve() {}
-} as any
+} as unknown as typeof ResizeObserver
 
 // Mock localStorage
 const localStorageMock = {
@@ -85,12 +85,12 @@ const localStorageMock = {
   key: vi.fn(),
 }
 
-global.localStorage = localStorageMock as any
+global.localStorage = localStorageMock as unknown as Storage
 
 // Suppress console errors in tests (optional)
 const originalError = console.error
 beforeAll(() => {
-  console.error = (...args: any[]) => {
+  console.error = (...args: unknown[]) => {
     if (
       typeof args[0] === 'string' &&
       args[0].includes('Warning: ReactDOM.render')

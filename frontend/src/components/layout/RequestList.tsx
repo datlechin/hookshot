@@ -39,6 +39,7 @@ export const RequestList = forwardRef<RequestListHandle, RequestListProps>(({
 
       addRequest(newRequest)
 
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setNewRequestIds((prev) => new Set(prev).add(newRequest.id))
 
       const timeoutId = window.setTimeout(() => {
@@ -55,9 +56,10 @@ export const RequestList = forwardRef<RequestListHandle, RequestListProps>(({
   }, [lastMessage, addRequest])
 
   useEffect(() => {
+    const timeouts = timeoutRefs.current
     return () => {
-      timeoutRefs.current.forEach((timeoutId) => clearTimeout(timeoutId))
-      timeoutRefs.current.clear()
+      timeouts.forEach((timeoutId) => clearTimeout(timeoutId))
+      timeouts.clear()
     }
   }, [])
 
