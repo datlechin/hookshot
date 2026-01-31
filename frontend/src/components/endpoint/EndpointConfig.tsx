@@ -6,6 +6,7 @@
 import { useState, useEffect } from 'react'
 import { X, Plus, Trash2 } from 'lucide-react'
 import { Button, Input, Textarea, Select, Checkbox } from '@/components/ui'
+import { validateStatusCode, validateJSON, validateHeaderName } from '@/lib/validation'
 import type { Endpoint, EndpointConfig as Config } from '@/lib/types'
 
 interface EndpointConfigProps {
@@ -59,6 +60,7 @@ export function EndpointConfig({ endpoint, onSave, onCancel }: EndpointConfigPro
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [jsonError, setJsonError] = useState<string | null>(null)
+  const [headerErrors, setHeaderErrors] = useState<Record<number, { key?: string; value?: string }>>({})
 
   // Check if custom status code is being used
   useEffect(() => {
@@ -70,16 +72,26 @@ export function EndpointConfig({ endpoint, onSave, onCancel }: EndpointConfigPro
   useEffect(() => {
     const contentType = headers.find((h) => h.key.toLowerCase() === 'content-type')?.value
     if (contentType?.toLowerCase().includes('application/json') && body.trim()) {
-      try {
-        JSON.parse(body)
-        setJsonError(null)
-      } catch (err) {
-        setJsonError('Invalid JSON format')
-      }
+      const error = validateJSON(body)
+      setJsonError(error)
     } else {
       setJsonError(null)
     }
   }, [body, headers])
+
+  // Validate headers on change
+  useEffect(() => {
+    const errors: Record<number, { key?: string; value?: string }> = {}
+    headers.forEach((header, index) => {
+      if (header.key.trim()) {
+        const keyError = validateHeaderName(header.key)
+        if (keyError) {
+          errors[index] = { ...errors[index], key: keyError }
+        }
+      }
+    })
+    setHeaderErrors(errors)
+  }, [headers])
 
   function handleAddHeader() {
     setHeaders([...headers, { key: '', value: '' }])
@@ -96,10 +108,20 @@ export function EndpointConfig({ endpoint, onSave, onCancel }: EndpointConfigPro
   }
 
   function validateForm(): string | null {
-    // Validate status code
+    // Validate status code using validation utility
     const code = parseInt(statusCode)
-    if (isNaN(code) || code < 100 || code > 599) {
-      return 'Status code must be between 100 and 599'
+    if (isNaN(code)) {
+      return 'Status code must be a number'
+    }
+    const statusError = validateStatusCode(code)
+    if (statusError) {
+      return statusError
+    }
+
+    // Check for any header validation errors
+    if (Object.keys(headerErrors).length > 0) {
+      const firstError = Object.values(headerErrors)[0]
+      return firstError.key || firstError.value || 'Invalid header configuration'
     }
 
     // Check for duplicate header keys
@@ -283,32 +305,42 @@ export function EndpointConfig({ endpoint, onSave, onCancel }: EndpointConfigPro
                 ) : (
                   <div className="space-y-2">
                     {headers.map((header, index) => (
-                      <div key={index} className="flex gap-2">
-                        <Input
-                          placeholder="Header name"
-                          value={header.key}
-                          onChange={(e) => handleHeaderChange(index, 'key', e.target.value)}
-                          className="flex-1"
-                          list={`common-headers-${index}`}
-                        />
-                        <datalist id={`common-headers-${index}`}>
-                          {COMMON_HEADERS.map((h) => (
-                            <option key={h} value={h} />
-                          ))}
-                        </datalist>
-                        <Input
-                          placeholder="Header value"
-                          value={header.value}
-                          onChange={(e) => handleHeaderChange(index, 'value', e.target.value)}
-                          className="flex-1"
-                        />
-                        <button
-                          onClick={() => handleRemoveHeader(index)}
-                          className="text-[var(--text-tertiary)] hover:text-[var(--accent-red)] transition-colors px-2"
-                          aria-label="Remove header"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                      <div key={index} className="space-y-1">
+                        <div className="flex gap-2">
+                          <div className="flex-1">
+                            <Input
+                              placeholder="Header name"
+                              value={header.key}
+                              onChange={(e) => handleHeaderChange(index, 'key', e.target.value)}
+                              className={headerErrors[index]?.key ? 'border-[var(--accent-red)]' : ''}
+                              list={`common-headers-${index}`}
+                            />
+                          </div>
+                          <datalist id={`common-headers-${index}`}>
+                            {COMMON_HEADERS.map((h) => (
+                              <option key={h} value={h} />
+                            ))}
+                          </datalist>
+                          <div className="flex-1">
+                            <Input
+                              placeholder="Header value"
+                              value={header.value}
+                              onChange={(e) => handleHeaderChange(index, 'value', e.target.value)}
+                            />
+                          </div>
+                          <button
+                            onClick={() => handleRemoveHeader(index)}
+                            className="text-[var(--text-tertiary)] hover:text-[var(--accent-red)] transition-colors px-2"
+                            aria-label="Remove header"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                        {headerErrors[index]?.key && (
+                          <p className="text-xs text-[var(--accent-red)] ml-1">
+                            {headerErrors[index].key}
+                          </p>
+                        )}
                       </div>
                     ))}
                   </div>
