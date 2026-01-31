@@ -142,7 +142,7 @@ export function Sidebar() {
           </div>
         ) : (
           <div className="space-y-1 p-2">
-            {endpoints.map((endpoint) => (
+            {endpoints.filter(endpoint => endpoint && endpoint.id).map((endpoint) => (
               <EndpointItem
                 key={endpoint.id}
                 endpoint={endpoint}
