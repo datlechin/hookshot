@@ -148,8 +148,7 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
               {error}
             </div>
           )}
-        )}
-      </div>
+        </div>
 
       <div className="flex-1 overflow-y-auto">
         {loading ? (
