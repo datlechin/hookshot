@@ -46,7 +46,7 @@ async fn test_webhook_post_request() {
     // Create webhook handler with mock ConnectInfo
     let app = axum::Router::new()
         .route(
-            "/webhook/:id",
+            "/webhook/{id}",
             axum::routing::any(handlers::webhook::webhook_handler),
         )
         .with_state(create_test_state(pool.clone()))
@@ -104,7 +104,7 @@ async fn test_webhook_get_request() {
 
     let app = axum::Router::new()
         .route(
-            "/webhook/:id",
+            "/webhook/{id}",
             axum::routing::any(handlers::webhook::webhook_handler),
         )
         .with_state(create_test_state(pool.clone()))
@@ -148,7 +148,7 @@ async fn test_webhook_invalid_endpoint() {
 
     let app = axum::Router::new()
         .route(
-            "/webhook/:id",
+            "/webhook/{id}",
             axum::routing::any(handlers::webhook::webhook_handler),
         )
         .with_state(create_test_state(pool.clone()))
@@ -178,7 +178,7 @@ async fn test_webhook_payload_too_large() {
 
     let app = axum::Router::new()
         .route(
-            "/webhook/:id",
+            "/webhook/{id}",
             axum::routing::any(handlers::webhook::webhook_handler),
         )
         .with_state(create_test_state(pool.clone()))
@@ -222,7 +222,7 @@ async fn test_webhook_all_http_methods() {
     for method in methods {
         let app = axum::Router::new()
             .route(
-                "/webhook/:id",
+                "/webhook/{id}",
                 axum::routing::any(handlers::webhook::webhook_handler),
             )
             .with_state(create_test_state(pool.clone()))
@@ -270,7 +270,7 @@ async fn test_webhook_binary_body() {
 
     let app = axum::Router::new()
         .route(
-            "/webhook/:id",
+            "/webhook/{id}",
             axum::routing::any(handlers::webhook::webhook_handler),
         )
         .with_state(create_test_state(pool.clone()))
@@ -317,7 +317,7 @@ async fn test_webhook_empty_body() {
 
     let app = axum::Router::new()
         .route(
-            "/webhook/:id",
+            "/webhook/{id}",
             axum::routing::any(handlers::webhook::webhook_handler),
         )
         .with_state(create_test_state(pool.clone()))
@@ -360,7 +360,7 @@ async fn test_webhook_cors_headers() {
 
     let app = axum::Router::new()
         .route(
-            "/webhook/:id",
+            "/webhook/{id}",
             axum::routing::any(handlers::webhook::webhook_handler),
         )
         .with_state(create_test_state(pool.clone()))
@@ -410,7 +410,7 @@ async fn test_webhook_custom_response() {
 
     let app = axum::Router::new()
         .route(
-            "/webhook/:id",
+            "/webhook/{id}",
             axum::routing::any(handlers::webhook::webhook_handler),
         )
         .with_state(create_test_state(pool.clone()))
