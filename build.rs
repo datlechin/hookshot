@@ -15,6 +15,19 @@ fn main() {
         build_frontend();
     } else {
         println!("cargo:warning=Skipping frontend build in dev mode. Set FORCE_FRONTEND_BUILD=1 to force build.");
+        ensure_frontend_placeholder();
+    }
+}
+
+fn ensure_frontend_placeholder() {
+    let dist_dir = Path::new("frontend/dist");
+    if !dist_dir.exists() {
+        println!("cargo:warning=Creating placeholder frontend assets for development...");
+        std::fs::create_dir_all(dist_dir).unwrap();
+        std::fs::write(
+            dist_dir.join("index.html"),
+            "<html><body>Placeholder for development</body></html>"
+        ).unwrap();
     }
 }
 
