@@ -26,8 +26,9 @@ fn ensure_frontend_placeholder() {
         std::fs::create_dir_all(dist_dir).unwrap();
         std::fs::write(
             dist_dir.join("index.html"),
-            "<html><body>Placeholder for development</body></html>"
-        ).unwrap();
+            "<html><body>Placeholder for development</body></html>",
+        )
+        .unwrap();
     }
 }
 
