@@ -2,13 +2,13 @@
  * Tests for CopyButton component
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest'
 import { render, screen, waitFor, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { CopyButton } from './CopyButton'
 
 describe('CopyButton', () => {
-  let clipboardWriteTextSpy: ReturnType<typeof vi.fn>
+  let clipboardWriteTextSpy: MockInstance
 
   beforeEach(() => {
     // Create a mock clipboard if it doesn't exist

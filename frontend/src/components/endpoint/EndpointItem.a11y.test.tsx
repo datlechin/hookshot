@@ -14,9 +14,9 @@ describe('EndpointItem Accessibility', () => {
     response_status: 200,
     response_headers: {},
     response_body: '',
-    forward_url: null,
+    forward_url: undefined,
     max_requests: 100,
-    rate_limit_per_minute: null,
+    rate_limit_per_minute: undefined,
   }
 
   const defaultProps = {

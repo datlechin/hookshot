@@ -3,6 +3,7 @@
  * Provides a fake WebSocket implementation for tests
  */
 
+import { vi } from 'vitest'
 import type { WebSocketMessage } from '@/lib/types'
 
 type EventHandler = (event: Event) => void

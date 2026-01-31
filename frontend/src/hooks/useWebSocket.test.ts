@@ -202,7 +202,7 @@ describe('useWebSocket', () => {
 
     const mockWs = getMockWebSocket()
     act(() => {
-      mockWs?.simulateError('Connection failed')
+      mockWs?.simulateError()
     })
 
     // Should still be functional, possibly falling back to polling
