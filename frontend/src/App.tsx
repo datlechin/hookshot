@@ -9,13 +9,12 @@ import { KeyboardShortcutsModal } from '@/components/ui/KeyboardShortcutsModal'
 import type { Request } from '@/lib/types'
 
 // Lazy load layout components for better code splitting
-const Header = lazy(() => import('@/components/layout/Header').then(module => ({ default: module.Header })))
 const Sidebar = lazy(() => import('@/components/layout/Sidebar').then(module => ({ default: module.Sidebar })))
 const RequestList = lazy(() => import('@/components/layout/RequestList').then(module => ({ default: module.RequestList })))
 const DetailPanel = lazy(() => import('@/components/layout/DetailPanel').then(module => ({ default: module.DetailPanel })))
 
 function AppContent() {
-  const { theme, toggleTheme } = useTheme()
+  const { theme } = useTheme()
   const { selectedEndpointId } = useSelectedEndpoint()
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null)
   const [showShortcutsModal, setShowShortcutsModal] = useState(false)
@@ -25,9 +24,6 @@ function AppContent() {
   >('disconnected')
   const handleCloseDetailPanel = () => {
     setSelectedRequest(null)
-  }
-  const handleToggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen)
   }
 
   // Keyboard shortcuts
@@ -65,16 +61,9 @@ function AppContent() {
     <Suspense fallback={<LoadingFallback />}>
       <div className={theme}>
         <div className="min-h-screen bg-[var(--background)] text-[var(--text-primary)]">
-          <Header
-            theme={theme}
-            onToggleTheme={toggleTheme}
-            connectionStatus={connectionStatus}
-            onToggleSidebar={handleToggleSidebar}
-          />
-
-          {/* Main 3-panel layout - offset by header height (48px) */}
-          <div className="flex h-[calc(100vh-48px)] mt-12">
-            <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+          {/* Main 3-panel layout - full viewport height */}
+          <div className="flex h-screen">
+            <Sidebar />
             <RequestList
               selectedEndpointId={selectedEndpointId}
               onConnectionStatusChange={handleConnectionStatusChange}
