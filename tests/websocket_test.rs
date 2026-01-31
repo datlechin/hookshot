@@ -55,7 +55,7 @@ async fn test_websocket_broadcast() {
 
     // Create test message
     let message = WebSocketMessage::NewRequest {
-        data: RequestData {
+        data: Box::new(RequestData {
             id: 123,
             endpoint_id: "endpoint1".to_string(),
             method: "POST".to_string(),
@@ -67,7 +67,7 @@ async fn test_websocket_broadcast() {
             content_type: Some("application/json".to_string()),
             received_at: "2024-01-01T00:00:00Z".to_string(),
             ip_address: Some("127.0.0.1".to_string()),
-        },
+        }),
     };
 
     // Broadcast message
@@ -154,7 +154,7 @@ async fn test_concurrent_registrations() {
 async fn test_websocket_message_serialization() {
     // Test that messages can be serialized to JSON
     let message = WebSocketMessage::NewRequest {
-        data: RequestData {
+        data: Box::new(RequestData {
             id: 456,
             endpoint_id: "test-endpoint".to_string(),
             method: "GET".to_string(),
@@ -166,7 +166,7 @@ async fn test_websocket_message_serialization() {
             content_type: Some("text/plain".to_string()),
             received_at: "2024-01-01T12:00:00Z".to_string(),
             ip_address: Some("192.168.1.1".to_string()),
-        },
+        }),
     };
 
     let json = serde_json::to_string(&message).unwrap();
@@ -215,7 +215,7 @@ async fn test_rapid_broadcast() {
     // Send 1000 messages rapidly
     for i in 0..1000 {
         let message = WebSocketMessage::NewRequest {
-            data: RequestData {
+            data: Box::new(RequestData {
                 id: i,
                 endpoint_id: "endpoint1".to_string(),
                 method: "POST".to_string(),
@@ -227,7 +227,7 @@ async fn test_rapid_broadcast() {
                 content_type: None,
                 received_at: "2024-01-01T00:00:00Z".to_string(),
                 ip_address: None,
-            },
+            }),
         };
         manager.broadcast("endpoint1", message).await;
     }
@@ -251,7 +251,7 @@ async fn test_latency_requirement() {
     manager.register_client("endpoint1".to_string(), tx).await;
 
     let message = WebSocketMessage::NewRequest {
-        data: RequestData {
+        data: Box::new(RequestData {
             id: 1,
             endpoint_id: "endpoint1".to_string(),
             method: "POST".to_string(),
@@ -263,7 +263,7 @@ async fn test_latency_requirement() {
             content_type: None,
             received_at: "2024-01-01T00:00:00Z".to_string(),
             ip_address: None,
-        },
+        }),
     };
 
     // Measure broadcast time

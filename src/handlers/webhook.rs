@@ -162,7 +162,7 @@ pub async fn webhook_handler(
 
         // Broadcast to WebSocket clients
         let ws_message = WebSocketMessage::NewRequest {
-            data: RequestData {
+            data: Box::new(RequestData {
                 id: request_id,
                 endpoint_id: endpoint_id_clone.clone(),
                 method: method_str,
@@ -174,7 +174,7 @@ pub async fn webhook_handler(
                 content_type,
                 received_at,
                 ip_address: Some(ip_address),
-            },
+            }),
         };
 
         ws_manager_clone

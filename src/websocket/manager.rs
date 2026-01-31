@@ -9,7 +9,7 @@ use tracing::{debug, error, info};
 #[serde(tag = "type")]
 pub enum WebSocketMessage {
     #[serde(rename = "new_request")]
-    NewRequest { data: RequestData },
+    NewRequest { data: Box<RequestData> },
     #[serde(rename = "ping")]
     Ping,
     #[serde(rename = "pong")]
@@ -217,7 +217,7 @@ mod tests {
         manager.register_client("endpoint1".to_string(), tx).await;
 
         let message = WebSocketMessage::NewRequest {
-            data: RequestData {
+            data: Box::new(RequestData {
                 id: 1,
                 endpoint_id: "test-endpoint".to_string(),
                 method: "POST".to_string(),
@@ -229,7 +229,7 @@ mod tests {
                 content_type: Some("application/json".to_string()),
                 received_at: "2024-01-01T00:00:00Z".to_string(),
                 ip_address: Some("127.0.0.1".to_string()),
-            },
+            }),
         };
 
         manager.broadcast("endpoint1", message.clone()).await;
