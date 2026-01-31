@@ -9,6 +9,7 @@ import { HeadersTab } from '@/components/detail/HeadersTab';
 import { BodyTab } from '@/components/detail/BodyTab';
 import { MetadataTab } from '@/components/detail/MetadataTab';
 import { ExportMenu } from '@/components/detail/ExportMenu';
+import { animations } from '@/lib/transitions';
 
 interface DetailPanelProps {
   isOpen?: boolean;
@@ -49,7 +50,7 @@ export function DetailPanel({ isOpen = false, onClose, selectedRequest = null, l
   }
 
   return (
-    <aside className="fixed inset-0 lg:relative lg:inset-auto w-full lg:w-[480px] bg-[var(--surface)] border-l border-[var(--border)] flex flex-col overflow-hidden z-40">
+    <aside className={`fixed inset-0 lg:relative lg:inset-auto w-full lg:w-[480px] bg-[var(--surface)] border-l border-[var(--border)] flex flex-col overflow-hidden z-40 ${animations.slideIn}`}>
       {loading ? (
         <>
           {/* Header with close button */}
