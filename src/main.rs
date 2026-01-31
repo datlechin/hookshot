@@ -9,6 +9,7 @@ use axum::{
     routing::{any, delete, get, post, put},
     Router,
 };
+use clap::Parser;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tower_http::{
@@ -19,8 +20,26 @@ use tower_http::{
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use websocket::WebSocketManager;
 
+/// Hookshot - Self-hosted webhook testing tool
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Cli {
+    /// Host address to bind to
+    #[arg(short = 'H', long, default_value = "127.0.0.1")]
+    host: String,
+
+    /// Port to listen on
+    #[arg(short, long, default_value_t = 3000)]
+    port: u16,
+
+    /// Database URL (SQLite)
+    #[arg(short, long, default_value = "sqlite:./hookshot.db")]
+    database_url: String,
+}
+
 #[tokio::main]
 async fn main() {
+    let cli = Cli::parse();
     // Initialize tracing
     tracing_subscriber::registry()
         .with(
@@ -33,8 +52,7 @@ async fn main() {
     tracing::info!("Starting Hookshot server...");
 
     // Initialize database
-    let database_url =
-        std::env::var("DATABASE_URL").unwrap_or_else(|_| "sqlite:./hookshot.db".to_string());
+    let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| cli.database_url.clone());
     let pool = db::init_pool(&database_url)
         .await
         .expect("Failed to initialize database pool");
@@ -107,7 +125,9 @@ async fn main() {
         .with_state((pool, ws_manager));
 
     // Start server
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+    let addr: SocketAddr = format!("{}:{}", cli.host, cli.port)
+        .parse()
+        .expect("Invalid host or port");
     tracing::info!("Server listening on {}", addr);
 
     let listener = tokio::net::TcpListener::bind(addr)

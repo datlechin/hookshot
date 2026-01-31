@@ -40,13 +40,34 @@ fn build_frontend() {
         return;
     }
 
+    // Check if dist directory already exists (e.g., from CI pre-build)
+    let dist_dir = frontend_dir.join("dist");
+    if dist_dir.exists() && dist_dir.join("index.html").exists() {
+        println!("cargo:warning=Frontend dist already exists, skipping build");
+        return;
+    }
+
+    // Skip frontend build if SKIP_FRONTEND_BUILD is set
+    if std::env::var("SKIP_FRONTEND_BUILD").is_ok() {
+        println!("cargo:warning=SKIP_FRONTEND_BUILD is set, skipping frontend build");
+        ensure_frontend_placeholder();
+        return;
+    }
+
     println!("cargo:warning=Building frontend...");
+
+    // Determine npm command based on platform
+    let npm_cmd = if cfg!(target_os = "windows") {
+        "npm.cmd"
+    } else {
+        "npm"
+    };
 
     // Check if node_modules exists, if not run npm install
     let node_modules = frontend_dir.join("node_modules");
     if !node_modules.exists() {
         println!("cargo:warning=Installing frontend dependencies...");
-        let status = Command::new("npm")
+        let status = Command::new(npm_cmd)
             .args(["install"])
             .current_dir(frontend_dir)
             .status();
@@ -60,7 +81,7 @@ fn build_frontend() {
 
     // Run npm run build
     println!("cargo:warning=Running npm build...");
-    let status = Command::new("npm")
+    let status = Command::new(npm_cmd)
         .args(["run", "build"])
         .current_dir(frontend_dir)
         .status();
@@ -72,7 +93,6 @@ fn build_frontend() {
     }
 
     // Verify dist directory was created
-    let dist_dir = frontend_dir.join("dist");
     if !dist_dir.exists() {
         panic!("Frontend dist directory not found after build");
     }

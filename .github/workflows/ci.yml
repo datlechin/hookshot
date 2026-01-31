@@ -119,12 +119,14 @@ jobs:
       - name: Verify binary runs (Unix)
         if: runner.os != 'Windows'
         run: |
-          ./target/release/hookshot --version || echo "Binary doesn't support --version flag"
+          ./target/release/hookshot --version
+          ./target/release/hookshot --help
 
       - name: Verify binary runs (Windows)
         if: runner.os == 'Windows'
         run: |
-          .\target\release\hookshot.exe --version || echo "Binary doesn't support --version flag"
+          .\target\release\hookshot.exe --version
+          .\target\release\hookshot.exe --help
 
   security:
     name: Security Audit
