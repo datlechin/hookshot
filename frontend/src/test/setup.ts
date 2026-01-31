@@ -7,6 +7,22 @@ import '@testing-library/jest-dom'
 import { cleanup } from '@testing-library/react'
 import { afterEach, beforeAll, afterAll, vi } from 'vitest'
 import { server } from './mocks/server'
+import React from 'react'
+
+// Mock react-syntax-highlighter to avoid ESM/CJS compatibility issues
+vi.mock('react-syntax-highlighter', () => ({
+  Prism: ({ children, ...props }: any) =>
+    React.createElement('pre', { 'data-testid': 'syntax-highlighter', ...props }, children),
+  Light: ({ children, ...props }: any) =>
+    React.createElement('pre', { 'data-testid': 'syntax-highlighter', ...props }, children),
+}))
+
+vi.mock('react-syntax-highlighter/dist/esm/styles/prism', () => ({
+  oneDark: {},
+  oneLight: {},
+  prism: {},
+  vscDarkPlus: {},
+}))
 
 // Establish API mocking before all tests
 beforeAll(() => {

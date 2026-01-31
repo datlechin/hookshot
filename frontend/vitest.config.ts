@@ -22,11 +22,6 @@ export default defineConfig({
         '**/*.test.{ts,tsx}',
       ],
     },
-    server: {
-      deps: {
-        inline: ['react-syntax-highlighter', 'refractor'],
-      },
-    },
   },
   resolve: {
     alias: {
