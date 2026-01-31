@@ -57,10 +57,13 @@ async fn test_websocket_broadcast() {
     let message = WebSocketMessage::NewRequest {
         data: RequestData {
             id: 123,
+            endpoint_id: "endpoint1".to_string(),
             method: "POST".to_string(),
             path: "/test".to_string(),
+            query_string: Some("foo=bar".to_string()),
             query_params: serde_json::json!("foo=bar"),
             headers: serde_json::json!({}),
+            body: Some("{\"test\": true}".to_string()),
             content_type: Some("application/json".to_string()),
             received_at: "2024-01-01T00:00:00Z".to_string(),
             ip_address: Some("127.0.0.1".to_string()),
@@ -153,10 +156,13 @@ async fn test_websocket_message_serialization() {
     let message = WebSocketMessage::NewRequest {
         data: RequestData {
             id: 456,
+            endpoint_id: "test-endpoint".to_string(),
             method: "GET".to_string(),
             path: "/api/test".to_string(),
+            query_string: None,
             query_params: serde_json::Value::Null,
             headers: serde_json::json!({"content-type":"text/plain"}),
+            body: None,
             content_type: Some("text/plain".to_string()),
             received_at: "2024-01-01T12:00:00Z".to_string(),
             ip_address: Some("192.168.1.1".to_string()),
@@ -211,10 +217,13 @@ async fn test_rapid_broadcast() {
         let message = WebSocketMessage::NewRequest {
             data: RequestData {
                 id: i,
+                endpoint_id: "endpoint1".to_string(),
                 method: "POST".to_string(),
                 path: "/test".to_string(),
+                query_string: None,
                 query_params: serde_json::Value::Null,
                 headers: serde_json::json!({}),
+                body: None,
                 content_type: None,
                 received_at: "2024-01-01T00:00:00Z".to_string(),
                 ip_address: None,
@@ -244,10 +253,13 @@ async fn test_latency_requirement() {
     let message = WebSocketMessage::NewRequest {
         data: RequestData {
             id: 1,
+            endpoint_id: "endpoint1".to_string(),
             method: "POST".to_string(),
             path: "/test".to_string(),
+            query_string: None,
             query_params: serde_json::Value::Null,
             headers: serde_json::json!({}),
+            body: None,
             content_type: None,
             received_at: "2024-01-01T00:00:00Z".to_string(),
             ip_address: None,

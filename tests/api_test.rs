@@ -229,17 +229,11 @@ async fn test_update_endpoint_response() {
     )
     .await;
 
-    assert_eq!(result.unwrap(), axum::http::StatusCode::NO_CONTENT);
+    // Verify the response contains the updated endpoint
+    assert!(result.is_ok());
+    let Json(endpoint) = result.unwrap();
 
-    // Verify update
-    let endpoint: hookshot::models::Endpoint = sqlx::query_as(
-        "SELECT id, created_at, custom_response_enabled, response_status, response_headers, response_body, request_count FROM endpoints WHERE id = ?"
-    )
-    .bind(&endpoint_id)
-    .fetch_one(&state.0)
-    .await
-    .unwrap();
-
+    assert_eq!(endpoint.id, endpoint_id);
     assert!(endpoint.custom_response_enabled);
     assert_eq!(endpoint.response_status, 404);
     assert_eq!(
