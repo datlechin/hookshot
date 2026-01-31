@@ -48,10 +48,10 @@ export function EndpointItem({
     <>
       <div
         className={cn(
-          'p-3 rounded-lg cursor-pointer transition-all group relative',
+          'p-2 rounded cursor-pointer transition-all group relative',
           selected
-            ? 'bg-[var(--surface-hover)] border-l-4 border-[var(--accent-blue)] pl-2'
-            : 'hover:bg-[var(--surface-hover)] border-l-4 border-transparent'
+            ? 'bg-[var(--surface-hover)] border-l-3 border-[var(--accent-blue)] pl-1.5'
+            : 'hover:bg-[var(--surface-hover)] border-l-3 border-transparent'
         )}
         onClick={onSelect}
         role="button"
@@ -64,10 +64,10 @@ export function EndpointItem({
           }
         }}
       >
-        <div className="flex items-start justify-between mb-2">
+        <div className="flex items-start justify-between mb-1">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <p className="text-sm font-mono text-[var(--text-primary)] truncate">{endpoint.id}</p>
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <p className="text-xs font-mono text-[var(--text-primary)] truncate">{endpoint.id}</p>
               {endpoint.custom_response_enabled && (
                 <span
                   className="flex-shrink-0 w-2 h-2 bg-[var(--accent-green)] rounded-full"
@@ -75,40 +75,36 @@ export function EndpointItem({
                 />
               )}
             </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <p className="text-xs text-[var(--text-tertiary)]">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {requestCount > 0 && (
+                <span className="text-[11px] px-1 py-0.5 bg-[var(--accent-blue)]/10 text-[var(--accent-blue)] rounded font-medium">
+                  {requestCount}
+                </span>
+              )}
+              <p className="text-[11px] text-[var(--text-tertiary)]">
                 {new Date(endpoint.created_at).toLocaleDateString('en-US', {
                   month: 'short',
                   day: 'numeric',
-                  year: 'numeric',
                 })}
               </p>
-              {requestCount > 0 && (
-                <>
-                  <span className="text-xs text-[var(--text-tertiary)]">•</span>
-                  <span className="text-xs px-1.5 py-0.5 bg-[var(--accent-blue)]/10 text-[var(--accent-blue)] rounded font-medium">
-                    {requestCount} {requestCount === 1 ? 'request' : 'requests'}
-                  </span>
-                </>
-              )}
             </div>
           </div>
-          <div className="flex gap-1 ml-2">
+          <div className="flex gap-0.5 ml-1.5">
             <button
               onClick={handleConfigure}
-              className="text-[var(--text-tertiary)] hover:text-[var(--accent-blue)] transition-colors opacity-0 group-hover:opacity-100"
-              title="Configure response"
+              className="p-0.5 text-[var(--text-tertiary)] hover:text-[var(--accent-blue)] transition-colors opacity-0 group-hover:opacity-100"
+              title="Configure"
               aria-label="Configure response"
             >
-              <Settings className="w-4 h-4" />
+              <Settings className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={handleDelete}
-              className="text-[var(--text-tertiary)] hover:text-[var(--accent-red)] transition-colors opacity-0 group-hover:opacity-100"
-              title="Delete endpoint"
+              className="p-0.5 text-[var(--text-tertiary)] hover:text-[var(--accent-red)] transition-colors opacity-0 group-hover:opacity-100"
+              title="Delete"
               aria-label="Delete endpoint"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>

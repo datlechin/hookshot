@@ -72,8 +72,8 @@ function AppContent() {
             onToggleSidebar={handleToggleSidebar}
           />
 
-          {/* Main 3-panel layout - offset by header height (64px) */}
-          <div className="flex h-[calc(100vh-64px)] mt-16">
+          {/* Main 3-panel layout - offset by header height (48px) */}
+          <div className="flex h-[calc(100vh-48px)] mt-12">
             <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
             <RequestList
               selectedEndpointId={selectedEndpointId}

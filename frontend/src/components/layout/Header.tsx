@@ -16,28 +16,28 @@ export function Header({
   connectionStatus = 'disconnected',
 }: HeaderProps) {
   return (
-    <header className="fixed top-0 left-0 right-0 h-16 bg-(--surface) border-b border-(--border) z-50">
-      <div className="flex items-center justify-between h-full px-4">
-        <div className="flex items-center space-x-3">
+    <header className="fixed top-0 left-0 right-0 h-12 bg-[var(--surface)] border-b border-[var(--border)] z-50">
+      <div className="flex items-center justify-between h-full px-3">
+        <div className="flex items-center space-x-2">
           {/* Mobile menu button */}
           <Button
             variant="ghost"
             size="sm"
             onClick={onToggleSidebar}
-            className="lg:hidden -ml-2"
+            className="lg:hidden -ml-1"
             aria-label="Toggle sidebar"
           >
-            <Menu className="w-5 h-5" />
+            <Menu className="w-4 h-4" />
           </Button>
-          <div className="w-8 h-8 bg-[var(--accent-blue)] rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-xl">H</span>
+          <div className="w-6 h-6 bg-[var(--accent-blue)] rounded flex items-center justify-center">
+            <span className="text-white font-bold text-sm">H</span>
           </div>
-          <h1 className="text-xl font-bold text-[var(--text-primary)]">Hookshot</h1>
+          <h1 className="text-base font-semibold text-[var(--text-primary)]">Hookshot</h1>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-1">
           {connectionStatus !== 'disconnected' && (
             <div
-              className={`hidden md:flex items-center space-x-2 px-3 py-1 rounded-full ${
+              className={`hidden md:flex items-center space-x-1.5 px-2 py-0.5 rounded-full ${
                 connectionStatus === 'connected'
                   ? 'bg-(--accent-green)/10 border border-(--accent-green)/20'
                   : connectionStatus === 'connecting'
@@ -59,7 +59,7 @@ export function Header({
                 }`}
               ></span>
               <span
-                className={`text-xs font-medium ${
+                className={`text-[11px] font-medium ${
                   connectionStatus === 'connected'
                     ? 'text-(--accent-green)'
                     : connectionStatus === 'connecting'
@@ -78,9 +78,9 @@ export function Header({
                       : 'Disconnected'}
               </span>
             </div>
-          )}{' '}
+          )}
           <Button variant="ghost" size="sm" onClick={onToggleTheme} aria-label="Toggle theme">
-            {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </Button>
         </div>
       </div>

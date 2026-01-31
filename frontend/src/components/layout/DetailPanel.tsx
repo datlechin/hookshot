@@ -54,7 +54,7 @@ export function DetailPanel({ isOpen = false, onClose, selectedRequest = null, l
       {loading ? (
         <>
           {/* Header with close button */}
-          <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-[var(--border)]">
+          <div className="flex-shrink-0 flex items-center justify-between p-2 border-b border-[var(--border)]">
             <h2 className="text-lg font-semibold text-[var(--text-primary)]">Request Details</h2>
             <Button
               variant="ghost"
@@ -70,19 +70,19 @@ export function DetailPanel({ isOpen = false, onClose, selectedRequest = null, l
       ) : selectedRequest ? (
         <>
           {/* Header with request info and actions */}
-          <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-[var(--border)]">
-            <div className="flex items-center gap-3 flex-1 min-w-0">
+          <div className="flex-shrink-0 flex items-center justify-between p-2 border-b border-[var(--border)]">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
               <MethodBadge method={selectedRequest.method} />
               <div className="flex-1 min-w-0">
-                <h2 className="text-sm font-semibold text-[var(--text-primary)] truncate">
-                  Request #{selectedRequest.id}
+                <h2 className="text-xs font-medium text-[var(--text-primary)] truncate">
+                  #{selectedRequest.id}
                 </h2>
-                <p className="text-xs text-[var(--text-secondary)] truncate">
+                <p className="text-[11px] text-[var(--text-secondary)] truncate">
                   {selectedRequest.path}
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               <ExportMenu request={selectedRequest} />
               <Button
                 variant="ghost"
@@ -90,7 +90,7 @@ export function DetailPanel({ isOpen = false, onClose, selectedRequest = null, l
                 onClick={onClose}
                 aria-label="Close detail panel"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </Button>
             </div>
           </div>
@@ -126,7 +126,7 @@ export function DetailPanel({ isOpen = false, onClose, selectedRequest = null, l
       ) : (
         <>
           {/* Header with close button */}
-          <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-[var(--border)]">
+          <div className="flex-shrink-0 flex items-center justify-between p-2 border-b border-[var(--border)]">
             <h2 className="text-lg font-semibold text-[var(--text-primary)]">Request Details</h2>
             <Button
               variant="ghost"

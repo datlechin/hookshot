@@ -111,42 +111,43 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
       >
-        <div className="p-4 border-b border-[var(--border)]">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wide">
-              Endpoints
-            </h2>
+        <div className="p-2 border-b border-[var(--border)]">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Button variant="primary" size="sm" onClick={handleCreateEndpoint} disabled={creating}>
                 {creating ? <LoadingSpinner size="sm" /> : 'New'}
               </Button>
-              {/* Close button for mobile */}
-              <button
-                onClick={onClose}
-                className="lg:hidden text-[var(--text-secondary)] hover:text-[var(--text-primary)] p-1"
-                aria-label="Close sidebar"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
+              <span className="text-xs font-medium text-[var(--text-tertiary)]">
+                {endpoints.length} {endpoints.length === 1 ? 'endpoint' : 'endpoints'}
+              </span>
             </div>
+            {/* Close button for mobile */}
+            <button
+              onClick={onClose}
+              className="lg:hidden text-[var(--text-secondary)] hover:text-[var(--text-primary)] p-1"
+              aria-label="Close sidebar"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
           </div>
 
-        {error && (
-          <div className="mb-4 p-2 bg-[var(--accent-red)]/10 border border-[var(--accent-red)] rounded text-xs text-[var(--accent-red)]">
-            {error}
-          </div>
+          {error && (
+            <div className="mt-2 p-1.5 bg-[var(--accent-red)]/10 border border-[var(--accent-red)] rounded text-[11px] text-[var(--accent-red)]">
+              {error}
+            </div>
+          )}
         )}
       </div>
 
