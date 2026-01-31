@@ -1,23 +1,22 @@
-import { useState, useEffect } from 'react'
-import { Webhook, Loader2, Moon, Sun } from 'lucide-react'
+import { useState, useEffect, forwardRef, useImperativeHandle } from 'react'
+import { Webhook, Loader2 } from 'lucide-react'
 import { useEndpoints } from '@/hooks'
 import { useSelectedEndpoint } from '@/contexts/EndpointContext'
-import { useTheme } from '@/hooks'
 import { EmptyState, Button } from '@/components/ui'
 import { LoadingSpinner } from '@/components/ui/Loading'
 import { EndpointItem, EndpointConfig } from '@/components/endpoint'
 import { useToast } from '@/hooks/useToast'
 import { api } from '@/lib/api'
 import type { Endpoint, EndpointConfig as Config } from '@/lib/types'
+import type { SidebarHandle } from '@/App'
 
 /**
  * Sidebar component for displaying endpoint list
  * Width: 280px, always visible
  */
-export function Sidebar() {
+export const Sidebar = forwardRef<SidebarHandle, {}>((props, ref) => {
   const { endpoints, loading, error, deleteEndpoint, createEndpoint, updateConfig } = useEndpoints()
   const { selectedEndpointId, setSelectedEndpointId } = useSelectedEndpoint()
-  const { theme, toggleTheme } = useTheme()
   const [configuringEndpoint, setConfiguringEndpoint] = useState<Endpoint | null>(null)
   const [creating, setCreating] = useState(false)
   const [requestCounts, setRequestCounts] = useState<Record<string, number>>({})
@@ -79,18 +78,14 @@ export function Sidebar() {
     }
   }
 
+  // Expose functions to parent via ref
+  useImperativeHandle(ref, () => ({
+    createEndpoint: handleCreateEndpoint,
+  }))
+
   return (
     <aside className="w-[280px] bg-(--surface) border-r border-(--border) overflow-y-auto flex flex-col">
       <div className="p-2 border-b border-(--border)">
-        <div className="flex items-center justify-between mb-2">
-          <button
-            onClick={toggleTheme}
-            className="text-(--text-secondary) hover:text-(--text-primary) p-1"
-            aria-label="Toggle theme"
-          >
-            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </button>
-        </div>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Button variant="primary" size="sm" onClick={handleCreateEndpoint} disabled={creating}>
@@ -156,4 +151,6 @@ export function Sidebar() {
       </div>
     </aside>
   )
-}
+})
+
+Sidebar.displayName = 'Sidebar'

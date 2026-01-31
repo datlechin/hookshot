@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import { Search, X } from 'lucide-react';
 
 interface RequestSearchProps {
@@ -7,16 +7,21 @@ interface RequestSearchProps {
   placeholder?: string;
 }
 
+export interface RequestSearchHandle {
+  focus: () => void;
+}
+
 /**
  * RequestSearch - Debounced search input
  * Delays onChange callback by 300ms to prevent excessive re-renders
  */
-export function RequestSearch({
+export const RequestSearch = forwardRef<RequestSearchHandle, RequestSearchProps>(({
   value,
   onChange,
   placeholder = 'Search headers or body...',
-}: RequestSearchProps) {
+}, ref) => {
   const [input, setInput] = useState(value);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Sync external value changes
   useEffect(() => {
@@ -37,10 +42,18 @@ export function RequestSearch({
     onChange('');
   }
 
+  // Expose focus method to parent
+  useImperativeHandle(ref, () => ({
+    focus: () => {
+      inputRef.current?.focus();
+    },
+  }));
+
   return (
     <div className="relative">
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" />
       <input
+        ref={inputRef}
         type="text"
         value={input}
         onChange={(e) => setInput(e.target.value)}
@@ -58,4 +71,6 @@ export function RequestSearch({
       )}
     </div>
   );
-}
+});
+
+RequestSearch.displayName = 'RequestSearch';

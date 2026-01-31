@@ -1,4 +1,4 @@
-use crate::models::{CreateEndpointResponse, Endpoint, EndpointSummary};
+use crate::models::{CreateEndpointResponse, Endpoint};
 use crate::services::endpoint;
 use crate::websocket::WebSocketManager;
 use axum::{
@@ -25,7 +25,7 @@ pub async fn create_endpoint(
 /// Handler for GET /api/endpoints - List all endpoints
 pub async fn list_endpoints(
     State((pool, _ws_manager)): State<(SqlitePool, Arc<WebSocketManager>)>,
-) -> Result<Json<Vec<EndpointSummary>>, StatusCode> {
+) -> Result<Json<Vec<Endpoint>>, StatusCode> {
     match endpoint::list_endpoints(&pool).await {
         Ok(endpoints) => Ok(Json(endpoints)),
         Err(e) => {

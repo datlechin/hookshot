@@ -1,7 +1,5 @@
+use axum::extract::{Path, Query, State};
 use hookshot::{db, handlers::api, models::RequestQueryParams, websocket::WebSocketManager};
-use axum::{
-    extract::{Path, Query, State},
-};
 use sqlx::SqlitePool;
 use std::{sync::Arc, time::Instant};
 
@@ -210,7 +208,8 @@ async fn test_binary_body_encoding() {
 
     // Create request with binary body
     let binary_body: Vec<u8> = vec![0xFF, 0xFE, 0xFD, 0xFC, 0x00, 0x01, 0x02, 0x03];
-    let request_id = create_test_request(&pool, &endpoint_id, "POST", Some(binary_body.clone())).await;
+    let request_id =
+        create_test_request(&pool, &endpoint_id, "POST", Some(binary_body.clone())).await;
 
     // Retrieve request
     let result = api::get_request_by_id(Path(request_id), State(create_test_state(pool))).await;
@@ -220,7 +219,7 @@ async fn test_binary_body_encoding() {
     // Body should be base64 encoded (since it's not valid UTF-8)
     assert!(response.body.is_some());
     let body = response.body.unwrap();
-    
+
     // Decode and verify
     use base64::{engine::general_purpose, Engine as _};
     let decoded = general_purpose::STANDARD.decode(&body).unwrap();
@@ -234,7 +233,8 @@ async fn test_utf8_body_encoding() {
 
     // Create request with UTF-8 body
     let utf8_body = r#"{"message":"Hello, World!"}"#.as_bytes().to_vec();
-    let request_id = create_test_request(&pool, &endpoint_id, "POST", Some(utf8_body.clone())).await;
+    let request_id =
+        create_test_request(&pool, &endpoint_id, "POST", Some(utf8_body.clone())).await;
 
     // Retrieve request
     let result = api::get_request_by_id(Path(request_id), State(create_test_state(pool))).await;
@@ -258,31 +258,38 @@ async fn test_cascade_delete_with_many_requests() {
     }
 
     // Verify requests exist
-    let count_before: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM requests WHERE endpoint_id = ?")
-        .bind(&endpoint_id)
-        .fetch_one(&pool)
-        .await
-        .unwrap();
+    let count_before: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM requests WHERE endpoint_id = ?")
+            .bind(&endpoint_id)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
     assert_eq!(count_before, 100);
 
     // Delete endpoint
-    let result = api::delete_endpoint(Path(endpoint_id.clone()), State(create_test_state(pool.clone()))).await;
+    let result = api::delete_endpoint(
+        Path(endpoint_id.clone()),
+        State(create_test_state(pool.clone())),
+    )
+    .await;
     assert!(result.is_ok());
 
     // Verify all requests are deleted
-    let count_after: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM requests WHERE endpoint_id = ?")
-        .bind(&endpoint_id)
-        .fetch_one(&pool)
-        .await
-        .unwrap();
+    let count_after: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM requests WHERE endpoint_id = ?")
+            .bind(&endpoint_id)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
     assert_eq!(count_after, 0);
 
     // Verify endpoint is deleted
-    let endpoint_exists: Option<(String,)> = sqlx::query_as("SELECT id FROM endpoints WHERE id = ?")
-        .bind(&endpoint_id)
-        .fetch_optional(&pool)
-        .await
-        .unwrap();
+    let endpoint_exists: Option<(String,)> =
+        sqlx::query_as("SELECT id FROM endpoints WHERE id = ?")
+            .bind(&endpoint_id)
+            .fetch_optional(&pool)
+            .await
+            .unwrap();
     assert!(endpoint_exists.is_none());
 }
 
@@ -293,7 +300,7 @@ async fn test_performance_query_10k_requests() {
 
     println!("Creating 10,000 test requests...");
     let start = Instant::now();
-    
+
     // Create 10,000 requests in batches for faster insertion
     for batch in 0..100 {
         let mut tx = pool.begin().await.unwrap();
@@ -322,7 +329,7 @@ async fn test_performance_query_10k_requests() {
         }
         tx.commit().await.unwrap();
     }
-    
+
     let insert_duration = start.elapsed();
     println!("Inserted 10,000 requests in {:?}", insert_duration);
 
@@ -340,13 +347,13 @@ async fn test_performance_query_10k_requests() {
     )
     .await;
     let query_duration = start.elapsed();
-    
+
     println!("Query completed in {:?}", query_duration);
     assert!(result.is_ok());
     let response = result.unwrap().0;
     assert_eq!(response.requests.len(), 50);
     assert_eq!(response.total, 10000);
-    
+
     // Query should complete in < 100ms (requirement from tasks.md)
     assert!(
         query_duration.as_millis() < 100,
@@ -368,14 +375,14 @@ async fn test_performance_query_10k_requests() {
     )
     .await;
     let filter_query_duration = start.elapsed();
-    
+
     println!("Filtered query completed in {:?}", filter_query_duration);
     assert!(result.is_ok());
     let response = result.unwrap().0;
     assert_eq!(response.requests.len(), 50);
     assert_eq!(response.total, 2500); // 1/4 of 10,000
     assert!(response.requests.iter().all(|r| r.method == "POST"));
-    
+
     // Filtered query should also complete in < 100ms
     assert!(
         filter_query_duration.as_millis() < 100,
@@ -397,12 +404,15 @@ async fn test_performance_query_10k_requests() {
     )
     .await;
     let pagination_duration = start.elapsed();
-    
-    println!("Pagination query (page 50) completed in {:?}", pagination_duration);
+
+    println!(
+        "Pagination query (page 50) completed in {:?}",
+        pagination_duration
+    );
     assert!(result.is_ok());
     let response = result.unwrap().0;
     assert_eq!(response.requests.len(), 50);
-    
+
     // Pagination should also be fast
     assert!(
         pagination_duration.as_millis() < 100,

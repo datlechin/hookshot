@@ -20,10 +20,13 @@ pub enum WebSocketMessage {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RequestData {
     pub id: i64,
+    pub endpoint_id: String,
     pub method: String,
     pub path: String,
+    pub query_string: Option<String>,
     pub query_params: serde_json::Value,
     pub headers: serde_json::Value,
+    pub body: Option<String>,
     pub content_type: Option<String>,
     pub received_at: String,
     pub ip_address: Option<String>,
@@ -216,10 +219,13 @@ mod tests {
         let message = WebSocketMessage::NewRequest {
             data: RequestData {
                 id: 1,
+                endpoint_id: "test-endpoint".to_string(),
                 method: "POST".to_string(),
                 path: "/test".to_string(),
+                query_string: None,
                 query_params: serde_json::json!({}),
                 headers: serde_json::json!({}),
+                body: Some("{\"test\": \"data\"}".to_string()),
                 content_type: Some("application/json".to_string()),
                 received_at: "2024-01-01T00:00:00Z".to_string(),
                 ip_address: Some("127.0.0.1".to_string()),

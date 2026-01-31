@@ -1,5 +1,4 @@
-import { useState, lazy, Suspense } from 'react'
-import { useTheme } from '@/hooks'
+import { useState, lazy, Suspense, useRef, useCallback } from 'react'
 import { useKeyboard } from '@/hooks/useKeyboard'
 import { EndpointProvider, useSelectedEndpoint } from '@/contexts/EndpointContext'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
@@ -13,18 +12,67 @@ const Sidebar = lazy(() => import('@/components/layout/Sidebar').then(module => 
 const RequestList = lazy(() => import('@/components/layout/RequestList').then(module => ({ default: module.RequestList })))
 const DetailPanel = lazy(() => import('@/components/layout/DetailPanel').then(module => ({ default: module.DetailPanel })))
 
+export interface SidebarHandle {
+  createEndpoint: () => void
+}
+
+export interface RequestListHandle {
+  focusSearch: () => void
+}
+
+export interface DetailPanelHandle {
+  copyAsCurl: () => void
+  exportRequest: () => void
+}
+
 function AppContent() {
-  const { theme } = useTheme()
   const { selectedEndpointId } = useSelectedEndpoint()
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null)
   const [showShortcutsModal, setShowShortcutsModal] = useState(false)
 
-  const handleCloseDetailPanel = () => {
+  // Refs to access child component functions
+  const sidebarRef = useRef<SidebarHandle>(null)
+  const requestListRef = useRef<RequestListHandle>(null)
+  const detailPanelRef = useRef<DetailPanelHandle>(null)
+
+  const handleCloseDetailPanel = useCallback(() => {
     setSelectedRequest(null)
-  }
+  }, [])
 
   // Keyboard shortcuts
   useKeyboard([
+    {
+      key: 'n',
+      handler: () => {
+        sidebarRef.current?.createEndpoint()
+      },
+      description: 'Create new endpoint',
+    },
+    {
+      key: '/',
+      handler: () => {
+        requestListRef.current?.focusSearch()
+      },
+      description: 'Focus search',
+    },
+    {
+      key: 'c',
+      handler: () => {
+        if (selectedRequest) {
+          detailPanelRef.current?.copyAsCurl()
+        }
+      },
+      description: 'Copy selected request as cURL',
+    },
+    {
+      key: 'e',
+      handler: () => {
+        if (selectedRequest) {
+          detailPanelRef.current?.exportRequest()
+        }
+      },
+      description: 'Export selected request',
+    },
     {
       key: 'Escape',
       handler: () => {
@@ -50,27 +98,27 @@ function AppContent() {
 
   return (
     <Suspense fallback={<LoadingFallback />}>
-      <div className={theme}>
-        <div className="min-h-screen bg-[var(--background)] text-[var(--text-primary)]">
-          {/* Main 3-panel layout - full viewport height */}
-          <div className="flex h-screen">
-            <Sidebar />
-            <RequestList
-              selectedEndpointId={selectedEndpointId}
-              onRequestSelect={handleRequestSelect}
-            />
-            <DetailPanel
-              isOpen={!!selectedRequest}
-              onClose={handleCloseDetailPanel}
-              selectedRequest={selectedRequest}
-            />
-          </div>
-          <Toaster />
-          <KeyboardShortcutsModal
-            isOpen={showShortcutsModal}
-            onClose={() => setShowShortcutsModal(false)}
+      <div className="min-h-screen bg-[var(--background)] text-[var(--text-primary)]">
+        {/* Main 3-panel layout - full viewport height */}
+        <div className="flex h-screen">
+          <Sidebar ref={sidebarRef} />
+          <RequestList
+            ref={requestListRef}
+            selectedEndpointId={selectedEndpointId}
+            onRequestSelect={handleRequestSelect}
+          />
+          <DetailPanel
+            ref={detailPanelRef}
+            isOpen={!!selectedRequest}
+            onClose={handleCloseDetailPanel}
+            selectedRequest={selectedRequest}
           />
         </div>
+        <Toaster />
+        <KeyboardShortcutsModal
+          isOpen={showShortcutsModal}
+          onClose={() => setShowShortcutsModal(false)}
+        />
       </div>
     </Suspense>
   )

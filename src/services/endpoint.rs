@@ -1,4 +1,4 @@
-use crate::models::{CreateEndpointResponse, Endpoint, EndpointSummary};
+use crate::models::{CreateEndpointResponse, Endpoint};
 use sqlx::SqlitePool;
 use uuid::Uuid;
 
@@ -21,11 +21,12 @@ pub async fn create_endpoint(pool: &SqlitePool) -> Result<CreateEndpointResponse
     Ok(CreateEndpointResponse { id })
 }
 
-/// List all endpoints with summary information
-pub async fn list_endpoints(pool: &SqlitePool) -> Result<Vec<EndpointSummary>, sqlx::Error> {
-    let endpoints = sqlx::query_as::<_, EndpointSummary>(
+/// List all endpoints with full configuration
+pub async fn list_endpoints(pool: &SqlitePool) -> Result<Vec<Endpoint>, sqlx::Error> {
+    let endpoints = sqlx::query_as::<_, Endpoint>(
         r#"
-        SELECT id, created_at, request_count
+        SELECT id, created_at, custom_response_enabled, response_status,
+               response_headers, response_body, request_count
         FROM endpoints
         ORDER BY created_at DESC
         "#,

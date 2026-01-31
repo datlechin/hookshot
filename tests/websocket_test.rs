@@ -1,4 +1,4 @@
-use hookshot::websocket::{WebSocketManager, WebSocketMessage, RequestData};
+use hookshot::websocket::{RequestData, WebSocketManager, WebSocketMessage};
 use tokio::sync::mpsc;
 
 #[tokio::test]
@@ -7,7 +7,9 @@ async fn test_websocket_manager_registration() {
     let (tx, _rx) = mpsc::unbounded_channel();
 
     // Register client
-    manager.register_client("test-endpoint".to_string(), tx.clone()).await;
+    manager
+        .register_client("test-endpoint".to_string(), tx.clone())
+        .await;
 
     // Check client count
     let count = manager.client_count("test-endpoint").await;
@@ -262,7 +264,11 @@ async fn test_latency_requirement() {
     let total_time = start.elapsed();
 
     // Should be well under 100ms (the acceptance criteria)
-    assert!(total_time.as_millis() < 100, "Latency too high: {:?}", total_time);
+    assert!(
+        total_time.as_millis() < 100,
+        "Latency too high: {:?}",
+        total_time
+    );
     println!("Broadcast latency: {:?}", broadcast_time);
     println!("Total latency: {:?}", total_time);
 }

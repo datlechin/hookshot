@@ -53,8 +53,22 @@ export function EndpointConfig({ endpoint, onSave, onCancel }: EndpointConfigPro
   const [statusCode, setStatusCode] = useState(endpoint.response_status?.toString() || '200')
   const [customStatus, setCustomStatus] = useState(false)
   const [headers, setHeaders] = useState<Header[]>(() => {
-    if (endpoint.response_headers && Object.keys(endpoint.response_headers).length > 0) {
-      return Object.entries(endpoint.response_headers).map(([key, value]) => ({ key, value }))
+    if (endpoint.response_headers) {
+      try {
+        // Parse if it's a JSON string, otherwise use as-is
+        const headersObj = typeof endpoint.response_headers === 'string'
+          ? JSON.parse(endpoint.response_headers)
+          : endpoint.response_headers
+
+        if (headersObj && Object.keys(headersObj).length > 0) {
+          return Object.entries(headersObj).map(([key, value]) => ({
+            key,
+            value: String(value)
+          }))
+        }
+      } catch (error) {
+        console.error('Failed to parse response headers:', error)
+      }
     }
     return []
   })

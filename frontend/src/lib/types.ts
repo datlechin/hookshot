@@ -12,7 +12,7 @@ export interface Endpoint {
   created_at: string
   custom_response_enabled: boolean
   response_status?: number
-  response_headers?: Record<string, string>
+  response_headers?: string | Record<string, string> // Can be JSON string or object
   response_body?: string
   forward_url?: string
   max_requests: number

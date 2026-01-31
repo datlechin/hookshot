@@ -1,5 +1,6 @@
 use crate::models::{
-    Request, RequestListResponse, RequestQueryParams, RequestResponse, UpdateResponseConfig,
+    Endpoint, Request, RequestListResponse, RequestQueryParams, RequestResponse,
+    UpdateResponseConfig,
 };
 use crate::websocket::WebSocketManager;
 use axum::{
@@ -200,7 +201,7 @@ pub async fn update_endpoint_response(
     Path(endpoint_id): Path<String>,
     State((pool, _ws_manager)): State<(SqlitePool, Arc<WebSocketManager>)>,
     Json(config): Json<UpdateResponseConfig>,
-) -> Result<StatusCode, (StatusCode, String)> {
+) -> Result<Json<Endpoint>, (StatusCode, String)> {
     // Validate status code (100-599)
     if !(100..=599).contains(&config.status) {
         return Err((
@@ -241,6 +242,18 @@ pub async fn update_endpoint_response(
         return Err((StatusCode::NOT_FOUND, "Endpoint not found".to_string()));
     }
 
+    // Fetch and return the updated endpoint
+    let endpoint = crate::services::endpoint::get_endpoint(&pool, &endpoint_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Database error fetching updated endpoint: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Internal server error".to_string(),
+            )
+        })?
+        .ok_or((StatusCode::NOT_FOUND, "Endpoint not found".to_string()))?;
+
     tracing::info!(
         "Updated response config for endpoint {}: enabled={}, status={}",
         endpoint_id,
@@ -248,13 +261,14 @@ pub async fn update_endpoint_response(
         config.status
     );
 
-    Ok(StatusCode::NO_CONTENT)
+    Ok(Json(endpoint))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::db;
+    use crate::models::Endpoint;
     use axum::extract::Query;
 
     async fn setup_test_db() -> SqlitePool {
@@ -540,7 +554,7 @@ mod tests {
             body: Some(r#"{"error":"Custom error"}"#.to_string()),
         };
 
-        let result = update_endpoint_response(
+        let result: Result<Json<Endpoint>, (StatusCode, String)> = update_endpoint_response(
             Path(endpoint_id.clone()),
             State(create_test_state(pool.clone())),
             Json(config),
@@ -548,17 +562,10 @@ mod tests {
         .await;
 
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), StatusCode::NO_CONTENT);
+        let Json(endpoint) = result.unwrap();
 
-        // Verify the update
-        let endpoint: crate::models::Endpoint = sqlx::query_as(
-            "SELECT id, created_at, custom_response_enabled, response_status, response_headers, response_body, request_count FROM endpoints WHERE id = ?"
-        )
-        .bind(&endpoint_id)
-        .fetch_one(&pool)
-        .await
-        .unwrap();
-
+        // Verify the returned endpoint has correct values
+        assert_eq!(endpoint.id, endpoint_id);
         assert!(endpoint.custom_response_enabled);
         assert_eq!(endpoint.response_status, 404);
         assert_eq!(
@@ -584,7 +591,7 @@ mod tests {
             body: None,
         };
 
-        let result = update_endpoint_response(
+        let result: Result<Json<Endpoint>, (StatusCode, String)> = update_endpoint_response(
             Path(endpoint_id.clone()),
             State(create_test_state(pool.clone())),
             Json(config),
@@ -604,7 +611,7 @@ mod tests {
             body: None,
         };
 
-        let result = update_endpoint_response(
+        let result: Result<Json<Endpoint>, (StatusCode, String)> = update_endpoint_response(
             Path(endpoint_id),
             State(create_test_state(pool)),
             Json(config),
@@ -629,7 +636,7 @@ mod tests {
             body: None,
         };
 
-        let result = update_endpoint_response(
+        let result: Result<Json<Endpoint>, (StatusCode, String)> = update_endpoint_response(
             Path(endpoint_id),
             State(create_test_state(pool)),
             Json(config),
@@ -653,7 +660,7 @@ mod tests {
             body: None,
         };
 
-        let result = update_endpoint_response(
+        let result: Result<Json<Endpoint>, (StatusCode, String)> = update_endpoint_response(
             Path("nonexistent-id".to_string()),
             State(create_test_state(pool)),
             Json(config),
@@ -678,13 +685,17 @@ mod tests {
             body: Some("Error".to_string()),
         };
 
-        update_endpoint_response(
+        let result: Result<Json<Endpoint>, (StatusCode, String)> = update_endpoint_response(
             Path(endpoint_id.clone()),
             State(create_test_state(pool.clone())),
             Json(config),
         )
-        .await
-        .unwrap();
+        .await;
+
+        assert!(result.is_ok());
+        let Json(updated_endpoint) = result.unwrap();
+        assert!(updated_endpoint.custom_response_enabled);
+        assert_eq!(updated_endpoint.response_status, 500);
 
         // Now disable
         let config = UpdateResponseConfig {
@@ -694,7 +705,7 @@ mod tests {
             body: None,
         };
 
-        let result = update_endpoint_response(
+        let result: Result<Json<Endpoint>, (StatusCode, String)> = update_endpoint_response(
             Path(endpoint_id.clone()),
             State(create_test_state(pool.clone())),
             Json(config),
@@ -702,17 +713,8 @@ mod tests {
         .await;
 
         assert!(result.is_ok());
-
-        // Verify disabled
-        let endpoint: crate::models::Endpoint = sqlx::query_as(
-            "SELECT id, created_at, custom_response_enabled, response_status, response_headers, response_body, request_count FROM endpoints WHERE id = ?"
-        )
-        .bind(&endpoint_id)
-        .fetch_one(&pool)
-        .await
-        .unwrap();
-
-        assert!(!endpoint.custom_response_enabled);
-        assert_eq!(endpoint.response_status, 200);
+        let Json(updated_endpoint) = result.unwrap();
+        assert!(!updated_endpoint.custom_response_enabled);
+        assert_eq!(updated_endpoint.response_status, 200);
     }
 }

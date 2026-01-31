@@ -155,14 +155,22 @@ pub async fn webhook_handler(
             serde_json::json!({})
         };
 
+        // Convert body bytes to UTF-8 string if present
+        let body_string = body_bytes
+            .as_ref()
+            .and_then(|bytes| String::from_utf8(bytes.clone()).ok());
+
         // Broadcast to WebSocket clients
         let ws_message = WebSocketMessage::NewRequest {
             data: RequestData {
                 id: request_id,
+                endpoint_id: endpoint_id_clone.clone(),
                 method: method_str,
                 path: path_str,
+                query_string: query_string.clone(),
                 query_params: query_params_value,
                 headers: headers_value,
+                body: body_string,
                 content_type,
                 received_at,
                 ip_address: Some(ip_address),
