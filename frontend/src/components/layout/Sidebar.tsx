@@ -5,6 +5,7 @@ import { useSelectedEndpoint } from '@/contexts/EndpointContext'
 import { EmptyState, Button } from '@/components/ui'
 import { LoadingSpinner } from '@/components/ui/Loading'
 import { EndpointItem, EndpointConfig } from '@/components/endpoint'
+import { useToast } from '@/hooks/useToast'
 import type { Endpoint, EndpointConfig as Config } from '@/lib/types'
 
 /**
@@ -23,24 +24,41 @@ export function Sidebar() {
   const { selectedEndpointId, setSelectedEndpointId } = useSelectedEndpoint()
   const [configuringEndpoint, setConfiguringEndpoint] = useState<Endpoint | null>(null)
   const [creating, setCreating] = useState(false)
+  const { success, error: showError } = useToast()
 
   async function handleCreateEndpoint() {
     setCreating(true)
     try {
       await createEndpoint()
+      success('Endpoint created successfully')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to create endpoint'
+      showError(message)
     } finally {
       setCreating(false)
     }
   }
 
   async function handleDeleteEndpoint(id: string) {
-    await deleteEndpoint(id)
+    try {
+      await deleteEndpoint(id)
+      success('Endpoint deleted successfully')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to delete endpoint'
+      showError(message)
+    }
   }
 
   async function handleSaveConfig(config: Config) {
     if (!configuringEndpoint) return
-    await updateConfig(configuringEndpoint.id, config)
-    setConfiguringEndpoint(null)
+    try {
+      await updateConfig(configuringEndpoint.id, config)
+      setConfiguringEndpoint(null)
+      success('Configuration saved successfully')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to save configuration'
+      showError(message)
+    }
   }
 
   return (
