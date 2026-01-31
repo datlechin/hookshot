@@ -1,17 +1,12 @@
-import { Moon, Sun, Menu } from 'lucide-react'
+import { Menu } from 'lucide-react'
 import { Button } from '@/components/ui'
-import type { Theme } from '@/hooks/useTheme'
 
 interface HeaderProps {
-  theme: Theme
-  onToggleTheme: () => void
   onToggleSidebar?: () => void
   connectionStatus?: 'connected' | 'connecting' | 'disconnected' | 'polling'
 }
 
 export function Header({
-  theme,
-  onToggleTheme,
   onToggleSidebar,
   connectionStatus = 'disconnected',
 }: HeaderProps) {
@@ -75,9 +70,6 @@ export function Header({
               </span>
             </div>
           )}
-          <Button variant="ghost" size="sm" onClick={onToggleTheme} aria-label="Toggle theme">
-            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </Button>
         </div>
       </div>
     </header>

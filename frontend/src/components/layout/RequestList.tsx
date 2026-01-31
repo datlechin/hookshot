@@ -115,6 +115,43 @@ export function RequestList({
               </span>
             )}
           </h2>
+          {/* Connection Status */}
+          {selectedEndpointId && (
+            <div
+              className={`flex items-center space-x-1.5 px-2 py-0.5 rounded-full ${
+                connected && !usingPolling
+                  ? 'bg-(--accent-green)/10 border border-(--accent-green)/20'
+                  : usingPolling
+                    ? 'bg-(--accent-blue)/10 border border-(--accent-blue)/20'
+                    : 'bg-(--accent-yellow)/10 border border-(--accent-yellow)/20'
+              }`}
+            >
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  connected && !usingPolling
+                    ? 'bg-(--accent-green) animate-pulse'
+                    : usingPolling
+                      ? 'bg-(--accent-blue)'
+                      : 'bg-(--accent-yellow) animate-pulse'
+                }`}
+              ></span>
+              <span
+                className={`text-[11px] font-medium ${
+                  connected && !usingPolling
+                    ? 'text-(--accent-green)'
+                    : usingPolling
+                      ? 'text-(--accent-blue)'
+                      : 'text-(--accent-yellow)'
+                }`}
+              >
+                {connected && !usingPolling
+                  ? 'Connected'
+                  : usingPolling
+                    ? 'Polling'
+                    : 'Connecting'}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Filters */}
