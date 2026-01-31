@@ -18,10 +18,7 @@ function AppContent() {
   const { selectedEndpointId } = useSelectedEndpoint()
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null)
   const [showShortcutsModal, setShowShortcutsModal] = useState(false)
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const [connectionStatus, setConnectionStatus] = useState<
-    'connected' | 'connecting' | 'disconnected' | 'polling'
-  >('disconnected')
+
   const handleCloseDetailPanel = () => {
     setSelectedRequest(null)
   }
@@ -47,12 +44,6 @@ function AppContent() {
     },
   ])
 
-  const handleConnectionStatusChange = (
-    status: 'connected' | 'connecting' | 'disconnected' | 'polling'
-  ) => {
-    setConnectionStatus(status)
-  }
-
   const handleRequestSelect = (request: Request) => {
     setSelectedRequest(request)
   }
@@ -66,7 +57,6 @@ function AppContent() {
             <Sidebar />
             <RequestList
               selectedEndpointId={selectedEndpointId}
-              onConnectionStatusChange={handleConnectionStatusChange}
               onRequestSelect={handleRequestSelect}
             />
             <DetailPanel
