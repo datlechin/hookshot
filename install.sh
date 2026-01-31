@@ -89,8 +89,14 @@ install_binary() {
         # Verify checksum
         echo "${YELLOW}Verifying checksum...${NC}"
         if command -v shasum >/dev/null 2>&1; then
-            if ! shasum -a 256 -c hookshot.tar.gz.sha256 >/dev/null 2>&1; then
+            # Extract just the hash from the checksum file (first field)
+            EXPECTED_HASH=$(awk '{print $1}' hookshot.tar.gz.sha256)
+            ACTUAL_HASH=$(shasum -a 256 hookshot.tar.gz | awk '{print $1}')
+
+            if [ "$EXPECTED_HASH" != "$ACTUAL_HASH" ]; then
                 echo "${RED}Error: Checksum verification failed${NC}"
+                echo "${RED}Expected: $EXPECTED_HASH${NC}"
+                echo "${RED}Got:      $ACTUAL_HASH${NC}"
                 rm -rf "$TMP_DIR"
                 exit 1
             fi
