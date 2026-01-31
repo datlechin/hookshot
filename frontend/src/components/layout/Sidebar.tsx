@@ -15,14 +15,7 @@ import type { Endpoint, EndpointConfig as Config } from '@/lib/types'
  * Width: 280px, always visible
  */
 export function Sidebar() {
-  const {
-    endpoints,
-    loading,
-    error,
-    deleteEndpoint,
-    createEndpoint,
-    updateConfig,
-  } = useEndpoints()
+  const { endpoints, loading, error, deleteEndpoint, createEndpoint, updateConfig } = useEndpoints()
   const { selectedEndpointId, setSelectedEndpointId } = useSelectedEndpoint()
   const { theme, toggleTheme } = useTheme()
   const [configuringEndpoint, setConfiguringEndpoint] = useState<Endpoint | null>(null)
@@ -87,45 +80,39 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="w-[280px] bg-[var(--surface)] border-r border-[var(--border)] overflow-y-auto flex flex-col">
-        <div className="p-2 border-b border-[var(--border)]">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-1.5">
-              <div className="w-5 h-5 bg-[var(--accent-blue)] rounded flex items-center justify-center">
-                <span className="text-white font-bold text-xs">H</span>
-              </div>
-              <span className="text-sm font-semibold text-[var(--text-primary)]">Hookshot</span>
-            </div>
-            <button
-              onClick={toggleTheme}
-              className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] p-1"
-              aria-label="Toggle theme"
-            >
-              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Button variant="primary" size="sm" onClick={handleCreateEndpoint} disabled={creating}>
-                {creating ? <LoadingSpinner size="sm" /> : 'New'}
-              </Button>
-              <span className="text-xs font-medium text-[var(--text-tertiary)]">
-                {endpoints.length} {endpoints.length === 1 ? 'endpoint' : 'endpoints'}
-              </span>
-            </div>
-          </div>
-
-          {error && (
-            <div className="mt-2 p-1.5 bg-[var(--accent-red)]/10 border border-[var(--accent-red)] rounded text-[11px] text-[var(--accent-red)]">
-              {error}
-            </div>
-          )}
+    <aside className="w-[280px] bg-(--surface) border-r border-(--border) overflow-y-auto flex flex-col">
+      <div className="p-2 border-b border-(--border)">
+        <div className="flex items-center justify-between mb-2">
+          <button
+            onClick={toggleTheme}
+            className="text-(--text-secondary) hover:text-(--text-primary) p-1"
+            aria-label="Toggle theme"
+          >
+            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
         </div>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Button variant="primary" size="sm" onClick={handleCreateEndpoint} disabled={creating}>
+              {creating ? <LoadingSpinner size="sm" /> : 'New'}
+            </Button>
+            <span className="text-xs font-medium text-(--text-tertiary)">
+              {endpoints.length} {endpoints.length === 1 ? 'endpoint' : 'endpoints'}
+            </span>
+          </div>
+        </div>
+
+        {error && (
+          <div className="mt-2 p-1.5 bg-(--accent-red)/10 border border-(--accent-red) rounded text-[11px] text-(--accent-red)">
+            {error}
+          </div>
+        )}
+      </div>
 
       <div className="flex-1 overflow-y-auto">
         {loading ? (
           <div className="flex items-center justify-center h-48">
-            <Loader2 className="w-8 h-8 animate-spin text-[var(--text-tertiary)]" />
+            <Loader2 className="w-8 h-8 animate-spin text-(--text-tertiary)" />
           </div>
         ) : endpoints.length === 0 ? (
           <div className="p-4">
@@ -142,17 +129,19 @@ export function Sidebar() {
           </div>
         ) : (
           <div className="space-y-1 p-2">
-            {endpoints.filter(endpoint => endpoint && endpoint.id).map((endpoint) => (
-              <EndpointItem
-                key={endpoint.id}
-                endpoint={endpoint}
-                selected={selectedEndpointId === endpoint.id}
-                onSelect={() => setSelectedEndpointId(endpoint.id)}
-                onDelete={() => handleDeleteEndpoint(endpoint.id)}
-                onConfigure={() => setConfiguringEndpoint(endpoint)}
-                requestCount={requestCounts[endpoint.id] || 0}
-              />
-            ))}
+            {endpoints
+              .filter((endpoint) => endpoint && endpoint.id)
+              .map((endpoint) => (
+                <EndpointItem
+                  key={endpoint.id}
+                  endpoint={endpoint}
+                  selected={selectedEndpointId === endpoint.id}
+                  onSelect={() => setSelectedEndpointId(endpoint.id)}
+                  onDelete={() => handleDeleteEndpoint(endpoint.id)}
+                  onConfigure={() => setConfiguringEndpoint(endpoint)}
+                  requestCount={requestCounts[endpoint.id] || 0}
+                />
+              ))}
           </div>
         )}
 

@@ -29,10 +29,6 @@ export function Header({
           >
             <Menu className="w-4 h-4" />
           </Button>
-          <div className="w-6 h-6 bg-[var(--accent-blue)] rounded flex items-center justify-center">
-            <span className="text-white font-bold text-sm">H</span>
-          </div>
-          <h1 className="text-base font-semibold text-[var(--text-primary)]">Hookshot</h1>
         </div>
         <div className="flex items-center space-x-1">
           {connectionStatus !== 'disconnected' && (
