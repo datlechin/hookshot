@@ -5,7 +5,6 @@ import type { Theme } from '@/hooks/useTheme'
 interface HeaderProps {
   theme: Theme
   onToggleTheme: () => void
-  onCreateEndpoint?: () => void
   onToggleSidebar?: () => void
   connectionStatus?: 'connected' | 'connecting' | 'disconnected' | 'polling'
 }
@@ -13,7 +12,6 @@ interface HeaderProps {
 export function Header({
   theme,
   onToggleTheme,
-  onCreateEndpoint,
   onToggleSidebar,
   connectionStatus = 'disconnected',
 }: HeaderProps) {
