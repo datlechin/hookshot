@@ -8,9 +8,15 @@ import { KeyboardShortcutsModal } from '@/components/ui/KeyboardShortcutsModal'
 import type { Request } from '@/lib/types'
 
 // Lazy load layout components for better code splitting
-const Sidebar = lazy(() => import('@/components/layout/Sidebar').then(module => ({ default: module.Sidebar })))
-const RequestList = lazy(() => import('@/components/layout/RequestList').then(module => ({ default: module.RequestList })))
-const DetailPanel = lazy(() => import('@/components/layout/DetailPanel').then(module => ({ default: module.DetailPanel })))
+const Sidebar = lazy(() =>
+  import('@/components/layout/Sidebar').then((module) => ({ default: module.Sidebar }))
+)
+const RequestList = lazy(() =>
+  import('@/components/layout/RequestList').then((module) => ({ default: module.RequestList }))
+)
+const DetailPanel = lazy(() =>
+  import('@/components/layout/DetailPanel').then((module) => ({ default: module.DetailPanel }))
+)
 
 export interface SidebarHandle {
   createEndpoint: () => void
@@ -98,7 +104,7 @@ function AppContent() {
 
   return (
     <Suspense fallback={<LoadingFallback />}>
-      <div className="min-h-screen bg-[var(--background)] text-[var(--text-primary)]">
+      <div className="min-h-screen bg-(--background) text-(--text-primary)">
         {/* Main 3-panel layout - full viewport height */}
         <div className="flex h-screen">
           <Sidebar ref={sidebarRef} />

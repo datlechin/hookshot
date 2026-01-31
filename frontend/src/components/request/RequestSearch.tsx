@@ -1,76 +1,74 @@
-import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
-import { Search, X } from 'lucide-react';
+import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react'
+import { Search, X } from 'lucide-react'
 
 interface RequestSearchProps {
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
+  value: string
+  onChange: (value: string) => void
+  placeholder?: string
 }
 
 export interface RequestSearchHandle {
-  focus: () => void;
+  focus: () => void
 }
 
 /**
  * RequestSearch - Debounced search input
  * Delays onChange callback by 300ms to prevent excessive re-renders
  */
-export const RequestSearch = forwardRef<RequestSearchHandle, RequestSearchProps>(({
-  value,
-  onChange,
-  placeholder = 'Search headers or body...',
-}, ref) => {
-  const [input, setInput] = useState(value);
-  const inputRef = useRef<HTMLInputElement>(null);
+export const RequestSearch = forwardRef<RequestSearchHandle, RequestSearchProps>(
+  ({ value, onChange, placeholder = 'Search headers or body...' }, ref) => {
+    const [input, setInput] = useState(value)
+    const inputRef = useRef<HTMLInputElement>(null)
 
-  // Sync external value changes
-  useEffect(() => {
-    setInput(value);
-  }, [value]);
+    // Sync external value changes
+    useEffect(() => {
+      setInput(value)
+    }, [value])
 
-  // Debounce search input
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      onChange(input);
-    }, 300);
+    // Debounce search input
+    useEffect(() => {
+      const timeout = setTimeout(() => {
+        onChange(input)
+      }, 300)
 
-    return () => clearTimeout(timeout);
-  }, [input, onChange]);
+      return () => clearTimeout(timeout)
+    }, [input, onChange])
 
-  function handleClear() {
-    setInput('');
-    onChange('');
+    function handleClear() {
+      setInput('')
+      onChange('')
+    }
+
+    // Expose focus method to parent
+    useImperativeHandle(ref, () => ({
+      focus: () => {
+        inputRef.current?.focus()
+      },
+    }))
+
+    return (
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--text-tertiary)" />
+        <input
+          ref={inputRef}
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder={placeholder}
+          className="w-full pl-10 pr-10 py-2 bg-(--background) border border-(--border) rounded-lg text-sm text-(--text-primary) placeholder:text-(--text-tertiary) focus:outline-none focus:ring-2 focus:ring-(--accent-blue) focus:border-transparent transition-shadow"
+        />
+        {input && (
+          <button
+            onClick={handleClear}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-(--text-tertiary) hover:text-(--text-primary) transition-colors"
+            aria-label="Clear search"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+    )
   }
+)
 
-  // Expose focus method to parent
-  useImperativeHandle(ref, () => ({
-    focus: () => {
-      inputRef.current?.focus();
-    },
-  }));
-
-  return (
-    <div className="relative">
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" />
-      <input
-        ref={inputRef}
-        type="text"
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        placeholder={placeholder}
-        className="w-full pl-10 pr-10 py-2 bg-[var(--background)] border border-[var(--border)] rounded-lg text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)] focus:border-transparent transition-shadow"
-      />
-      {input && (
-        <button
-          onClick={handleClear}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors"
-          aria-label="Clear search"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      )}
-    </div>
-  );
-});
-
-RequestSearch.displayName = 'RequestSearch';
+RequestSearch.displayName = 'RequestSearch'

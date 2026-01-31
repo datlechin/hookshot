@@ -1,8 +1,3 @@
-/**
- * EndpointConfig component
- * Modal dialog for configuring endpoint custom responses
- */
-
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { X, Plus, Trash2 } from 'lucide-react'
@@ -56,14 +51,15 @@ export function EndpointConfig({ endpoint, onSave, onCancel }: EndpointConfigPro
     if (endpoint.response_headers) {
       try {
         // Parse if it's a JSON string, otherwise use as-is
-        const headersObj = typeof endpoint.response_headers === 'string'
-          ? JSON.parse(endpoint.response_headers)
-          : endpoint.response_headers
+        const headersObj =
+          typeof endpoint.response_headers === 'string'
+            ? JSON.parse(endpoint.response_headers)
+            : endpoint.response_headers
 
         if (headersObj && Object.keys(headersObj).length > 0) {
           return Object.entries(headersObj).map(([key, value]) => ({
             key,
-            value: String(value)
+            value: String(value),
           }))
         }
       } catch (error) {
@@ -76,7 +72,9 @@ export function EndpointConfig({ endpoint, onSave, onCancel }: EndpointConfigPro
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [jsonError, setJsonError] = useState<string | null>(null)
-  const [headerErrors, setHeaderErrors] = useState<Record<number, { key?: string; value?: string }>>({})
+  const [headerErrors, setHeaderErrors] = useState<
+    Record<number, { key?: string; value?: string }>
+  >({})
 
   // Check if custom status code is being used
   useEffect(() => {
@@ -220,20 +218,20 @@ export function EndpointConfig({ endpoint, onSave, onCancel }: EndpointConfigPro
       aria-labelledby="config-title"
     >
       <div
-        className={`bg-[var(--surface)] rounded-lg max-w-2xl w-full max-h-[90vh] flex flex-col shadow-xl ${animations.fadeIn}`}
+        className={`bg-(--surface) rounded-lg max-w-2xl w-full max-h-[90vh] flex flex-col shadow-xl ${animations.fadeIn}`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-[var(--border)]">
+        <div className="flex items-center justify-between p-6 border-b border-(--border)">
           <div>
-            <h2 id="config-title" className="text-lg font-semibold text-[var(--text-primary)]">
+            <h2 id="config-title" className="text-lg font-semibold text-(--text-primary)">
               Configure Response
             </h2>
-            <p className="text-sm text-[var(--text-tertiary)] mt-1 font-mono">{endpoint.id}</p>
+            <p className="text-sm text-(--text-tertiary) mt-1 font-mono">{endpoint.id}</p>
           </div>
           <button
             onClick={onCancel}
-            className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors"
+            className="text-(--text-tertiary) hover:text-(--text-primary) transition-colors"
             aria-label="Close dialog"
           >
             <X className="w-5 h-5" />
@@ -256,7 +254,7 @@ export function EndpointConfig({ endpoint, onSave, onCancel }: EndpointConfigPro
             <>
               {/* Status Code */}
               <div className="space-y-3">
-                <label className="block text-sm font-medium text-[var(--text-secondary)]">
+                <label className="block text-sm font-medium text-(--text-secondary)">
                   Status Code
                 </label>
                 <div className="flex gap-3">
@@ -306,7 +304,7 @@ export function EndpointConfig({ endpoint, onSave, onCancel }: EndpointConfigPro
               {/* Headers */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="block text-sm font-medium text-[var(--text-secondary)]">
+                  <label className="block text-sm font-medium text-(--text-secondary)">
                     Response Headers
                   </label>
                   <Button variant="ghost" size="sm" onClick={handleAddHeader}>
@@ -316,9 +314,7 @@ export function EndpointConfig({ endpoint, onSave, onCancel }: EndpointConfigPro
                 </div>
 
                 {headers.length === 0 ? (
-                  <p className="text-sm text-[var(--text-tertiary)] italic">
-                    No headers configured
-                  </p>
+                  <p className="text-sm text-(--text-tertiary) italic">No headers configured</p>
                 ) : (
                   <div className="space-y-2">
                     {headers.map((header, index) => (
@@ -329,7 +325,7 @@ export function EndpointConfig({ endpoint, onSave, onCancel }: EndpointConfigPro
                               placeholder="Header name"
                               value={header.key}
                               onChange={(e) => handleHeaderChange(index, 'key', e.target.value)}
-                              className={headerErrors[index]?.key ? 'border-[var(--accent-red)]' : ''}
+                              className={headerErrors[index]?.key ? 'border-(--accent-red)' : ''}
                               list={`common-headers-${index}`}
                             />
                           </div>
@@ -347,14 +343,14 @@ export function EndpointConfig({ endpoint, onSave, onCancel }: EndpointConfigPro
                           </div>
                           <button
                             onClick={() => handleRemoveHeader(index)}
-                            className="text-[var(--text-tertiary)] hover:text-[var(--accent-red)] transition-colors px-2"
+                            className="text-(--text-tertiary) hover:text-(--accent-red) transition-colors px-2"
                             aria-label="Remove header"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                         {headerErrors[index]?.key && (
-                          <p className="text-xs text-[var(--accent-red)] ml-1">
+                          <p className="text-xs text-(--accent-red) ml-1">
                             {headerErrors[index].key}
                           </p>
                         )}
@@ -384,10 +380,10 @@ export function EndpointConfig({ endpoint, onSave, onCancel }: EndpointConfigPro
               {/* Preview */}
               {body && !jsonError && (
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-[var(--text-secondary)]">
+                  <label className="block text-sm font-medium text-(--text-secondary)">
                     Preview
                   </label>
-                  <pre className="p-3 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg text-xs font-mono text-[var(--text-primary)] overflow-x-auto">
+                  <pre className="p-3 bg-(--bg-secondary) border border-(--border) rounded-lg text-xs font-mono text-(--text-primary) overflow-x-auto">
                     {(() => {
                       const contentType = headers.find(
                         (h) => h.key.toLowerCase() === 'content-type'
@@ -409,14 +405,14 @@ export function EndpointConfig({ endpoint, onSave, onCancel }: EndpointConfigPro
 
           {/* Error Message */}
           {error && (
-            <div className="p-3 bg-[var(--accent-red)]/10 border border-[var(--accent-red)] rounded-lg text-sm text-[var(--accent-red)]">
+            <div className="p-3 bg-(--accent-red)/10 border border-(--accent-red) rounded-lg text-sm text-(--accent-red)">
               {error}
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="flex gap-3 justify-end p-6 border-t border-[var(--border)]">
+        <div className="flex gap-3 justify-end p-6 border-t border-(--border)">
           <Button variant="ghost" onClick={onCancel} disabled={saving}>
             Cancel
           </Button>

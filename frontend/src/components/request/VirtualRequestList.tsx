@@ -1,17 +1,17 @@
-import { useRef, useMemo } from 'react';
-import { useVirtualizer } from '@tanstack/react-virtual';
-import { Inbox } from 'lucide-react';
-import { RequestItem } from './RequestItem';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { groupRequestsByTime } from '@/lib/utils';
-import type { Request } from '@/lib/types';
+import { useRef, useMemo } from 'react'
+import { useVirtualizer } from '@tanstack/react-virtual'
+import { Inbox } from 'lucide-react'
+import { RequestItem } from './RequestItem'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { groupRequestsByTime } from '@/lib/utils'
+import type { Request } from '@/lib/types'
 
 interface VirtualRequestListProps {
-  requests: Request[];
-  onRequestClick?: (request: Request) => void;
-  selectedRequestId?: number;
-  newRequestIds?: Set<number>;
-  enableTimeGrouping?: boolean;
+  requests: Request[]
+  onRequestClick?: (request: Request) => void
+  selectedRequestId?: number
+  newRequestIds?: Set<number>
+  enableTimeGrouping?: boolean
 }
 
 /**
@@ -26,39 +26,40 @@ export function VirtualRequestList({
   newRequestIds = new Set(),
   enableTimeGrouping = true,
 }: VirtualRequestListProps) {
-  const parentRef = useRef<HTMLDivElement>(null);
+  const parentRef = useRef<HTMLDivElement>(null)
 
   // Group requests by time if enabled
   const groups = useMemo(() => {
     if (!enableTimeGrouping) {
-      return [{ label: '', requests }];
+      return [{ label: '', requests }]
     }
-    return groupRequestsByTime(requests);
-  }, [requests, enableTimeGrouping]);
+    return groupRequestsByTime(requests)
+  }, [requests, enableTimeGrouping])
 
   // Flatten groups into items with group headers
   const items = useMemo(() => {
-    const result: Array<{ type: 'header'; label: string } | { type: 'request'; request: Request }> = [];
+    const result: Array<{ type: 'header'; label: string } | { type: 'request'; request: Request }> =
+      []
     for (const group of groups) {
       if (enableTimeGrouping && group.label) {
-        result.push({ type: 'header', label: group.label });
+        result.push({ type: 'header', label: group.label })
       }
       for (const request of group.requests) {
-        result.push({ type: 'request', request });
+        result.push({ type: 'request', request })
       }
     }
-    return result;
-  }, [groups, enableTimeGrouping]);
+    return result
+  }, [groups, enableTimeGrouping])
 
   const virtualizer = useVirtualizer({
     count: items.length,
     getScrollElement: () => parentRef.current,
     estimateSize: (index) => {
-      const item = items[index];
-      return item.type === 'header' ? 40 : 72; // Headers are 40px, requests are 72px
+      const item = items[index]
+      return item.type === 'header' ? 40 : 72 // Headers are 40px, requests are 72px
     },
     overscan: 5,
-  });
+  })
 
   if (requests.length === 0) {
     return (
@@ -67,7 +68,7 @@ export function VirtualRequestList({
         title="No requests found"
         description="No requests match your filters."
       />
-    );
+    )
   }
 
   return (
@@ -80,7 +81,7 @@ export function VirtualRequestList({
         }}
       >
         {virtualizer.getVirtualItems().map((virtualRow) => {
-          const item = items[virtualRow.index];
+          const item = items[virtualRow.index]
 
           return (
             <div
@@ -96,8 +97,8 @@ export function VirtualRequestList({
               }}
             >
               {item.type === 'header' ? (
-                <div className="px-4 py-2 bg-[var(--surface-hover)] sticky top-0 z-10">
-                  <h3 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide">
+                <div className="px-4 py-2 bg-(--surface-hover) sticky top-0 z-10">
+                  <h3 className="text-xs font-semibold text-(--text-secondary) uppercase tracking-wide">
                     {item.label}
                   </h3>
                 </div>
@@ -110,9 +111,9 @@ export function VirtualRequestList({
                 />
               )}
             </div>
-          );
+          )
         })}
       </div>
     </div>
-  );
+  )
 }

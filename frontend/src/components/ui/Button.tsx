@@ -16,12 +16,13 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       'inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed'
 
     const variants = {
-      default: 'bg-[var(--surface)] hover:bg-[var(--surface-hover)] text-[var(--text-primary)] border border-[var(--border)]',
-      primary: 'bg-[var(--accent-blue)] hover:bg-blue-600 text-white border border-transparent',
-      secondary: 'bg-[var(--accent-green)] hover:bg-green-600 text-white border border-transparent',
-      outline: 'bg-transparent hover:bg-[var(--surface)] text-[var(--text-primary)] border border-[var(--border)]',
-      ghost: 'bg-transparent hover:bg-[var(--surface)] text-[var(--text-primary)] border border-transparent',
-      danger: 'bg-[var(--accent-red)] hover:bg-red-600 text-white border border-transparent',
+      default:
+        'bg-(--surface) hover:bg-(--surface-hover) text-(--text-primary) border border-(--border)',
+      primary: 'bg-(--accent-blue) hover:bg-blue-600 text-white border border-transparent',
+      secondary: 'bg-(--accent-green) hover:bg-green-600 text-white border border-transparent',
+      outline: 'bg-transparent hover:bg-(--surface) text-(--text-primary) border border-(--border)',
+      ghost: 'bg-transparent hover:bg-(--surface) text-(--text-primary) border border-transparent',
+      danger: 'bg-(--accent-red) hover:bg-red-600 text-white border border-transparent',
     }
 
     const sizes = {

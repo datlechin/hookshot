@@ -6,12 +6,9 @@ interface HeaderProps {
   connectionStatus?: 'connected' | 'connecting' | 'disconnected' | 'polling'
 }
 
-export function Header({
-  onToggleSidebar,
-  connectionStatus = 'disconnected',
-}: HeaderProps) {
+export function Header({ onToggleSidebar, connectionStatus = 'disconnected' }: HeaderProps) {
   return (
-    <header className="fixed top-0 left-0 right-0 h-12 bg-[var(--surface)] border-b border-[var(--border)] z-50">
+    <header className="fixed top-0 left-0 right-0 h-12 bg-(--surface) border-b border-(--border) z-50">
       <div className="flex items-center justify-between h-full px-3">
         <div className="flex items-center space-x-2">
           {/* Mobile menu button */}

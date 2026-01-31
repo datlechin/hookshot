@@ -10,9 +10,10 @@ interface CopyButtonProps {
   text: string;
   label?: string;
   className?: string;
+  'aria-label'?: string;
 }
 
-export function CopyButton({ text, label = 'Copy', className }: CopyButtonProps) {
+export function CopyButton({ text, label = 'Copy', className, 'aria-label': ariaLabel }: CopyButtonProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -31,6 +32,8 @@ export function CopyButton({ text, label = 'Copy', className }: CopyButtonProps)
       size="sm"
       onClick={handleCopy}
       className={className}
+      aria-label={ariaLabel || (label ? undefined : `Copy ${text}`)}
+      title={ariaLabel || (label ? undefined : 'Copy to clipboard')}
     >
       {copied ? (
         <>

@@ -15,57 +15,57 @@ describe('MethodBadge', () => {
   it('applies correct styles for GET method', () => {
     render(<MethodBadge method="GET" />)
     const badge = screen.getByText('GET')
-    expect(badge).toHaveClass('bg-[var(--accent-blue)]/10')
-    expect(badge).toHaveClass('text-[var(--accent-blue)]')
+    expect(badge).toHaveClass('bg-(--accent-blue)/10')
+    expect(badge).toHaveClass('text-(--accent-blue)')
   })
 
   it('applies correct styles for POST method', () => {
     render(<MethodBadge method="POST" />)
     const badge = screen.getByText('POST')
-    expect(badge).toHaveClass('bg-[var(--accent-green)]/10')
-    expect(badge).toHaveClass('text-[var(--accent-green)]')
+    expect(badge).toHaveClass('bg-(--accent-green)/10')
+    expect(badge).toHaveClass('text-(--accent-green)')
   })
 
   it('applies correct styles for PUT method', () => {
     render(<MethodBadge method="PUT" />)
     const badge = screen.getByText('PUT')
-    expect(badge).toHaveClass('bg-[var(--accent-orange)]/10')
-    expect(badge).toHaveClass('text-[var(--accent-orange)]')
+    expect(badge).toHaveClass('bg-(--accent-orange)/10')
+    expect(badge).toHaveClass('text-(--accent-orange)')
   })
 
   it('applies correct styles for PATCH method', () => {
     render(<MethodBadge method="PATCH" />)
     const badge = screen.getByText('PATCH')
-    expect(badge).toHaveClass('bg-[var(--accent-purple)]/10')
-    expect(badge).toHaveClass('text-[var(--accent-purple)]')
+    expect(badge).toHaveClass('bg-(--accent-purple)/10')
+    expect(badge).toHaveClass('text-(--accent-purple)')
   })
 
   it('applies correct styles for DELETE method', () => {
     render(<MethodBadge method="DELETE" />)
     const badge = screen.getByText('DELETE')
-    expect(badge).toHaveClass('bg-[var(--accent-red)]/10')
-    expect(badge).toHaveClass('text-[var(--accent-red)]')
+    expect(badge).toHaveClass('bg-(--accent-red)/10')
+    expect(badge).toHaveClass('text-(--accent-red)')
   })
 
   it('applies correct styles for HEAD method', () => {
     render(<MethodBadge method="HEAD" />)
     const badge = screen.getByText('HEAD')
-    expect(badge).toHaveClass('bg-[var(--accent-yellow)]/10')
-    expect(badge).toHaveClass('text-[var(--accent-yellow)]')
+    expect(badge).toHaveClass('bg-(--accent-yellow)/10')
+    expect(badge).toHaveClass('text-(--accent-yellow)')
   })
 
   it('applies correct styles for OPTIONS method', () => {
     render(<MethodBadge method="OPTIONS" />)
     const badge = screen.getByText('OPTIONS')
-    expect(badge).toHaveClass('bg-[var(--accent-yellow)]/10')
-    expect(badge).toHaveClass('text-[var(--accent-yellow)]')
+    expect(badge).toHaveClass('bg-(--accent-yellow)/10')
+    expect(badge).toHaveClass('text-(--accent-yellow)')
   })
 
   it('handles unknown methods with default styles', () => {
     render(<MethodBadge method="CUSTOM" />)
     const badge = screen.getByText('CUSTOM')
-    expect(badge).toHaveClass('bg-[var(--text-secondary)]/10')
-    expect(badge).toHaveClass('text-[var(--text-secondary)]')
+    expect(badge).toHaveClass('bg-(--text-secondary)/10')
+    expect(badge).toHaveClass('text-(--text-secondary)')
   })
 
   it('handles lowercase method names', () => {

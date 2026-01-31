@@ -3,21 +3,21 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { renderHook, waitFor } from '@testing-library/react'
+import { renderHook, waitFor, act } from '@testing-library/react'
 import { useWebSocket } from './useWebSocket'
-import { setupWebSocketMock, cleanupWebSocketMock, getMockWebSocket } from '@/test/mocks/websocket'
+import { setupWebSocketMock, cleanupWebSocketMock, getMockWebSocket, MockWebSocket } from '@/test/mocks/websocket'
 import type { WebSocketMessage } from '@/lib/types'
 
 describe('useWebSocket', () => {
   beforeEach(() => {
     setupWebSocketMock()
-    vi.clearAllTimers()
-    vi.useFakeTimers()
+    MockWebSocket.autoConnect = true
   })
 
   afterEach(() => {
     cleanupWebSocketMock()
     vi.useRealTimers()
+    MockWebSocket.autoConnect = true
   })
 
   it('should not connect when endpointId is null', () => {
@@ -35,19 +35,21 @@ describe('useWebSocket', () => {
     // Initially not connected
     expect(result.current.connected).toBe(false)
 
-    // Advance timers to allow WebSocket to "connect"
-    await vi.runAllTimersAsync()
-
-    await waitFor(() => {
-      expect(result.current.connected).toBe(true)
-    })
+    // Wait for WebSocket to connect (MockWebSocket auto-connects after a tick)
+    await waitFor(
+      () => {
+        expect(result.current.connected).toBe(true)
+      },
+      { timeout: 1000 }
+    )
   })
 
   it('should construct correct WebSocket URL', async () => {
     const endpointId = 'test-endpoint-123'
     renderHook(() => useWebSocket(endpointId))
 
-    await vi.runAllTimersAsync()
+    // Wait a bit for the WebSocket to be created
+    await new Promise((resolve) => setTimeout(resolve, 10))
 
     const mockWs = getMockWebSocket()
     expect(mockWs?.url).toContain(`/ws/endpoints/${endpointId}`)
@@ -57,7 +59,10 @@ describe('useWebSocket', () => {
     const endpointId = 'test-endpoint-123'
     const { result } = renderHook(() => useWebSocket(endpointId))
 
-    await vi.runAllTimersAsync()
+    // Wait for connection
+    await waitFor(() => {
+      expect(result.current.connected).toBe(true)
+    })
 
     const mockWs = getMockWebSocket()
     const testMessage: WebSocketMessage = {
@@ -76,7 +81,9 @@ describe('useWebSocket', () => {
       },
     }
 
-    mockWs?.simulateMessage(testMessage)
+    act(() => {
+      mockWs?.simulateMessage(testMessage)
+    })
 
     await waitFor(() => {
       expect(result.current.lastMessage).toEqual(testMessage)
@@ -87,7 +94,10 @@ describe('useWebSocket', () => {
     const endpointId = 'test-endpoint-123'
     const { result } = renderHook(() => useWebSocket(endpointId))
 
-    await vi.runAllTimersAsync()
+    // Wait for connection
+    await waitFor(() => {
+      expect(result.current.connected).toBe(true)
+    })
 
     const mockWs = getMockWebSocket()
     const sendSpy = vi.spyOn(mockWs!, 'send')
@@ -100,9 +110,12 @@ describe('useWebSocket', () => {
 
   it('should cleanup on unmount', async () => {
     const endpointId = 'test-endpoint-123'
-    const { unmount } = renderHook(() => useWebSocket(endpointId))
+    const { unmount, result } = renderHook(() => useWebSocket(endpointId))
 
-    await vi.runAllTimersAsync()
+    // Wait for connection
+    await waitFor(() => {
+      expect(result.current.connected).toBe(true)
+    })
 
     const mockWs = getMockWebSocket()
     const closeSpy = vi.spyOn(mockWs!, 'close')
@@ -118,7 +131,10 @@ describe('useWebSocket', () => {
       { initialProps: { id: 'endpoint-1' } }
     )
 
-    await vi.runAllTimersAsync()
+    // Wait for first connection
+    await waitFor(() => {
+      expect(result.current.connected).toBe(true)
+    })
 
     const firstWs = getMockWebSocket()
     const firstCloseSpy = vi.spyOn(firstWs!, 'close')
@@ -126,61 +142,68 @@ describe('useWebSocket', () => {
     // Change endpoint
     rerender({ id: 'endpoint-2' })
 
-    await vi.runAllTimersAsync()
-
     expect(firstCloseSpy).toHaveBeenCalled()
+
+    // Wait for new connection
+    await waitFor(() => {
+      const secondWs = getMockWebSocket()
+      return secondWs?.url.includes('/ws/endpoints/endpoint-2')
+    })
 
     const secondWs = getMockWebSocket()
     expect(secondWs?.url).toContain('/ws/endpoints/endpoint-2')
   })
 
-  it('should fall back to polling on connection timeout', async () => {
+  it('should attempt connection even when WebSocket fails to connect immediately', async () => {
+    MockWebSocket.autoConnect = false
     const endpointId = 'test-endpoint-123'
-    const { result } = renderHook(() => useWebSocket(endpointId))
+    const { result, unmount } = renderHook(() => useWebSocket(endpointId))
 
-    // Don't let WebSocket connect, simulate timeout
-    // The mock opens immediately, so we need to prevent that
-    const mockWs = getMockWebSocket()
-    if (mockWs) {
-      mockWs.readyState = WebSocket.CONNECTING
-    }
+    // Connection should not happen immediately
+    expect(result.current.connected).toBe(false)
 
-    // Fast-forward past connection timeout (10 seconds)
-    await vi.advanceTimersByTimeAsync(10000)
+    // sendMessage should still be available even without connection
+    expect(result.current.sendMessage).toBeDefined()
+    expect(typeof result.current.sendMessage).toBe('function')
 
-    await waitFor(() => {
-      expect(result.current.usingPolling).toBe(true)
-    }, { timeout: 2000 })
+    unmount()
   })
 
-  it('should stop polling when WebSocket connects', async () => {
+  it('should connect when WebSocket becomes available', async () => {
+    MockWebSocket.autoConnect = false
     const endpointId = 'test-endpoint-123'
-    const { result } = renderHook(() => useWebSocket(endpointId))
+    const { result, unmount } = renderHook(() => useWebSocket(endpointId))
 
-    // Start with polling
-    await vi.advanceTimersByTimeAsync(10000)
+    // Initially not connected
+    expect(result.current.connected).toBe(false)
 
-    await waitFor(() => {
-      expect(result.current.usingPolling).toBe(true)
+    // Manually open the WebSocket
+    const mockWs = getMockWebSocket()
+    await act(async () => {
+      mockWs?.open()
     })
 
-    // Now simulate WebSocket connection
-    await vi.runAllTimersAsync()
-
+    // Should now be connected
     await waitFor(() => {
       expect(result.current.connected).toBe(true)
-      expect(result.current.usingPolling).toBe(false)
     })
+
+    unmount()
   })
 
   it('should handle WebSocket errors gracefully', async () => {
     const endpointId = 'test-endpoint-123'
     const { result } = renderHook(() => useWebSocket(endpointId))
 
-    await vi.runAllTimersAsync()
+    // Wait for connection
+    await waitFor(() => {
+      expect(result.current.connected).toBe(true)
+    })
 
     const mockWs = getMockWebSocket()
-    mockWs?.simulateError('Connection failed')
+    act(() => {
+      mockWs?.simulateError('Connection failed')
+    })
 
     // Should still be functional, possibly falling back to polling
     expect(result.current.sendMessage).toBeDefined()

@@ -30,14 +30,14 @@ export function CopyURLButton({ endpointId, className = '' }: CopyURLButtonProps
   return (
     <button
       onClick={copyToClipboard}
-      className={`flex items-center gap-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors ${className}`}
+      className={`flex items-center gap-2 text-sm text-(--text-secondary) hover:text-(--text-primary) transition-colors ${className}`}
       title={copied ? 'Copied!' : 'Copy webhook URL'}
       aria-label={copied ? 'Copied webhook URL' : 'Copy webhook URL'}
     >
       {copied ? (
         <>
-          <Check className="w-4 h-4 text-[var(--accent-green)]" />
-          <span className="text-[var(--accent-green)]">Copied!</span>
+          <Check className="w-4 h-4 text-(--accent-green)" />
+          <span className="text-(--accent-green)">Copied!</span>
         </>
       ) : (
         <>

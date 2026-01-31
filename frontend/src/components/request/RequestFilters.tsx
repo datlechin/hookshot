@@ -1,11 +1,11 @@
-import { Filter } from 'lucide-react';
-import type { HttpMethod } from '@/lib/types';
+import { Filter } from 'lucide-react'
+import type { HttpMethod } from '@/lib/types'
 
-const METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
+const METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
 
 interface RequestFiltersProps {
-  selectedMethods: HttpMethod[];
-  onMethodsChange: (methods: HttpMethod[]) => void;
+  selectedMethods: HttpMethod[]
+  onMethodsChange: (methods: HttpMethod[]) => void
 }
 
 /**
@@ -15,17 +15,17 @@ export function RequestFilters({ selectedMethods, onMethodsChange }: RequestFilt
   function toggleMethod(method: HttpMethod) {
     const methods = selectedMethods.includes(method)
       ? selectedMethods.filter((m) => m !== method)
-      : [...selectedMethods, method];
-    onMethodsChange(methods);
+      : [...selectedMethods, method]
+    onMethodsChange(methods)
   }
 
   function clearFilters() {
-    onMethodsChange([]);
+    onMethodsChange([])
   }
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      <div className="flex items-center gap-1 text-sm text-[var(--text-secondary)]">
+      <div className="flex items-center gap-1 text-sm text-(--text-secondary)">
         <Filter className="w-4 h-4" />
         <span>Method:</span>
       </div>
@@ -35,21 +35,18 @@ export function RequestFilters({ selectedMethods, onMethodsChange }: RequestFilt
           onClick={() => toggleMethod(method)}
           className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
             selectedMethods.includes(method)
-              ? 'bg-[var(--accent-blue)] text-white'
-              : 'bg-[var(--surface)] text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] border border-[var(--border)]'
+              ? 'bg-(--accent-blue) text-white'
+              : 'bg-(--surface) text-(--text-secondary) hover:bg-(--surface-hover) border border-(--border)'
           }`}
         >
           {method}
         </button>
       ))}
       {selectedMethods.length > 0 && (
-        <button
-          onClick={clearFilters}
-          className="text-xs text-[var(--accent-red)] hover:underline ml-1"
-        >
+        <button onClick={clearFilters} className="text-xs text-(--accent-red) hover:underline ml-1">
           Clear filters
         </button>
       )}
     </div>
-  );
+  )
 }

@@ -44,16 +44,13 @@ export function ConfirmDialog({
       aria-labelledby="dialog-title"
     >
       <div
-        className="bg-[var(--surface)] rounded-lg p-6 max-w-md w-full mx-4 shadow-xl"
+        className="bg-(--surface) rounded-lg p-6 max-w-md w-full mx-4 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3
-          id="dialog-title"
-          className="text-lg font-semibold text-[var(--text-primary)] mb-2"
-        >
+        <h3 id="dialog-title" className="text-lg font-semibold text-(--text-primary) mb-2">
           {title}
         </h3>
-        <p className="text-[var(--text-secondary)] mb-6">{message}</p>
+        <p className="text-(--text-secondary) mb-6">{message}</p>
         <div className="flex gap-3 justify-end">
           <Button variant="ghost" onClick={onCancel}>
             {cancelLabel}

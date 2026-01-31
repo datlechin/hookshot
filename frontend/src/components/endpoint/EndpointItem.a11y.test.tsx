@@ -1,8 +1,3 @@
-/**
- * Accessibility tests for EndpointItem component
- * Ensures WCAG 2.1 AA compliance
- */
-
 import { describe, it, expect, vi } from 'vitest'
 import { render } from '@testing-library/react'
 import { axe, toHaveNoViolations } from 'jest-axe'
@@ -82,14 +77,16 @@ describe('EndpointItem Accessibility', () => {
     const { getByRole } = render(<EndpointItem {...defaultProps} />)
 
     const mainButton = getByRole('button', { name: /select endpoint/i })
-    expect(mainButton).toHaveAttribute('tabIndex', '0')
+    // Button naturally has tabIndex 0
+    expect(mainButton.tabIndex).toBe(0)
   })
 
   it('should have proper role attribute', () => {
     const { getByRole } = render(<EndpointItem {...defaultProps} />)
 
     const mainButton = getByRole('button', { name: /select endpoint/i })
-    expect(mainButton).toHaveAttribute('role', 'button')
+    // The element itself is a button, so it has implicit role="button"
+    expect(mainButton.tagName).toBe('BUTTON')
   })
 
   it('should have descriptive title attributes for visual indicators', () => {

@@ -1,124 +1,114 @@
-/**
- * ExportMenu component - dropdown menu for exporting request data
- */
-
-import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
-import type { WebhookRequest } from '@/lib/types';
-import { exportAsJSON, exportAsCurl, exportAsHTTPRaw } from '@/lib/export';
-import { Download, FileJson, Terminal, FileText } from 'lucide-react';
+import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react'
+import type { WebhookRequest } from '@/lib/types'
+import { exportAsJSON, exportAsCurl, exportAsHTTPRaw } from '@/lib/export'
+import { Download, FileJson, Terminal, FileText } from 'lucide-react'
 
 interface ExportMenuProps {
-  request: WebhookRequest;
+  request: WebhookRequest
 }
 
 export interface ExportMenuHandle {
-  copyAsCurl: () => void;
-  exportAsJson: () => void;
+  copyAsCurl: () => void
+  exportAsJson: () => void
 }
 
 export const ExportMenu = forwardRef<ExportMenuHandle, ExportMenuProps>(({ request }, ref) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const [isOpen, setIsOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
+        setIsOpen(false)
       }
-    };
+    }
 
     if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('mousedown', handleClickOutside)
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isOpen]);
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isOpen])
 
   const handleExport = async (format: 'json' | 'curl' | 'http') => {
     switch (format) {
       case 'json':
-        exportAsJSON(request);
-        break;
+        exportAsJSON(request)
+        break
       case 'curl': {
-        const curlCommand = exportAsCurl(request);
-        await navigator.clipboard.writeText(curlCommand);
+        const curlCommand = exportAsCurl(request)
+        await navigator.clipboard.writeText(curlCommand)
         // Could add a toast notification here
-        break;
+        break
       }
       case 'http': {
-        const httpRaw = exportAsHTTPRaw(request);
-        await navigator.clipboard.writeText(httpRaw);
+        const httpRaw = exportAsHTTPRaw(request)
+        await navigator.clipboard.writeText(httpRaw)
         // Could add a toast notification here
-        break;
+        break
       }
     }
-    setIsOpen(false);
-  };
+    setIsOpen(false)
+  }
 
   // Expose functions to parent via ref
   useImperativeHandle(ref, () => ({
     copyAsCurl: () => handleExport('curl'),
     exportAsJson: () => handleExport('json'),
-  }));
+  }))
 
   return (
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[var(--text-primary)] bg-[var(--background)] border border-[var(--border)] rounded hover:bg-[var(--surface)] transition-colors"
+        className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-(--text-primary) bg-(--background) border border-(--border) rounded hover:bg-(--surface) transition-colors"
       >
         <Download className="w-4 h-4" />
         Export
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-56 bg-[var(--surface)] border border-[var(--border)] rounded-lg shadow-lg z-50">
+        <div className="absolute right-0 mt-2 w-56 bg-(--surface) border border-(--border) rounded-lg shadow-lg z-50">
           <div className="py-1">
             <button
               onClick={() => handleExport('json')}
-              className="w-full flex items-center gap-3 px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--background)] transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-2 text-sm text-(--text-primary) hover:bg-(--background) transition-colors"
             >
-              <FileJson className="w-4 h-4 text-[var(--text-secondary)]" />
+              <FileJson className="w-4 h-4 text-(--text-secondary)" />
               <div className="flex-1 text-left">
                 <div className="font-medium">Export as JSON</div>
-                <div className="text-xs text-[var(--text-secondary)]">
-                  Download complete request
-                </div>
+                <div className="text-xs text-(--text-secondary)">Download complete request</div>
               </div>
             </button>
 
             <button
               onClick={() => handleExport('curl')}
-              className="w-full flex items-center gap-3 px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--background)] transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-2 text-sm text-(--text-primary) hover:bg-(--background) transition-colors"
             >
-              <Terminal className="w-4 h-4 text-[var(--text-secondary)]" />
+              <Terminal className="w-4 h-4 text-(--text-secondary)" />
               <div className="flex-1 text-left">
                 <div className="font-medium">Copy as cURL</div>
-                <div className="text-xs text-[var(--text-secondary)]">
-                  Generate curl command
-                </div>
+                <div className="text-xs text-(--text-secondary)">Generate curl command</div>
               </div>
             </button>
 
             <button
               onClick={() => handleExport('http')}
-              className="w-full flex items-center gap-3 px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--background)] transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-2 text-sm text-(--text-primary) hover:bg-(--background) transition-colors"
             >
-              <FileText className="w-4 h-4 text-[var(--text-secondary)]" />
+              <FileText className="w-4 h-4 text-(--text-secondary)" />
               <div className="flex-1 text-left">
                 <div className="font-medium">Copy as HTTP Raw</div>
-                <div className="text-xs text-[var(--text-secondary)]">
-                  Raw HTTP request format
-                </div>
+                <div className="text-xs text-(--text-secondary)">Raw HTTP request format</div>
               </div>
             </button>
           </div>
         </div>
       )}
     </div>
-  );
-});
+  )
+})
 
-ExportMenu.displayName = 'ExportMenu';
+ExportMenu.displayName = 'ExportMenu'

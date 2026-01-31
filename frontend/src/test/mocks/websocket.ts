@@ -11,6 +11,7 @@ type EventHandler = (event: Event) => void
 
 export class MockWebSocket {
   static instances: MockWebSocket[] = []
+  static autoConnect = true
 
   url: string
   readyState: number = WebSocket.CONNECTING
@@ -28,13 +29,23 @@ export class MockWebSocket {
     this.url = url
     MockWebSocket.instances.push(this)
 
-    // Simulate connection opening after a tick
-    setTimeout(() => {
-      this.readyState = WebSocket.OPEN
-      if (this.onopen) {
-        this.onopen(new Event('open'))
-      }
-    }, 0)
+    // Simulate connection opening after a tick if autoConnect is true
+    if (MockWebSocket.autoConnect) {
+      setTimeout(() => {
+        this.readyState = WebSocket.OPEN
+        if (this.onopen) {
+          this.onopen(new Event('open'))
+        }
+      }, 0)
+    }
+  }
+
+  // Helper to manually connect
+  open() {
+    this.readyState = WebSocket.OPEN
+    if (this.onopen) {
+      this.onopen(new Event('open'))
+    }
   }
 
   send(data: string | ArrayBufferLike | Blob | ArrayBufferView) {
@@ -96,8 +107,9 @@ export class MockWebSocket {
  * Setup WebSocket mock for tests
  */
 export function setupWebSocketMock() {
-  global.WebSocket = MockWebSocket as any
+  vi.stubGlobal('WebSocket', MockWebSocket)
   MockWebSocket.clearInstances()
+  MockWebSocket.autoConnect = true
 }
 
 /**

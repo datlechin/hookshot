@@ -4,8 +4,8 @@ export function LoadingFallback() {
   return (
     <div className="flex items-center justify-center h-screen">
       <div className="flex flex-col items-center gap-4">
-        <Loader2 className="w-8 h-8 animate-spin text-[var(--accent-blue)]" />
-        <p className="text-sm text-[var(--text-secondary)]">Loading...</p>
+        <Loader2 className="w-8 h-8 animate-spin text-(--accent-blue)" />
+        <p className="text-sm text-(--text-secondary)">Loading...</p>
       </div>
     </div>
   )
@@ -18,7 +18,5 @@ export function LoadingSpinner({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
     lg: 'w-8 h-8',
   }
 
-  return (
-    <Loader2 className={`animate-spin text-[var(--accent-blue)] ${sizeClasses[size]}`} />
-  )
+  return <Loader2 className={`animate-spin text-(--accent-blue) ${sizeClasses[size]}`} />
 }
