@@ -65,3 +65,41 @@ export async function copyToClipboard(text: string): Promise<boolean> {
 export function cn(...classes: (string | boolean | undefined | null)[]): string {
   return classes.filter(Boolean).join(' ')
 }
+
+/**
+ * Group requests by time periods
+ */
+export function groupRequestsByTime<T extends { received_at: string }>(
+  requests: T[]
+): { label: string; requests: T[] }[] {
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
+  const lastWeek = new Date(today)
+  lastWeek.setDate(lastWeek.getDate() - 7)
+
+  const groups: { label: string; requests: T[] }[] = [
+    { label: 'Today', requests: [] },
+    { label: 'Yesterday', requests: [] },
+    { label: 'Last 7 days', requests: [] },
+    { label: 'Older', requests: [] },
+  ]
+
+  for (const request of requests) {
+    const date = new Date(request.received_at)
+
+    if (date >= today) {
+      groups[0].requests.push(request)
+    } else if (date >= yesterday) {
+      groups[1].requests.push(request)
+    } else if (date >= lastWeek) {
+      groups[2].requests.push(request)
+    } else {
+      groups[3].requests.push(request)
+    }
+  }
+
+  // Filter out empty groups
+  return groups.filter((group) => group.requests.length > 0)
+}

@@ -1,9 +1,11 @@
 import { useState, lazy, Suspense } from 'react'
 import { useTheme } from '@/hooks'
+import { useKeyboard } from '@/hooks/useKeyboard'
 import { EndpointProvider, useSelectedEndpoint } from '@/contexts/EndpointContext'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { LoadingFallback } from '@/components/ui/Loading'
 import { Toaster } from '@/components/ui/toaster'
+import { KeyboardShortcutsModal } from '@/components/ui/KeyboardShortcutsModal'
 import type { Request } from '@/lib/types'
 
 // Lazy load layout components for better code splitting
@@ -16,12 +18,34 @@ function AppContent() {
   const { theme, toggleTheme } = useTheme()
   const { selectedEndpointId } = useSelectedEndpoint()
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null)
+  const [showShortcutsModal, setShowShortcutsModal] = useState(false)
   const [connectionStatus, setConnectionStatus] = useState<
     'connected' | 'connecting' | 'disconnected' | 'polling'
   >('disconnected')
   const handleCloseDetailPanel = () => {
     setSelectedRequest(null)
   }
+
+  // Keyboard shortcuts
+  useKeyboard([
+    {
+      key: 'Escape',
+      handler: () => {
+        if (showShortcutsModal) {
+          setShowShortcutsModal(false)
+        } else {
+          handleCloseDetailPanel()
+        }
+      },
+      description: 'Close detail panel or modal',
+    },
+    {
+      key: '?',
+      shiftKey: true,
+      handler: () => setShowShortcutsModal(true),
+      description: 'Show keyboard shortcuts',
+    },
+  ])
 
   const handleConnectionStatusChange = (
     status: 'connected' | 'connecting' | 'disconnected' | 'polling'
@@ -54,6 +78,10 @@ function AppContent() {
             />
           </div>
           <Toaster />
+          <KeyboardShortcutsModal
+            isOpen={showShortcutsModal}
+            onClose={() => setShowShortcutsModal(false)}
+          />
         </div>
       </div>
     </Suspense>
