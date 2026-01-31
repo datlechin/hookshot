@@ -33,12 +33,6 @@ function removeToast(id: string) {
 export function useToast() {
   const [state, setState] = useState<ToastData[]>(toasts);
 
-  // Subscribe to toast updates
-  const subscribe = useCallback((listener: (toasts: ToastData[]) => void) => {
-    listeners.add(listener);
-    return () => listeners.delete(listener);
-  }, []);
-
   // Keep state in sync
   if (!listeners.has(setState)) {
     listeners.add(setState);
