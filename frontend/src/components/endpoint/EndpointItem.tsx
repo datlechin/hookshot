@@ -46,8 +46,10 @@ export function EndpointItem({
     <>
       <div
         className={cn(
-          'p-3 rounded-lg cursor-pointer transition-colors group',
-          selected ? 'bg-(--surface-hover)' : 'hover:bg-(--surface-hover)'
+          'p-3 rounded-lg cursor-pointer transition-all group relative',
+          selected
+            ? 'bg-[var(--surface-hover)] border-l-4 border-[var(--accent-blue)] pl-2'
+            : 'hover:bg-[var(--surface-hover)] border-l-4 border-transparent'
         )}
         onClick={onSelect}
         role="button"

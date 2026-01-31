@@ -27,7 +27,14 @@ export function OverviewTab({ request }: OverviewTabProps) {
         <h3 className="text-sm font-semibold text-[var(--text-secondary)] mb-2">Request</h3>
         <div className="flex items-center gap-3 mb-2">
           <MethodBadge method={request.method} />
-          <code className="text-sm font-mono text-[var(--text-primary)]">{request.path}</code>
+          <code className="text-sm font-mono text-[var(--text-primary)] flex-1 min-w-0 truncate">
+            {request.path}
+          </code>
+          <CopyButton
+            text={request.path + (request.query_string ? `?${request.query_string}` : '')}
+            label=""
+            className="flex-shrink-0"
+          />
         </div>
         {request.query_string && (
           <div className="mt-2">
@@ -45,7 +52,10 @@ export function OverviewTab({ request }: OverviewTabProps) {
           <Globe className="w-4 h-4 text-[var(--text-secondary)] mt-0.5" />
           <div className="flex-1">
             <div className="text-xs text-[var(--text-secondary)] mb-1">IP Address</div>
-            <div className="text-sm font-mono text-[var(--text-primary)]">{request.ip_address}</div>
+            <div className="flex items-center gap-2">
+              <div className="text-sm font-mono text-[var(--text-primary)]">{request.ip_address}</div>
+              <CopyButton text={request.ip_address} label="" className="flex-shrink-0" />
+            </div>
           </div>
         </div>
 
@@ -53,8 +63,11 @@ export function OverviewTab({ request }: OverviewTabProps) {
           <Clock className="w-4 h-4 text-[var(--text-secondary)] mt-0.5" />
           <div className="flex-1">
             <div className="text-xs text-[var(--text-secondary)] mb-1">Timestamp</div>
-            <div className="text-sm text-[var(--text-primary)]">
-              {formatTimestamp(request.received_at)}
+            <div className="flex items-center gap-2">
+              <div className="text-sm text-[var(--text-primary)]">
+                {formatTimestamp(request.received_at)}
+              </div>
+              <CopyButton text={request.received_at} label="" className="flex-shrink-0" />
             </div>
           </div>
         </div>
@@ -63,8 +76,13 @@ export function OverviewTab({ request }: OverviewTabProps) {
           <FileText className="w-4 h-4 text-[var(--text-secondary)] mt-0.5" />
           <div className="flex-1">
             <div className="text-xs text-[var(--text-secondary)] mb-1">Content Type</div>
-            <div className="text-sm font-mono text-[var(--text-primary)]">
-              {request.content_type || 'Not specified'}
+            <div className="flex items-center gap-2">
+              <div className="text-sm font-mono text-[var(--text-primary)]">
+                {request.content_type || 'Not specified'}
+              </div>
+              {request.content_type && (
+                <CopyButton text={request.content_type} label="" className="flex-shrink-0" />
+              )}
             </div>
           </div>
         </div>
