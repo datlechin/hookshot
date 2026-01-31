@@ -147,14 +147,35 @@ jobs:
       - name: Display structure of downloaded files
         run: ls -R artifacts
 
+      - name: Generate changelog
+        id: changelog
+        uses: mikepenz/release-changelog-builder-action@v4
+        with:
+          configuration: ".github/release-changelog-config.json"
+          commitMode: true
+          fetchReviewers: true
+          fetchReleaseInformation: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Create release notes
         run: |
           cat > release-notes.md << 'EOF'
-          ## Hookshot ${{ steps.get_version.outputs.VERSION }}
+          ## 🚀 What's Changed
 
-          Self-hosted webhook testing tool built with Rust and React.
+          ${{ steps.changelog.outputs.changelog }}
 
-          ### Download
+          ---
+
+          ## 📦 Installation
+
+          ### One-line installer (macOS/Linux)
+
+          ```bash
+          curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/main/install.sh | sh
+          ```
+
+          ### Manual download
 
           Choose the binary for your platform:
 
@@ -172,7 +193,11 @@ jobs:
           ### Quick Start
 
           ```bash
-          # macOS / Linux
+          # Using installer
+          curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/main/install.sh | sh
+          hookshot
+
+          # Manual install (macOS / Linux)
           tar -xzf hookshot-*.tar.gz
           chmod +x hookshot-*
           ./hookshot-*
@@ -195,9 +220,9 @@ jobs:
           certutil -hashfile hookshot-*.zip SHA256
           ```
 
-          ### What's New
+          ---
 
-          See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/${{ steps.get_version.outputs.VERSION }}/CHANGELOG.md) for full details.
+          **Full Changelog**: https://github.com/${{ github.repository }}/compare/...HEAD
           EOF
 
       - name: Create GitHub Release

@@ -67,15 +67,38 @@ Be respectful, inclusive, and collaborative. We're all here to build something g
 
 ### Commit Message Guidelines
 
-Follow conventional commit format:
+We use [Conventional Commits](https://www.conventionalcommits.org/) format for automatic changelog generation.
 
-- `feat: Add new feature`
-- `fix: Fix bug in component`
-- `docs: Update documentation`
-- `test: Add tests for feature`
-- `refactor: Refactor code`
-- `style: Format code`
-- `chore: Update dependencies`
+**Format:** `<type>: <description>`
+
+**Types:**
+- `feat:` - New feature (appears in changelog under "🎉 New Features")
+- `fix:` - Bug fix (appears in changelog under "🐛 Bug Fixes")
+- `docs:` - Documentation changes (appears under "📚 Documentation")
+- `perf:` - Performance improvements (appears under "⚡ Performance")
+- `security:` - Security fixes (appears under "🔒 Security")
+- `chore:` - Maintenance tasks (appears under "🔧 Maintenance")
+- `refactor:` - Code refactoring (appears under "🔧 Maintenance")
+- `test:` - Adding or updating tests
+- `style:` - Code formatting (no functional changes)
+
+**Examples:**
+```bash
+feat: Add WebSocket support for real-time updates
+fix: Resolve memory leak in request handler
+docs: Update installation instructions
+perf: Optimize database queries for large datasets
+security: Sanitize user input to prevent XSS
+chore: Update dependencies to latest versions
+```
+
+**Tips:**
+- Use present tense ("Add feature" not "Added feature")
+- Keep first line under 72 characters
+- Reference issues when applicable (`fix: #123 - Resolve connection timeout`)
+- Add detailed description in commit body if needed
+
+Your commit messages directly affect the automatically generated changelog!
 
 ### Submitting Changes
 

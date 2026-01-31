@@ -23,18 +23,30 @@ A self-hosted webhook testing tool built with Rust and React - like webhook.site
 
 ## Quick Start
 
-### Download and Run
+### One-line Install (macOS / Linux)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/datlechin/hookshot/main/install.sh | sh
+```
+
+Then run:
+```bash
+hookshot
+```
+
+### Manual Install
 
 1. Download the latest release for your platform from [Releases](https://github.com/datlechin/hookshot/releases)
 
-2. Run the binary:
+2. Extract and run the binary:
    ```bash
    # macOS / Linux
+   tar -xzf hookshot-*.tar.gz
    chmod +x hookshot-*
    ./hookshot-*
 
    # Windows
-   hookshot-*.exe
+   # Extract the ZIP file and run hookshot-*.exe
    ```
 
 3. Open your browser to `http://localhost:3000`
@@ -151,25 +163,47 @@ The release build:
 
 ## Configuration
 
-Hookshot can be configured via environment variables:
+### Command-line Options
+
+```bash
+hookshot --help
+```
+
+| Option | Short | Default | Description |
+|--------|-------|---------|-------------|
+| `--host` | `-H` | `127.0.0.1` | Host address to bind to |
+| `--port` | `-p` | `3000` | Port to listen on |
+| `--database-url` | `-d` | `sqlite:./hookshot.db` | SQLite database file path |
+
+### Environment Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `DATABASE_URL` | `sqlite:./hookshot.db` | SQLite database file path |
+| `DATABASE_URL` | `sqlite:./hookshot.db` | SQLite database file path (overridden by `--database-url`) |
 | `RUST_LOG` | `hookshot=debug,tower_http=debug` | Logging level |
 | `FORCE_FRONTEND_BUILD` | (unset) | Force frontend rebuild in dev mode (set to `1`) |
+| `SKIP_FRONTEND_BUILD` | (unset) | Skip frontend build entirely (set to `1`) |
 
 ### Examples
 
 ```bash
+# Use custom port
+hookshot --port 8080
+
+# Bind to all interfaces
+hookshot --host 0.0.0.0 --port 3000
+
 # Use custom database location
-DATABASE_URL=sqlite:./data/webhooks.db ./hookshot
+hookshot --database-url sqlite:./data/webhooks.db
+
+# Or with environment variable
+DATABASE_URL=sqlite:./data/webhooks.db hookshot
 
 # Enable verbose logging
-RUST_LOG=debug ./hookshot
+RUST_LOG=debug hookshot
 
 # Minimal logging
-RUST_LOG=info ./hookshot
+RUST_LOG=info hookshot
 ```
 
 ## Architecture
