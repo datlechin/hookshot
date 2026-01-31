@@ -16,6 +16,7 @@ interface EndpointItemProps {
   onSelect: () => void
   onDelete: () => void
   onConfigure: () => void
+  requestCount?: number
 }
 
 export function EndpointItem({
@@ -24,6 +25,7 @@ export function EndpointItem({
   onSelect,
   onDelete,
   onConfigure,
+  requestCount = 0,
 }: EndpointItemProps) {
   const [showConfirm, setShowConfirm] = useState(false)
 
@@ -64,27 +66,37 @@ export function EndpointItem({
       >
         <div className="flex items-start justify-between mb-2">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <p className="text-sm font-mono text-(--text-primary) truncate">{endpoint.id}</p>
+            <div className="flex items-center gap-2 mb-1">
+              <p className="text-sm font-mono text-[var(--text-primary)] truncate">{endpoint.id}</p>
               {endpoint.custom_response_enabled && (
                 <span
-                  className="flex-shrink-0 w-2 h-2 bg-(--accent-green) rounded-full"
+                  className="flex-shrink-0 w-2 h-2 bg-[var(--accent-green)] rounded-full"
                   title="Custom response enabled"
                 />
               )}
             </div>
-            <p className="text-xs text-(--text-tertiary) mt-1">
-              {new Date(endpoint.created_at).toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-              })}
-            </p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="text-xs text-[var(--text-tertiary)]">
+                {new Date(endpoint.created_at).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric',
+                })}
+              </p>
+              {requestCount > 0 && (
+                <>
+                  <span className="text-xs text-[var(--text-tertiary)]">•</span>
+                  <span className="text-xs px-1.5 py-0.5 bg-[var(--accent-blue)]/10 text-[var(--accent-blue)] rounded font-medium">
+                    {requestCount} {requestCount === 1 ? 'request' : 'requests'}
+                  </span>
+                </>
+              )}
+            </div>
           </div>
           <div className="flex gap-1 ml-2">
             <button
               onClick={handleConfigure}
-              className="text-(--text-tertiary) hover:text-(--accent-blue) transition-colors opacity-0 group-hover:opacity-100"
+              className="text-[var(--text-tertiary)] hover:text-[var(--accent-blue)] transition-colors opacity-0 group-hover:opacity-100"
               title="Configure response"
               aria-label="Configure response"
             >
@@ -92,7 +104,7 @@ export function EndpointItem({
             </button>
             <button
               onClick={handleDelete}
-              className="text-(--text-tertiary) hover:text-(--accent-red) transition-colors opacity-0 group-hover:opacity-100"
+              className="text-[var(--text-tertiary)] hover:text-[var(--accent-red)] transition-colors opacity-0 group-hover:opacity-100"
               title="Delete endpoint"
               aria-label="Delete endpoint"
             >

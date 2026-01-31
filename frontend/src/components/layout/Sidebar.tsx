@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Webhook, Loader2 } from 'lucide-react'
 import { useEndpoints } from '@/hooks'
 import { useSelectedEndpoint } from '@/contexts/EndpointContext'
@@ -6,6 +6,7 @@ import { EmptyState, Button } from '@/components/ui'
 import { LoadingSpinner } from '@/components/ui/Loading'
 import { EndpointItem, EndpointConfig } from '@/components/endpoint'
 import { useToast } from '@/hooks/useToast'
+import { api } from '@/lib/api'
 import type { Endpoint, EndpointConfig as Config } from '@/lib/types'
 
 /**
@@ -24,7 +25,29 @@ export function Sidebar() {
   const { selectedEndpointId, setSelectedEndpointId } = useSelectedEndpoint()
   const [configuringEndpoint, setConfiguringEndpoint] = useState<Endpoint | null>(null)
   const [creating, setCreating] = useState(false)
+  const [requestCounts, setRequestCounts] = useState<Record<string, number>>({})
   const { success, error: showError } = useToast()
+
+  // Fetch request counts for all endpoints
+  useEffect(() => {
+    async function fetchRequestCounts() {
+      const counts: Record<string, number> = {}
+      for (const endpoint of endpoints) {
+        try {
+          const requests = await api.requests.list(endpoint.id)
+          counts[endpoint.id] = requests.length
+        } catch (err) {
+          console.error(`Failed to fetch request count for ${endpoint.id}:`, err)
+          counts[endpoint.id] = 0
+        }
+      }
+      setRequestCounts(counts)
+    }
+
+    if (endpoints.length > 0) {
+      fetchRequestCounts()
+    }
+  }, [endpoints])
 
   async function handleCreateEndpoint() {
     setCreating(true)
@@ -108,6 +131,7 @@ export function Sidebar() {
                 onSelect={() => setSelectedEndpointId(endpoint.id)}
                 onDelete={() => handleDeleteEndpoint(endpoint.id)}
                 onConfigure={() => setConfiguringEndpoint(endpoint)}
+                requestCount={requestCounts[endpoint.id] || 0}
               />
             ))}
           </div>

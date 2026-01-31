@@ -11,9 +11,13 @@ interface RequestItemProps {
 
 /**
  * RequestItem - Individual request in the list
- * Shows method badge, path, timestamp, and IP address
+ * Shows method badge, path, timestamp, IP address, and body preview
  */
 export function RequestItem({ request, onClick, isSelected = false, isNew = false }: RequestItemProps) {
+  const bodyPreview = request.body
+    ? request.body.substring(0, 50).replace(/\n/g, ' ')
+    : null;
+
   return (
     <div
       onClick={onClick}
@@ -21,7 +25,7 @@ export function RequestItem({ request, onClick, isSelected = false, isNew = fals
         isSelected ? 'bg-[var(--surface)]' : ''
       } ${isNew ? 'animate-pulse-subtle bg-[var(--accent-blue)]/10' : ''}`}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-start gap-3">
         <MethodBadge method={request.method} />
         <div className="flex-1 min-w-0">
           <p className="text-sm text-[var(--text-primary)] truncate font-mono">
@@ -30,11 +34,24 @@ export function RequestItem({ request, onClick, isSelected = false, isNew = fals
               <span className="text-[var(--text-tertiary)]">?{request.query_string}</span>
             )}
           </p>
-          <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-            <RelativeTimestamp date={request.received_at} />
-          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-xs text-[var(--text-secondary)]">
+              <RelativeTimestamp date={request.received_at} />
+            </p>
+            {request.content_type && (
+              <span className="text-xs px-1.5 py-0.5 bg-[var(--surface-hover)] border border-[var(--border)] rounded text-[var(--text-tertiary)] font-mono">
+                {request.content_type.split(';')[0]}
+              </span>
+            )}
+          </div>
+          {bodyPreview && (
+            <p className="text-xs text-[var(--text-tertiary)] mt-1 truncate font-mono">
+              {bodyPreview}
+              {request.body && request.body.length > 50 && '...'}
+            </p>
+          )}
         </div>
-        <p className="text-xs text-[var(--text-tertiary)] font-mono">{request.ip_address}</p>
+        <p className="text-xs text-[var(--text-tertiary)] font-mono flex-shrink-0">{request.ip_address}</p>
       </div>
     </div>
   );
