@@ -172,11 +172,12 @@ export function EndpointConfig({ endpoint, onSave, onCancel }: EndpointConfigPro
 
       const config: Config = {
         enabled,
-        status: parseInt(statusCode),
+        status: parseInt(statusCode) || 200,
         headers: Object.keys(headersObj).length > 0 ? JSON.stringify(headersObj) : undefined,
         body: body.trim() || undefined,
       }
 
+      console.log('Sending config:', JSON.stringify(config, null, 2))
       await onSave(config)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to save configuration'
