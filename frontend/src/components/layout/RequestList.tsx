@@ -6,6 +6,7 @@ import { RequestFilters } from '@/components/request/RequestFilters'
 import { RequestSearch } from '@/components/request/RequestSearch'
 import { VirtualRequestList } from '@/components/request/VirtualRequestList'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { RequestListSkeleton } from '@/components/ui/Skeleton'
 
 interface RequestListProps {
   selectedEndpointId: string | null
@@ -126,9 +127,7 @@ export function RequestList({
       {/* Scrollable list area */}
       <div className="flex-1 overflow-hidden">
         {loading ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-(--text-secondary)">Loading requests...</div>
-          </div>
+          <RequestListSkeleton />
         ) : !selectedEndpointId ? (
           <EmptyState
             icon={<Inbox className="w-16 h-16" />}

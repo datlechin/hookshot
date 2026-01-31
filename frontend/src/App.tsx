@@ -1,8 +1,16 @@
-import { useState } from 'react'
+import { useState, lazy, Suspense } from 'react'
 import { useTheme } from '@/hooks'
-import { Header, Sidebar, RequestList, DetailPanel } from '@/components/layout'
 import { EndpointProvider, useSelectedEndpoint } from '@/contexts/EndpointContext'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { LoadingFallback } from '@/components/ui/Loading'
+import { Toaster } from '@/components/ui/toaster'
 import type { Request } from '@/lib/types'
+
+// Lazy load layout components for better code splitting
+const Header = lazy(() => import('@/components/layout/Header').then(module => ({ default: module.Header })))
+const Sidebar = lazy(() => import('@/components/layout/Sidebar').then(module => ({ default: module.Sidebar })))
+const RequestList = lazy(() => import('@/components/layout/RequestList').then(module => ({ default: module.RequestList })))
+const DetailPanel = lazy(() => import('@/components/layout/DetailPanel').then(module => ({ default: module.DetailPanel })))
 
 function AppContent() {
   const { theme, toggleTheme } = useTheme()
@@ -26,33 +34,38 @@ function AppContent() {
   }
 
   return (
-    <div className={theme}>
-      <div className="min-h-screen bg-[var(--background)] text-[var(--text-primary)]">
-        <Header theme={theme} onToggleTheme={toggleTheme} connectionStatus={connectionStatus} />
+    <Suspense fallback={<LoadingFallback />}>
+      <div className={theme}>
+        <div className="min-h-screen bg-[var(--background)] text-[var(--text-primary)]">
+          <Header theme={theme} onToggleTheme={toggleTheme} connectionStatus={connectionStatus} />
 
-        {/* Main 3-panel layout - offset by header height (64px) */}
-        <div className="flex h-[calc(100vh-64px)] pt-16">
-          <Sidebar />
-          <RequestList
-            selectedEndpointId={selectedEndpointId}
-            onConnectionStatusChange={handleConnectionStatusChange}
-            onRequestSelect={handleRequestSelect}
-          />
-          <DetailPanel
-            isOpen={!!selectedRequest}
-            onClose={handleCloseDetailPanel}
-            selectedRequest={selectedRequest}
-          />
+          {/* Main 3-panel layout - offset by header height (64px) */}
+          <div className="flex h-[calc(100vh-64px)] pt-16">
+            <Sidebar />
+            <RequestList
+              selectedEndpointId={selectedEndpointId}
+              onConnectionStatusChange={handleConnectionStatusChange}
+              onRequestSelect={handleRequestSelect}
+            />
+            <DetailPanel
+              isOpen={!!selectedRequest}
+              onClose={handleCloseDetailPanel}
+              selectedRequest={selectedRequest}
+            />
+          </div>
+          <Toaster />
         </div>
       </div>
-    </div>
+    </Suspense>
   )
 }
 
 export default function App() {
   return (
-    <EndpointProvider>
-      <AppContent />
-    </EndpointProvider>
+    <ErrorBoundary>
+      <EndpointProvider>
+        <AppContent />
+      </EndpointProvider>
+    </ErrorBoundary>
   )
 }
