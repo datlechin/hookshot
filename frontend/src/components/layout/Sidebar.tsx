@@ -10,15 +10,11 @@ import { api } from '@/lib/api'
 import type { Endpoint, EndpointConfig as Config } from '@/lib/types'
 import type { SidebarHandle } from '@/App'
 
-interface SidebarProps {
-  // No props currently needed
-}
-
 /**
  * Sidebar component for displaying endpoint list
  * Width: 280px, always visible
  */
-export const Sidebar = forwardRef<SidebarHandle, SidebarProps>((_, ref) => {
+export const Sidebar = forwardRef<SidebarHandle>((_, ref) => {
   const { endpoints, loading, error, deleteEndpoint, createEndpoint, updateConfig } = useEndpoints()
   const { selectedEndpointId, setSelectedEndpointId } = useSelectedEndpoint()
   const [configuringEndpoint, setConfiguringEndpoint] = useState<Endpoint | null>(null)
