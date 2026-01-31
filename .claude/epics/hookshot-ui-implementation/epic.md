@@ -1,9 +1,9 @@
 ---
 name: hookshot-ui-implementation
-status: backlog
+status: in-progress
 created: 2026-01-30T07:59:43Z
-updated: 2026-01-30T08:27:22Z
-progress: 0%
+updated: 2026-01-31T08:44:20Z
+progress: 56%
 prd: .claude/prds/hookshot-ui-implementation.md
 github: https://github.com/datlechin/hookshot/issues/23
 ---
