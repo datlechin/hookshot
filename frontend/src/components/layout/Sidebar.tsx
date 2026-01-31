@@ -9,11 +9,16 @@ import { useToast } from '@/hooks/useToast'
 import { api } from '@/lib/api'
 import type { Endpoint, EndpointConfig as Config } from '@/lib/types'
 
+interface SidebarProps {
+  isOpen?: boolean
+  onClose?: () => void
+}
+
 /**
  * Sidebar component for displaying endpoint list
- * Width: 280px on desktop, collapsible on tablet, hidden on mobile
+ * Width: 280px on desktop, collapsible on tablet, overlay on mobile
  */
-export function Sidebar() {
+export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
   const {
     endpoints,
     loading,
@@ -85,16 +90,58 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="hidden lg:block w-[280px] bg-[var(--surface)] border-r border-[var(--border)] overflow-y-auto flex flex-col">
-      <div className="p-4 border-b border-[var(--border)]">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wide">
-            Endpoints
-          </h2>
-          <Button variant="primary" size="sm" onClick={handleCreateEndpoint} disabled={creating}>
-            {creating ? <LoadingSpinner size="sm" /> : 'New'}
-          </Button>
-        </div>
+    <>
+      {/* Mobile overlay */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={`
+          fixed lg:relative inset-y-0 left-0 z-40 lg:z-0
+          w-[280px] bg-[var(--surface)] border-r border-[var(--border)]
+          overflow-y-auto flex flex-col
+          transition-transform duration-300 ease-in-out
+          lg:translate-x-0
+          ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+        `}
+      >
+        <div className="p-4 border-b border-[var(--border)]">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wide">
+              Endpoints
+            </h2>
+            <div className="flex items-center gap-2">
+              <Button variant="primary" size="sm" onClick={handleCreateEndpoint} disabled={creating}>
+                {creating ? <LoadingSpinner size="sm" /> : 'New'}
+              </Button>
+              {/* Close button for mobile */}
+              <button
+                onClick={onClose}
+                className="lg:hidden text-[var(--text-secondary)] hover:text-[var(--text-primary)] p-1"
+                aria-label="Close sidebar"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
 
         {error && (
           <div className="mb-4 p-2 bg-[var(--accent-red)]/10 border border-[var(--accent-red)] rounded text-xs text-[var(--accent-red)]">
@@ -147,5 +194,6 @@ export function Sidebar() {
         )}
       </div>
     </aside>
+    </>
   )
 }

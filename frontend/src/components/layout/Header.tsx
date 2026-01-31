@@ -1,4 +1,4 @@
-import { Moon, Sun, Plus } from 'lucide-react'
+import { Moon, Sun, Menu } from 'lucide-react'
 import { Button } from '@/components/ui'
 import type { Theme } from '@/hooks/useTheme'
 
@@ -6,6 +6,7 @@ interface HeaderProps {
   theme: Theme
   onToggleTheme: () => void
   onCreateEndpoint?: () => void
+  onToggleSidebar?: () => void
   connectionStatus?: 'connected' | 'connecting' | 'disconnected' | 'polling'
 }
 
@@ -13,28 +14,29 @@ export function Header({
   theme,
   onToggleTheme,
   onCreateEndpoint,
+  onToggleSidebar,
   connectionStatus = 'disconnected',
 }: HeaderProps) {
   return (
     <header className="fixed top-0 left-0 right-0 h-16 bg-(--surface) border-b border-(--border) z-50">
       <div className="flex items-center justify-between h-full px-4">
-        {' '}
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-(--accent-blue) rounded-lg flex items-center justify-center">
+          {/* Mobile menu button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onToggleSidebar}
+            className="lg:hidden -ml-2"
+            aria-label="Toggle sidebar"
+          >
+            <Menu className="w-5 h-5" />
+          </Button>
+          <div className="w-8 h-8 bg-[var(--accent-blue)] rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-xl">H</span>
           </div>
-          <h1 className="text-xl font-bold text-(--text-primary)">Hookshot</h1>
-        </div>{' '}
+          <h1 className="text-xl font-bold text-[var(--text-primary)]">Hookshot</h1>
+        </div>
         <div className="flex items-center space-x-2">
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={onCreateEndpoint}
-            className="sm:hidden"
-            aria-label="Create endpoint"
-          >
-            <Plus className="w-4 h-4" />
-          </Button>{' '}
           {connectionStatus !== 'disconnected' && (
             <div
               className={`hidden md:flex items-center space-x-2 px-3 py-1 rounded-full ${

@@ -19,11 +19,15 @@ function AppContent() {
   const { selectedEndpointId } = useSelectedEndpoint()
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null)
   const [showShortcutsModal, setShowShortcutsModal] = useState(false)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [connectionStatus, setConnectionStatus] = useState<
     'connected' | 'connecting' | 'disconnected' | 'polling'
   >('disconnected')
   const handleCloseDetailPanel = () => {
     setSelectedRequest(null)
+  }
+  const handleToggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen)
   }
 
   // Keyboard shortcuts
@@ -61,11 +65,16 @@ function AppContent() {
     <Suspense fallback={<LoadingFallback />}>
       <div className={theme}>
         <div className="min-h-screen bg-[var(--background)] text-[var(--text-primary)]">
-          <Header theme={theme} onToggleTheme={toggleTheme} connectionStatus={connectionStatus} />
+          <Header
+            theme={theme}
+            onToggleTheme={toggleTheme}
+            connectionStatus={connectionStatus}
+            onToggleSidebar={handleToggleSidebar}
+          />
 
           {/* Main 3-panel layout - offset by header height (64px) */}
           <div className="flex h-[calc(100vh-64px)] pt-16">
-            <Sidebar />
+            <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
             <RequestList
               selectedEndpointId={selectedEndpointId}
               onConnectionStatusChange={handleConnectionStatusChange}
