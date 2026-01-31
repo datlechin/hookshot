@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react'
 import { X, Plus, Trash2 } from 'lucide-react'
 import { Button, Input, Textarea, Select, Checkbox } from '@/components/ui'
 import { validateStatusCode, validateJSON, validateHeaderName } from '@/lib/validation'
+import { animations } from '@/lib/transitions'
 import type { Endpoint, EndpointConfig as Config } from '@/lib/types'
 
 interface EndpointConfigProps {
@@ -196,14 +197,14 @@ export function EndpointConfig({ endpoint, onSave, onCancel }: EndpointConfigPro
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      className={`fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 ${animations.fadeIn}`}
       onClick={onCancel}
       role="dialog"
       aria-modal="true"
       aria-labelledby="config-title"
     >
       <div
-        className="bg-[var(--surface)] rounded-lg max-w-2xl w-full max-h-[90vh] flex flex-col shadow-xl"
+        className={`bg-[var(--surface)] rounded-lg max-w-2xl w-full max-h-[90vh] flex flex-col shadow-xl ${animations.fadeIn}`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
