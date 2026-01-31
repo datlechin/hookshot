@@ -2,6 +2,7 @@ import { useState, lazy, Suspense } from 'react'
 import { useTheme } from '@/hooks'
 import { EndpointProvider, useSelectedEndpoint } from '@/contexts/EndpointContext'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { Toaster } from '@/components/ui/toaster'
 import type { Request } from '@/lib/types'
 
 // Lazy load layout components for better code splitting
@@ -63,6 +64,7 @@ function AppContent() {
               selectedRequest={selectedRequest}
             />
           </div>
+          <Toaster />
         </div>
       </div>
     </Suspense>
