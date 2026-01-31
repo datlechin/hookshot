@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, FileText } from 'lucide-react';
 import { Button, MethodBadge, Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { DetailPanelSkeleton } from '@/components/ui/Skeleton';
 import type { WebhookRequest } from '@/lib/types';
 import { OverviewTab } from '@/components/detail/OverviewTab';
 import { HeadersTab } from '@/components/detail/HeadersTab';
@@ -13,6 +14,7 @@ interface DetailPanelProps {
   isOpen?: boolean;
   onClose?: () => void;
   selectedRequest?: WebhookRequest | null;
+  loading?: boolean;
 }
 
 /**
@@ -20,7 +22,7 @@ interface DetailPanelProps {
  * Width: 480px on desktop, full width on mobile
  * Collapsible/closable with X button and ESC key
  */
-export function DetailPanel({ isOpen = false, onClose, selectedRequest = null }: DetailPanelProps) {
+export function DetailPanel({ isOpen = false, onClose, selectedRequest = null, loading = false }: DetailPanelProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'headers' | 'body' | 'metadata'>('overview');
 
   // Handle ESC key to close panel
@@ -48,7 +50,23 @@ export function DetailPanel({ isOpen = false, onClose, selectedRequest = null }:
 
   return (
     <aside className="fixed inset-0 lg:relative lg:inset-auto w-full lg:w-[480px] bg-[var(--surface)] border-l border-[var(--border)] flex flex-col overflow-hidden z-40">
-      {selectedRequest ? (
+      {loading ? (
+        <>
+          {/* Header with close button */}
+          <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-[var(--border)]">
+            <h2 className="text-lg font-semibold text-[var(--text-primary)]">Request Details</h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              aria-label="Close detail panel"
+            >
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
+          <DetailPanelSkeleton />
+        </>
+      ) : selectedRequest ? (
         <>
           {/* Header with request info and actions */}
           <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-[var(--border)]">
