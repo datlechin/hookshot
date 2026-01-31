@@ -1,12 +1,13 @@
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useState, useMemo, useEffect, useRef, forwardRef, useImperativeHandle } from 'react'
 import { Inbox } from 'lucide-react'
 import { useRequests, useWebSocket } from '@/hooks'
 import type { HttpMethod, Request } from '@/lib/types'
 import { RequestFilters } from '@/components/request/RequestFilters'
-import { RequestSearch } from '@/components/request/RequestSearch'
+import { RequestSearch, type RequestSearchHandle } from '@/components/request/RequestSearch'
 import { VirtualRequestList } from '@/components/request/VirtualRequestList'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { RequestListSkeleton } from '@/components/ui/Skeleton'
+import type { RequestListHandle } from '@/App'
 
 interface RequestListProps {
   selectedEndpointId: string | null
@@ -16,16 +17,17 @@ interface RequestListProps {
   onRequestSelect?: (request: Request) => void
 }
 
-export function RequestList({
+export const RequestList = forwardRef<RequestListHandle, RequestListProps>(({
   selectedEndpointId,
   onConnectionStatusChange,
   onRequestSelect,
-}: RequestListProps) {
+}, ref) => {
   const { requests, loading, addRequest } = useRequests(selectedEndpointId)
   const { lastMessage, connected, usingPolling } = useWebSocket(selectedEndpointId)
 
   const [newRequestIds, setNewRequestIds] = useState<Set<number>>(new Set())
   const timeoutRefs = useRef<Map<number, number>>(new Map())
+  const searchRef = useRef<RequestSearchHandle>(null)
 
   const [selectedMethods, setSelectedMethods] = useState<HttpMethod[]>([])
   const [searchQuery, setSearchQuery] = useState('')
@@ -102,6 +104,13 @@ export function RequestList({
     onRequestSelect?.(request)
   }
 
+  // Expose functions to parent via ref
+  useImperativeHandle(ref, () => ({
+    focusSearch: () => {
+      searchRef.current?.focus()
+    },
+  }))
+
   return (
     <main className="flex-1 min-w-0 flex flex-col bg-(--background)">
       {/* Header with filters and search */}
@@ -158,7 +167,7 @@ export function RequestList({
         <RequestFilters selectedMethods={selectedMethods} onMethodsChange={setSelectedMethods} />
 
         {/* Search bar */}
-        <RequestSearch value={searchQuery} onChange={setSearchQuery} />
+        <RequestSearch ref={searchRef} value={searchQuery} onChange={setSearchQuery} />
       </div>
 
       {/* Scrollable list area */}
@@ -182,4 +191,6 @@ export function RequestList({
       </div>
     </main>
   )
-}
+})
+
+RequestList.displayName = 'RequestList'

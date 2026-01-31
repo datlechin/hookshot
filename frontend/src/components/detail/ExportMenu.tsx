@@ -2,7 +2,7 @@
  * ExportMenu component - dropdown menu for exporting request data
  */
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import type { WebhookRequest } from '@/lib/types';
 import { exportAsJSON, exportAsCurl, exportAsHTTPRaw } from '@/lib/export';
 import { Download, FileJson, Terminal, FileText } from 'lucide-react';
@@ -11,7 +11,12 @@ interface ExportMenuProps {
   request: WebhookRequest;
 }
 
-export function ExportMenu({ request }: ExportMenuProps) {
+export interface ExportMenuHandle {
+  copyAsCurl: () => void;
+  exportAsJson: () => void;
+}
+
+export const ExportMenu = forwardRef<ExportMenuHandle, ExportMenuProps>(({ request }, ref) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -51,6 +56,12 @@ export function ExportMenu({ request }: ExportMenuProps) {
     }
     setIsOpen(false);
   };
+
+  // Expose functions to parent via ref
+  useImperativeHandle(ref, () => ({
+    copyAsCurl: () => handleExport('curl'),
+    exportAsJson: () => handleExport('json'),
+  }));
 
   return (
     <div className="relative" ref={menuRef}>
@@ -108,4 +119,6 @@ export function ExportMenu({ request }: ExportMenuProps) {
       )}
     </div>
   );
-}
+});
+
+ExportMenu.displayName = 'ExportMenu';

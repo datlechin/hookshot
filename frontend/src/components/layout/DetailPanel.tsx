@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import { X, FileText } from 'lucide-react';
 import { Button, MethodBadge, Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -8,8 +8,9 @@ import { OverviewTab } from '@/components/detail/OverviewTab';
 import { HeadersTab } from '@/components/detail/HeadersTab';
 import { BodyTab } from '@/components/detail/BodyTab';
 import { MetadataTab } from '@/components/detail/MetadataTab';
-import { ExportMenu } from '@/components/detail/ExportMenu';
+import { ExportMenu, type ExportMenuHandle } from '@/components/detail/ExportMenu';
 import { animations } from '@/lib/transitions';
+import type { DetailPanelHandle } from '@/App';
 
 interface DetailPanelProps {
   isOpen?: boolean;
@@ -23,8 +24,9 @@ interface DetailPanelProps {
  * Width: 480px on desktop, full width on mobile
  * Collapsible/closable with X button and ESC key
  */
-export function DetailPanel({ isOpen = false, onClose, selectedRequest = null, loading = false }: DetailPanelProps) {
+export const DetailPanel = forwardRef<DetailPanelHandle, DetailPanelProps>(({ isOpen = false, onClose, selectedRequest = null, loading = false }, ref) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'headers' | 'body' | 'metadata'>('overview');
+  const exportMenuRef = useRef<ExportMenuHandle>(null);
 
   // Handle ESC key to close panel
   useEffect(() => {
@@ -44,6 +46,16 @@ export function DetailPanel({ isOpen = false, onClose, selectedRequest = null, l
       setActiveTab('overview');
     }
   }, [selectedRequest]);
+
+  // Expose functions to parent via ref
+  useImperativeHandle(ref, () => ({
+    copyAsCurl: () => {
+      exportMenuRef.current?.copyAsCurl();
+    },
+    exportRequest: () => {
+      exportMenuRef.current?.exportAsJson();
+    },
+  }));
 
   if (!isOpen) {
     return null;
@@ -83,7 +95,7 @@ export function DetailPanel({ isOpen = false, onClose, selectedRequest = null, l
               </div>
             </div>
             <div className="flex items-center gap-1">
-              <ExportMenu request={selectedRequest} />
+              <ExportMenu ref={exportMenuRef} request={selectedRequest} />
               <Button
                 variant="ghost"
                 size="sm"
@@ -150,4 +162,6 @@ export function DetailPanel({ isOpen = false, onClose, selectedRequest = null, l
       )}
     </aside>
   );
-}
+});
+
+DetailPanel.displayName = 'DetailPanel';

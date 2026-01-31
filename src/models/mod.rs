@@ -36,14 +36,6 @@ pub struct CreateEndpointResponse {
     pub id: String,
 }
 
-/// Summary endpoint data for list view
-#[derive(Debug, Serialize, Deserialize, FromRow)]
-pub struct EndpointSummary {
-    pub id: String,
-    pub created_at: String,
-    pub request_count: i32,
-}
-
 /// Query parameters for GET /api/endpoints/:id/requests
 #[derive(Debug, Deserialize)]
 pub struct RequestQueryParams {
