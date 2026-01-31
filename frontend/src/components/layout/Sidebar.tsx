@@ -3,6 +3,7 @@ import { Webhook, Loader2 } from 'lucide-react'
 import { useEndpoints } from '@/hooks'
 import { useSelectedEndpoint } from '@/contexts/EndpointContext'
 import { EmptyState, Button } from '@/components/ui'
+import { LoadingSpinner } from '@/components/ui/Loading'
 import { EndpointItem, EndpointConfig } from '@/components/endpoint'
 import type { Endpoint, EndpointConfig as Config } from '@/lib/types'
 
@@ -21,9 +22,15 @@ export function Sidebar() {
   } = useEndpoints()
   const { selectedEndpointId, setSelectedEndpointId } = useSelectedEndpoint()
   const [configuringEndpoint, setConfiguringEndpoint] = useState<Endpoint | null>(null)
+  const [creating, setCreating] = useState(false)
 
   async function handleCreateEndpoint() {
-    await createEndpoint()
+    setCreating(true)
+    try {
+      await createEndpoint()
+    } finally {
+      setCreating(false)
+    }
   }
 
   async function handleDeleteEndpoint(id: string) {
@@ -43,8 +50,8 @@ export function Sidebar() {
           <h2 className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wide">
             Endpoints
           </h2>
-          <Button variant="primary" size="sm" onClick={handleCreateEndpoint}>
-            New
+          <Button variant="primary" size="sm" onClick={handleCreateEndpoint} disabled={creating}>
+            {creating ? <LoadingSpinner size="sm" /> : 'New'}
           </Button>
         </div>
 
