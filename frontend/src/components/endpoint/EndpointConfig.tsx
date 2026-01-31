@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { X, Plus, Trash2 } from 'lucide-react'
 import { Button, Input, Textarea, Select, Checkbox } from '@/components/ui'
 import { validateStatusCode, validateJSON, validateHeaderName } from '@/lib/validation'
@@ -195,7 +196,7 @@ export function EndpointConfig({ endpoint, onSave, onCancel }: EndpointConfigPro
     return () => document.removeEventListener('keydown', handleEscape)
   }, [onCancel])
 
-  return (
+  return createPortal(
     <div
       className={`fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 ${animations.fadeIn}`}
       onClick={onCancel}
@@ -409,6 +410,7 @@ export function EndpointConfig({ endpoint, onSave, onCancel }: EndpointConfigPro
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

@@ -50,7 +50,7 @@ export function DetailPanel({ isOpen = false, onClose, selectedRequest = null, l
   }
 
   return (
-    <aside className={`fixed inset-0 lg:relative lg:inset-auto w-full lg:w-[480px] bg-[var(--surface)] border-l border-[var(--border)] flex flex-col overflow-hidden z-40 ${animations.slideIn}`}>
+    <aside className={`fixed inset-0 lg:relative lg:inset-auto w-full lg:w-[480px] bg-[var(--surface)] border-l border-[var(--border)] flex flex-col z-40 ${animations.slideIn}`}>
       {loading ? (
         <>
           {/* Header with close button */}
@@ -96,8 +96,8 @@ export function DetailPanel({ isOpen = false, onClose, selectedRequest = null, l
           </div>
 
           {/* Tabbed interface */}
-          <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as typeof activeTab)}>
-            <TabsList>
+          <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as typeof activeTab)} className="flex flex-col flex-1 overflow-hidden">
+            <TabsList className="flex-shrink-0">
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="headers">
                 Headers ({Object.keys(selectedRequest.headers).length})
