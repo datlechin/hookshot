@@ -12,7 +12,10 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage"
+    "test:coverage": "vitest --coverage",
+    "ci:test": "vitest run",
+    "ci:lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "ci:typecheck": "tsc -b --noEmit"
   },
   "dependencies": {
     "@tanstack/react-virtual": "^3.13.18",
