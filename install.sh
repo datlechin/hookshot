@@ -2,18 +2,15 @@
 
 set -e
 
-# Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-# Configuration
 REPO="datlechin/hookshot"
 INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/bin}"
 BINARY_NAME="hookshot"
 
-# Detect OS and architecture
 detect_platform() {
     OS="$(uname -s)"
     ARCH="$(uname -m)"
@@ -52,7 +49,6 @@ detect_platform() {
     esac
 }
 
-# Get latest version from GitHub API
 get_latest_version() {
     echo "${YELLOW}Fetching latest version...${NC}"
     VERSION=$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/')
@@ -65,18 +61,15 @@ get_latest_version() {
     echo "${GREEN}Latest version: $VERSION${NC}"
 }
 
-# Download and install binary
 install_binary() {
     DOWNLOAD_URL="https://github.com/$REPO/releases/download/$VERSION/hookshot-$VERSION-$PLATFORM.tar.gz"
     CHECKSUM_URL="https://github.com/$REPO/releases/download/$VERSION/hookshot-$VERSION-$PLATFORM.tar.gz.sha256"
 
     echo "${YELLOW}Downloading from: $DOWNLOAD_URL${NC}"
 
-    # Create temporary directory
     TMP_DIR=$(mktemp -d)
     cd "$TMP_DIR"
 
-    # Download binary and checksum
     if ! curl -fsSL -o hookshot.tar.gz "$DOWNLOAD_URL"; then
         echo "${RED}Error: Failed to download binary${NC}"
         rm -rf "$TMP_DIR"
@@ -86,10 +79,8 @@ install_binary() {
     if ! curl -fsSL -o hookshot.tar.gz.sha256 "$CHECKSUM_URL"; then
         echo "${YELLOW}Warning: Could not download checksum file${NC}"
     else
-        # Verify checksum
         echo "${YELLOW}Verifying checksum...${NC}"
         if command -v shasum >/dev/null 2>&1; then
-            # Extract just the hash from the checksum file (first field)
             EXPECTED_HASH=$(awk '{print $1}' hookshot.tar.gz.sha256)
             ACTUAL_HASH=$(shasum -a 256 hookshot.tar.gz | awk '{print $1}')
 
@@ -106,11 +97,9 @@ install_binary() {
         fi
     fi
 
-    # Extract binary
     echo "${YELLOW}Extracting binary...${NC}"
     tar -xzf hookshot.tar.gz
 
-    # Find the extracted binary
     EXTRACTED_BINARY=$(find . -name "hookshot-*" -type f ! -name "*.tar.gz*" | head -1)
 
     if [ -z "$EXTRACTED_BINARY" ]; then
@@ -119,22 +108,18 @@ install_binary() {
         exit 1
     fi
 
-    # Create install directory if it doesn't exist
     mkdir -p "$INSTALL_DIR"
 
-    # Install binary
     echo "${YELLOW}Installing to $INSTALL_DIR/$BINARY_NAME${NC}"
     mv "$EXTRACTED_BINARY" "$INSTALL_DIR/$BINARY_NAME"
     chmod +x "$INSTALL_DIR/$BINARY_NAME"
 
-    # Cleanup
     cd - >/dev/null
     rm -rf "$TMP_DIR"
 
     echo "${GREEN}Installation complete!${NC}"
 }
 
-# Check if binary is in PATH
 check_path() {
     if ! echo "$PATH" | tr ':' '\n' | grep -q "^$INSTALL_DIR$"; then
         echo ""
@@ -147,7 +132,6 @@ check_path() {
     fi
 }
 
-# Print success message
 print_success() {
     echo ""
     echo "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -167,7 +151,6 @@ print_success() {
     echo ""
 }
 
-# Main installation flow
 main() {
     echo "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo "${GREEN}  Hookshot Installer${NC}"
