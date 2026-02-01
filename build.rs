@@ -12,8 +12,11 @@ fn main() {
 
         // Create a minimal index.html so the directory isn't completely empty
         let index_html = dist_path.join("index.html");
-        fs::write(index_html, "<!DOCTYPE html><html><body>Build placeholder</body></html>")
-            .expect("Failed to create placeholder index.html");
+        fs::write(
+            index_html,
+            "<!DOCTYPE html><html><body>Build placeholder</body></html>",
+        )
+        .expect("Failed to create placeholder index.html");
     }
 
     // Tell Cargo to rerun this build script if frontend/dist changes

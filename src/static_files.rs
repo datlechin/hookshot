@@ -64,8 +64,6 @@ mod tests {
         let uri = "/".parse::<Uri>().unwrap();
         let response = serve_static_file(uri).await;
         // Response can be either 200 (if real frontend) or 404 (if placeholder)
-        assert!(
-            response.status() == StatusCode::OK || response.status() == StatusCode::NOT_FOUND
-        );
+        assert!(response.status() == StatusCode::OK || response.status() == StatusCode::NOT_FOUND);
     }
 }
