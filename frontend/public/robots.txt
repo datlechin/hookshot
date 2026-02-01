@@ -1,0 +1,13 @@
+# Allow all crawlers
+User-agent: *
+Allow: /
+
+# Disallow private/sensitive paths
+Disallow: /api/
+Disallow: /webhook/
+
+# Sitemap location
+Sitemap: https://hook.nqd.vn/sitemap.xml
+
+# Crawl-delay (optional, helps prevent server overload)
+Crawl-delay: 1

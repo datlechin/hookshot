@@ -1,0 +1,151 @@
+name: Build, Release, and Deploy
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-release:
+    name: Build and Create Release
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.VERSION }}
+      download_url: ${{ steps.upload.outputs.browser_download_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build Frontend
+        run: |
+          cd frontend
+          rm -f .env .env.local
+          cat > .env.production << 'ENVFILE'
+          VITE_API_BASE_URL=
+          VITE_WS_BASE_URL=
+          ENVFILE
+          npm ci
+          npm run build
+
+          if grep -r "localhost:3000" dist/; then
+            echo "❌ Error: localhost found in compiled assets!"
+            exit 1
+          fi
+
+      - name: Build Backend
+        run: |
+          cargo build --release
+
+      - name: Prepare Release Assets
+        run: |
+          cp target/release/hookshot hookshot-linux-x86_64
+          chmod +x hookshot-linux-x86_64
+          sha256sum hookshot-linux-x86_64 > hookshot-linux-x86_64.sha256
+          SIZE=$(du -h hookshot-linux-x86_64 | cut -f1)
+          echo "BINARY_SIZE=$SIZE" >> $GITHUB_ENV
+
+      - name: Get version
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Release ${{ steps.version.outputs.VERSION }}
+          draft: false
+          prerelease: false
+          files: |
+            hookshot-linux-x86_64
+            hookshot-linux-x86_64.sha256
+          body: |
+            ## Hookshot ${{ steps.version.outputs.VERSION }}
+
+            ### 🚀 Auto-Deployment
+
+            This release is being **automatically deployed** to production VPS!
+
+            ### 📦 Binary
+
+            - **Size:** ${{ env.BINARY_SIZE }}
+            - **Platform:** Linux x86_64
+
+            ### ✅ Checksums
+
+            See `hookshot-linux-x86_64.sha256` for SHA256 checksum.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get Download URL
+        id: get_url
+        run: |
+          DOWNLOAD_URL=$(curl -s "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ steps.version.outputs.VERSION }}" | grep "browser_download_url.*hookshot-linux-x86_64\"" | cut -d '"' -f 4)
+          echo "DOWNLOAD_URL=$DOWNLOAD_URL" >> $GITHUB_OUTPUT
+
+      - name: Deploy to VPS
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VERSION: ${{ steps.version.outputs.VERSION }}
+          DOWNLOAD_URL: ${{ steps.get_url.outputs.DOWNLOAD_URL }}
+        run: |
+          # Setup SSH
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p 24700 -H 103.57.220.28 >> ~/.ssh/known_hosts
+
+          # Deploy
+          ssh -p 24700 root@103.57.220.28 << ENDSSH
+          set -e
+
+          echo "🚀 Auto-deploying $VERSION..."
+
+          if [ -z "$DOWNLOAD_URL" ]; then
+            echo "❌ Download URL not found"
+            exit 1
+          fi
+
+          echo "📥 Downloading from: $DOWNLOAD_URL"
+          curl -L -o /tmp/hookshot "$DOWNLOAD_URL"
+          chmod +x /tmp/hookshot
+
+          echo "✅ Downloaded: \$(du -h /tmp/hookshot | cut -f1)"
+
+          # Deploy
+          systemctl stop hookshot
+          cp /opt/hookshot/hookshot /opt/hookshot/hookshot.backup.\$(date +%Y%m%d-%H%M%S)
+          mv /tmp/hookshot /opt/hookshot/hookshot
+          chown hookshot:hookshot /opt/hookshot/hookshot
+          systemctl start hookshot
+
+          sleep 3
+
+          if systemctl is-active --quiet hookshot; then
+            echo "✅ Deployment successful!"
+            systemctl status hookshot --no-pager -l | head -10
+          else
+            echo "❌ Service failed! Rolling back..."
+            BACKUP=\$(ls -t /opt/hookshot/hookshot.backup.* | head -1)
+            cp "\$BACKUP" /opt/hookshot/hookshot
+            systemctl start hookshot
+            exit 1
+          fi
+          ENDSSH
+
+      - name: Verify Deployment
+        if: success()
+        run: |
+          echo "✅ Successfully deployed ${{ steps.version.outputs.VERSION }}"
+          curl -sI https://hook.nqd.vn | head -5
