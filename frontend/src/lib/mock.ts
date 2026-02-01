@@ -12,6 +12,7 @@ export const mockEndpoints: Endpoint[] = [
     id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
     created_at: '2026-01-30T08:00:00Z',
     custom_response_enabled: false,
+    response_status: 200,
     max_requests: 100,
   },
   {

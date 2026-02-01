@@ -34,6 +34,12 @@ pub struct Request {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreateEndpointResponse {
     pub id: String,
+    pub created_at: String,
+    pub custom_response_enabled: bool,
+    pub response_status: i32,
+    pub response_headers: Option<String>,
+    pub response_body: Option<String>,
+    pub request_count: i32,
 }
 
 /// Query parameters for GET /api/endpoints/:id/requests

@@ -11,12 +11,13 @@ export interface Endpoint {
   id: string
   created_at: string
   custom_response_enabled: boolean
-  response_status?: number
+  response_status: number
   response_headers?: string | Record<string, string> // Can be JSON string or object
   response_body?: string
-  forward_url?: string
-  max_requests: number
-  rate_limit_per_minute?: number
+  request_count?: number // Number of requests received
+  forward_url?: string // Future feature
+  max_requests?: number // Future feature
+  rate_limit_per_minute?: number // Future feature
 }
 
 /**
