@@ -6,12 +6,8 @@ use axum::{
 use include_dir::{include_dir, Dir};
 
 // Embed the frontend dist directory at compile time
-// For tests, we use an empty directory to avoid compilation errors
-#[cfg(not(test))]
+// Note: build.rs ensures this directory exists even during tests
 static STATIC_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/frontend/dist");
-
-#[cfg(test)]
-static STATIC_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/src");
 
 /// Serve static files from embedded directory
 pub async fn serve_static_file(uri: Uri) -> Response {

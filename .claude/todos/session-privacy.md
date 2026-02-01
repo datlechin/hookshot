@@ -13,19 +13,16 @@
 - [x] Read key files identified by agents
 - [x] Present comprehensive summary
 
-## Phase 3: Clarifying Questions (IN PROGRESS)
-- [ ] Identify underspecified aspects
-- [ ] Present questions to user
-- [ ] Wait for answers
+## Phase 3: Clarifying Questions ✅
+- [x] Identify underspecified aspects
+- [x] Present questions to user
+- [x] Wait for answers (User accepted all recommendations)
 
-## Phase 4: Architecture Design
-- [ ] Launch code-architect agents (parallel)
-  - [ ] Agent 1: Minimal changes approach
-  - [ ] Agent 2: Clean architecture approach
-  - [ ] Agent 3: Pragmatic balance approach
-- [ ] Review approaches
-- [ ] Present recommendation to user
-- [ ] Get user approval on approach
+## Phase 4: Architecture Design (IN PROGRESS)
+- [ ] Launch Plan agent for implementation design
+- [ ] Review plan approach
+- [ ] Read critical files
+- [ ] Write final plan to plan file
 
 ## Phase 5: Implementation
 - [ ] Wait for explicit approval
@@ -48,3 +45,18 @@
 - [ ] Summarize accomplishments
 - [ ] Document key decisions
 - [ ] Suggest next steps
+
+---
+
+## Clarified Requirements (User Accepted All Recommendations)
+
+1. **Auto-Claiming:** Option A - Automatically add to "my endpoints" when visiting direct URLs
+2. **Initial Empty State:** Option A - Show empty state for new users
+3. **Migration:** Option A - Auto-claim all existing endpoints on first load
+4. **URL Sync:** Option A - Always sync URL with selected endpoint
+5. **Invalid URLs:** Option C - Graceful handling with message
+6. **Deletion:** Option A - Full delete from backend and localStorage
+7. **Empty Message:** Add hint about pasting URLs
+8. **Visual Indicators:** Option A - No special indicators needed
+9. **localStorage Key:** `hookshot_my_endpoints`
+10. **Validation:** Option A - Auto-cleanup stale IDs from localStorage
