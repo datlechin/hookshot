@@ -15,16 +15,23 @@ import type { SidebarHandle } from '@/App'
  * Width: 280px, always visible
  */
 export const Sidebar = forwardRef<SidebarHandle>((_, ref) => {
-  const { endpoints, loading, error, deleteEndpoint, createEndpoint, updateConfig } = useEndpoints()
+  const { endpoints, loading, error, deleteEndpoint, createEndpoint, updateConfig, claimEndpoint } = useEndpoints()
   const { selectedEndpointId, setSelectedEndpointId } = useSelectedEndpoint()
   const [configuringEndpoint, setConfiguringEndpoint] = useState<Endpoint | null>(null)
   const [creating, setCreating] = useState(false)
   const [requestCounts, setRequestCounts] = useState<Record<string, number>>({})
+  const [urlValidationError, setUrlValidationError] = useState<string | null>(null)
   const { success, error: showError } = useToast()
 
-  // Fetch request counts for all endpoints
+  // Fetch request counts for all endpoints (debounced to avoid loading before selection)
   useEffect(() => {
-    async function fetchRequestCounts() {
+    // Skip if no endpoints or still loading
+    if (endpoints.length === 0 || loading) {
+      return
+    }
+
+    // Debounce to let auto-selection complete first
+    const timer = setTimeout(async () => {
       const counts: Record<string, number> = {}
       for (const endpoint of endpoints) {
         try {
@@ -36,18 +43,57 @@ export const Sidebar = forwardRef<SidebarHandle>((_, ref) => {
         }
       }
       setRequestCounts(counts)
-    }
+    }, 300) // Small delay to let selection happen first
 
-    if (endpoints.length > 0) {
-      fetchRequestCounts()
+    return () => clearTimeout(timer)
+  }, [endpoints, loading])
+
+  // Parse URL on mount to auto-claim and select endpoint from /endpoint/{uuid}
+  useEffect(() => {
+    const path = window.location.pathname
+    const endpointMatch = path.match(/^\/endpoint\/([0-9a-f-]+)$/i)
+
+    if (endpointMatch) {
+      const endpointId = endpointMatch[1]
+
+      // Verify endpoint exists before claiming
+      api.endpoints
+        .get(endpointId)
+        .then((endpoint) => {
+          claimEndpoint(endpoint.id)
+          setSelectedEndpointId(endpoint.id)
+          setUrlValidationError(null)
+        })
+        .catch(() => {
+          setUrlValidationError(`Endpoint not found: ${endpointId}`)
+          window.history.pushState(null, '', '/')
+        })
     }
-  }, [endpoints])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Only run once on mount
+
+  // Sync URL with selected endpoint
+  useEffect(() => {
+    if (selectedEndpointId) {
+      const targetUrl = `/endpoint/${selectedEndpointId}`
+      if (window.location.pathname !== targetUrl) {
+        window.history.pushState(null, '', targetUrl)
+      }
+    } else {
+      if (window.location.pathname !== '/') {
+        window.history.pushState(null, '', '/')
+      }
+    }
+  }, [selectedEndpointId])
 
   async function handleCreateEndpoint() {
     setCreating(true)
     try {
-      await createEndpoint()
-      success('Endpoint created successfully')
+      const newEndpoint = await createEndpoint()
+      if (newEndpoint) {
+        setSelectedEndpointId(newEndpoint.id) // Auto-select the newly created endpoint
+        success('Endpoint created successfully')
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to create endpoint'
       showError(message)
@@ -102,6 +148,12 @@ export const Sidebar = forwardRef<SidebarHandle>((_, ref) => {
             {error}
           </div>
         )}
+
+        {urlValidationError && (
+          <div className="mt-2 p-1.5 bg-(--accent-yellow)/10 border border-(--accent-yellow) rounded text-[11px] text-(--accent-yellow)">
+            {urlValidationError}
+          </div>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto">
@@ -114,7 +166,7 @@ export const Sidebar = forwardRef<SidebarHandle>((_, ref) => {
             <EmptyState
               icon={<Webhook className="w-12 h-12" />}
               title="No endpoints yet"
-              description="Create your first webhook endpoint to get started."
+              description="Create a new endpoint or visit an endpoint URL to get started."
               action={
                 <Button variant="primary" onClick={handleCreateEndpoint}>
                   Create Endpoint

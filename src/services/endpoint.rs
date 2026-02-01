@@ -18,7 +18,29 @@ pub async fn create_endpoint(pool: &SqlitePool) -> Result<CreateEndpointResponse
 
     tracing::info!("Created new endpoint: {}", id);
 
-    Ok(CreateEndpointResponse { id })
+    // Fetch the created endpoint to get created_at and other fields
+    let endpoint = sqlx::query_as::<_, Endpoint>(
+        r#"
+        SELECT id, created_at, custom_response_enabled, response_status,
+               response_headers, response_body, request_count
+        FROM endpoints
+        WHERE id = ?
+        "#,
+    )
+    .bind(&id)
+    .fetch_one(pool)
+    .await?;
+
+    // Build response from endpoint
+    Ok(CreateEndpointResponse {
+        id: endpoint.id,
+        created_at: endpoint.created_at,
+        custom_response_enabled: endpoint.custom_response_enabled,
+        response_status: endpoint.response_status,
+        response_headers: endpoint.response_headers,
+        response_body: endpoint.response_body,
+        request_count: endpoint.request_count,
+    })
 }
 
 /// List all endpoints with full configuration
