@@ -11,47 +11,47 @@
 
 ---
 
-## ✨ Features
+## Features
 
 ### Core Functionality
-- 🎯 **Unique Webhook URLs** - Instantly generate UUID-based webhook endpoints
-- 📨 **Full Request Capture** - Capture ALL HTTP methods (GET, POST, PUT, DELETE, PATCH, etc.)
-- 📋 **Complete Request Details** - Headers, query parameters, body, IP address, timestamps
-- 🔄 **Real-time Updates** - Live WebSocket connection shows requests as they arrive
-- 🎨 **Beautiful UI** - Modern, responsive interface built with React and Tailwind CSS
+- **Unique Webhook URLs** - Instantly generate UUID-based webhook endpoints
+- **Full Request Capture** - Capture ALL HTTP methods (GET, POST, PUT, DELETE, PATCH, etc.)
+- **Complete Request Details** - Headers, query parameters, body, IP address, timestamps
+- **Real-time Updates** - Live WebSocket connection shows requests as they arrive
+- **Beautiful UI** - Modern, responsive interface built with React and Tailwind CSS
 
 ### Request Management
-- 🔍 **Advanced Filtering** - Filter requests by HTTP method
-- 🔎 **Search** - Search through request headers and body content
-- 📄 **Pagination** - Efficient handling of large request histories
-- ⚡ **Virtual Scrolling** - Smooth performance with thousands of requests
-- 📊 **Request Details** - Tabbed interface for Overview, Headers, Body, and Metadata
+- **Advanced Filtering** - Filter requests by HTTP method
+- **Search** - Search through request headers and body content
+- **Pagination** - Efficient handling of large request histories
+- **Virtual Scrolling** - Smooth performance with thousands of requests
+- **Request Details** - Tabbed interface for Overview, Headers, Body, and Metadata
 
 ### Developer Experience
-- 💾 **Export Options** - Download requests as JSON, CSV, or cURL commands
-- 📋 **One-Click Copy** - Copy webhook URLs, request data, cURL commands
-- ⌨️ **Keyboard Shortcuts** - Navigate efficiently with keyboard controls
-- 🕐 **Relative Timestamps** - Human-friendly time display (e.g., "2 minutes ago")
-- 🎨 **Syntax Highlighting** - Pretty-print JSON, XML, and other formats
+- **Export Options** - Download requests as JSON, CSV, or cURL commands
+- **One-Click Copy** - Copy webhook URLs, request data, cURL commands
+- **Keyboard Shortcuts** - Navigate efficiently with keyboard controls
+- **Relative Timestamps** - Human-friendly time display (e.g., "2 minutes ago")
+- **Syntax Highlighting** - Pretty-print JSON, XML, and other formats
 
 ### Custom Responses
-- ⚙️ **Configurable Responses** - Set custom HTTP status codes
-- 📤 **Custom Headers** - Return any headers you want
-- 💬 **Custom Body** - Send back specific response content
-- 🔧 **Per-Endpoint Config** - Each webhook can have its own response settings
+- **Configurable Responses** - Set custom HTTP status codes
+- **Custom Headers** - Return any headers you want
+- **Custom Body** - Send back specific response content
+- **Per-Endpoint Config** - Each webhook can have its own response settings
 
 ### Technical Excellence
-- 🚀 **Single Binary** - No dependencies, no setup - just download and run
-- 🗄️ **SQLite Database** - Embedded database with WAL mode for concurrent access
-- 🌐 **WebSocket Support** - Real-time bidirectional communication
-- 🔒 **CORS Enabled** - Works with any frontend or API client
-- 📦 **Embedded Frontend** - Complete web UI bundled in ~7.5MB binary
-- ⚡ **High Performance** - Built with Rust and Axum for blazing speed
-- 🐳 **Self-hosted** - Complete privacy and control over your data
+- **Single Binary** - No dependencies, no setup - just download and run
+- **SQLite Database** - Embedded database with WAL mode for concurrent access
+- **WebSocket Support** - Real-time bidirectional communication
+- **CORS Enabled** - Works with any frontend or API client
+- **Embedded Frontend** - Complete web UI bundled in ~7.5MB binary
+- **High Performance** - Built with Rust and Axum for blazing speed
+- **Self-hosted** - Complete privacy and control over your data
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### One-Line Install (macOS/Linux)
 
@@ -90,7 +90,7 @@ That's it! No database setup, no config files - just run and go.
 
 ---
 
-## 💡 Usage
+## Usage
 
 ### Creating Your First Webhook
 
@@ -114,7 +114,7 @@ That's it! No database setup, no config files - just run and go.
 
 ### Configuring Custom Responses
 
-1. Click the ⚙️ icon next to your endpoint
+1. Click the settings icon next to your endpoint
 2. Toggle "Enable Custom Response"
 3. Set your desired:
    - **Status Code** (e.g., `200`, `201`, `404`)
@@ -179,7 +179,7 @@ ws.onclose = () => {
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 ### Command-Line Options
 
@@ -222,7 +222,7 @@ RUST_LOG=debug hookshot
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 Hookshot is built as a high-performance, single-binary application:
 
@@ -283,7 +283,7 @@ The project uses a custom `build.rs` script that:
 
 ---
 
-## 🛠️ Development
+## Development
 
 ### Prerequisites
 
@@ -369,7 +369,7 @@ The release build:
 
 ---
 
-## 📚 API Reference
+## API Reference
 
 ### Health Check
 
@@ -435,7 +435,7 @@ This endpoint:
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for:
 - Development setup
@@ -454,7 +454,7 @@ Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for:
 
 ---
 
-## 📜 License
+## License
 
 This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 
