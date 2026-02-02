@@ -489,18 +489,18 @@ See [GitHub Issues](https://github.com/datlechin/hookshot/issues) for feature re
 
 ---
 
-## 📞 Support
+## Support
 
-- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/datlechin/hookshot/issues)
-- 💡 **Feature Requests**: [GitHub Issues](https://github.com/datlechin/hookshot/issues)
-- 💬 **Questions**: [GitHub Discussions](https://github.com/datlechin/hookshot/discussions)
-
----
-
-## ⭐ Star History
-
-If you find Hookshot useful, please consider giving it a star on GitHub! ⭐
+- **Bug Reports**: [GitHub Issues](https://github.com/datlechin/hookshot/issues)
+- **Feature Requests**: [GitHub Issues](https://github.com/datlechin/hookshot/issues)
+- **Questions**: [GitHub Discussions](https://github.com/datlechin/hookshot/discussions)
 
 ---
 
-**Built with 🦀 Rust and ⚛️ React** • **Made with ❤️ for developers**
+## Star History
+
+If you find Hookshot useful, please consider giving it a star on GitHub!
+
+---
+
+**Built with Rust and React** • **Made with love for developers**
