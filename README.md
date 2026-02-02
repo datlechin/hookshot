@@ -14,6 +14,7 @@
 ## Features
 
 ### Core Functionality
+
 - **Unique Webhook URLs** - Instantly generate UUID-based webhook endpoints
 - **Full Request Capture** - Capture ALL HTTP methods (GET, POST, PUT, DELETE, PATCH, etc.)
 - **Complete Request Details** - Headers, query parameters, body, IP address, timestamps
@@ -21,6 +22,7 @@
 - **Beautiful UI** - Modern, responsive interface built with React and Tailwind CSS
 
 ### Request Management
+
 - **Advanced Filtering** - Filter requests by HTTP method
 - **Search** - Search through request headers and body content
 - **Pagination** - Efficient handling of large request histories
@@ -28,6 +30,7 @@
 - **Request Details** - Tabbed interface for Overview, Headers, Body, and Metadata
 
 ### Developer Experience
+
 - **Export Options** - Download requests as JSON, CSV, or cURL commands
 - **One-Click Copy** - Copy webhook URLs, request data, cURL commands
 - **Keyboard Shortcuts** - Navigate efficiently with keyboard controls
@@ -35,12 +38,14 @@
 - **Syntax Highlighting** - Pretty-print JSON, XML, and other formats
 
 ### Custom Responses
+
 - **Configurable Responses** - Set custom HTTP status codes
 - **Custom Headers** - Return any headers you want
 - **Custom Body** - Send back specific response content
 - **Per-Endpoint Config** - Each webhook can have its own response settings
 
 ### Technical Excellence
+
 - **Single Binary** - No dependencies, no setup - just download and run
 - **SQLite Database** - Embedded database with WAL mode for concurrent access
 - **WebSocket Support** - Real-time bidirectional communication
@@ -60,6 +65,7 @@ curl -fsSL https://raw.githubusercontent.com/datlechin/hookshot/main/install.sh 
 ```
 
 Then run:
+
 ```bash
 hookshot
 ```
@@ -74,6 +80,7 @@ hookshot
    - [Windows (x86_64)](https://github.com/datlechin/hookshot/releases/latest) - `windows-x86_64.zip`
 
 2. Extract and run:
+
    ```bash
    # macOS/Linux
    tar -xzf hookshot-*.tar.gz
@@ -158,22 +165,22 @@ curl -X DELETE http://localhost:3000/api/endpoints/YOUR-ID
 ### Real-time Updates via WebSocket
 
 ```javascript
-const ws = new WebSocket('ws://localhost:3000/ws/endpoints/YOUR-ENDPOINT-ID');
+const ws = new WebSocket("ws://localhost:3000/ws/endpoints/YOUR-ENDPOINT-ID");
 
 ws.onopen = () => {
-  console.log('Connected to webhook endpoint');
+  console.log("Connected to webhook endpoint");
 };
 
 ws.onmessage = (event) => {
   const data = JSON.parse(event.data);
 
-  if (data.type === 'new_request') {
-    console.log('New webhook received:', data.request);
+  if (data.type === "new_request") {
+    console.log("New webhook received:", data.request);
   }
 };
 
 ws.onclose = () => {
-  console.log('Disconnected');
+  console.log("Disconnected");
 };
 ```
 
@@ -187,19 +194,19 @@ ws.onclose = () => {
 hookshot --help
 ```
 
-| Option | Short | Default | Description |
-|--------|-------|---------|-------------|
-| `--host` | `-H` | `127.0.0.1` | Host address to bind to |
-| `--port` | `-p` | `3000` | Port to listen on |
-| `--database-url` | `-d` | `sqlite:./hookshot.db` | SQLite database path |
-| `--version` | `-V` | - | Print version information |
+| Option           | Short | Default                | Description               |
+| ---------------- | ----- | ---------------------- | ------------------------- |
+| `--host`         | `-H`  | `127.0.0.1`            | Host address to bind to   |
+| `--port`         | `-p`  | `3000`                 | Port to listen on         |
+| `--database-url` | `-d`  | `sqlite:./hookshot.db` | SQLite database path      |
+| `--version`      | `-V`  | -                      | Print version information |
 
 ### Environment Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `DATABASE_URL` | `sqlite:./hookshot.db` | Database file location |
-| `RUST_LOG` | `hookshot=debug` | Logging level (`debug`, `info`, `warn`, `error`) |
+| Variable       | Default                | Description                                      |
+| -------------- | ---------------------- | ------------------------------------------------ |
+| `DATABASE_URL` | `sqlite:./hookshot.db` | Database file location                           |
+| `RUST_LOG`     | `hookshot=debug`       | Logging level (`debug`, `info`, `warn`, `error`) |
 
 ### Examples
 
@@ -227,6 +234,7 @@ RUST_LOG=debug hookshot
 Hookshot is built as a high-performance, single-binary application:
 
 ### Backend Stack
+
 - **[Rust](https://www.rust-lang.org/)** - Memory-safe systems programming language
 - **[Axum](https://github.com/tokio-rs/axum)** - Ergonomic web framework built on Tokio
 - **[SQLite](https://www.sqlite.org/)** - Zero-configuration embedded database with WAL mode
@@ -235,6 +243,7 @@ Hookshot is built as a high-performance, single-binary application:
 - **[Tower](https://github.com/tower-rs/tower)** - Middleware for CORS, compression, and tracing
 
 ### Frontend Stack
+
 - **[React 19](https://react.dev/)** - Modern UI library with concurrent features
 - **[TypeScript](https://www.typescriptlang.org/)** - Type-safe JavaScript
 - **[Vite](https://vitejs.dev/)** - Lightning-fast build tool and dev server
@@ -275,6 +284,7 @@ requests (
 ### Build Process
 
 The project uses a custom `build.rs` script that:
+
 1. Checks if `frontend/dist` exists
 2. If not in release mode, skips frontend build
 3. In release mode, builds the frontend with Vite
@@ -361,6 +371,7 @@ cargo build --release
 ```
 
 The release build:
+
 - Automatically builds the frontend via `build.rs`
 - Embeds all static files into the binary
 - Produces a single ~7.5MB executable
@@ -381,33 +392,35 @@ Returns server health status.
 
 ### Endpoints
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `POST` | `/api/endpoints` | Create a new webhook endpoint |
-| `GET` | `/api/endpoints` | List all endpoints |
-| `GET` | `/api/endpoints/:id` | Get endpoint details |
-| `DELETE` | `/api/endpoints/:id` | Delete an endpoint |
-| `PUT` | `/api/endpoints/:id/response` | Update custom response config |
+| Method   | Path                          | Description                   |
+| -------- | ----------------------------- | ----------------------------- |
+| `POST`   | `/api/endpoints`              | Create a new webhook endpoint |
+| `GET`    | `/api/endpoints`              | List all endpoints            |
+| `GET`    | `/api/endpoints/:id`          | Get endpoint details          |
+| `DELETE` | `/api/endpoints/:id`          | Delete an endpoint            |
+| `PUT`    | `/api/endpoints/:id/response` | Update custom response config |
 
 ### Requests
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/api/endpoints/:id/requests` | Get requests for endpoint (paginated) |
-| `GET` | `/api/requests/:id` | Get specific request details |
+| Method | Path                          | Description                           |
+| ------ | ----------------------------- | ------------------------------------- |
+| `GET`  | `/api/endpoints/:id/requests` | Get requests for endpoint (paginated) |
+| `GET`  | `/api/requests/:id`           | Get specific request details          |
 
 **Query Parameters for `/api/endpoints/:id/requests`:**
+
 - `page` (default: 1) - Page number
 - `limit` (default: 50) - Results per page
 - `method` (optional) - Comma-separated HTTP methods to filter (e.g., `POST,PUT`)
 
 ### Webhooks
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `ANY` | `/:id` | Webhook capture endpoint (accepts ALL HTTP methods) |
+| Method | Path   | Description                                         |
+| ------ | ------ | --------------------------------------------------- |
+| `ANY`  | `/:id` | Webhook capture endpoint (accepts ALL HTTP methods) |
 
 This endpoint:
+
 - Accepts any HTTP method (GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD, etc.)
 - Captures complete request details (headers, body, query params, IP)
 - Stores in database and broadcasts via WebSocket
@@ -415,11 +428,12 @@ This endpoint:
 
 ### WebSocket
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `WS` | `/ws/endpoints/:id` | Real-time updates for an endpoint |
+| Method | Path                | Description                       |
+| ------ | ------------------- | --------------------------------- |
+| `WS`   | `/ws/endpoints/:id` | Real-time updates for an endpoint |
 
 **WebSocket Message Format:**
+
 ```json
 {
   "type": "new_request",
@@ -438,6 +452,7 @@ This endpoint:
 ## Contributing
 
 Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for:
+
 - Development setup
 - Code style guidelines
 - Commit message conventions (for automatic changelog generation)
@@ -445,6 +460,7 @@ Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for:
 - Testing requirements
 
 **Quick Start for Contributors:**
+
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feat/amazing-feature`)
 3. Make your changes following our conventions
@@ -463,6 +479,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 ## Roadmap
 
 ### Planned Features
+
 - [ ] Request forwarding to external URLs
 - [ ] Rate limiting per endpoint
 - [ ] Auto-cleanup of old requests (configurable retention)
@@ -477,15 +494,6 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 - [ ] Request diff/comparison view
 
 See [GitHub Issues](https://github.com/datlechin/hookshot/issues) for feature requests and bug reports.
-
----
-
-## Acknowledgments
-
-- Built with [Claude Code PM](https://github.com/automazeio/ccpm) - AI-powered project management
-- Inspired by [webhook.site](https://webhook.site) and [requestbin](https://requestbin.com)
-- Icons by [Lucide](https://lucide.dev)
-- UI components inspired by [shadcn/ui](https://ui.shadcn.com)
 
 ---
 
