@@ -460,7 +460,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ---
 
-## 🗺️ Roadmap
+## Roadmap
 
 ### Planned Features
 - [ ] Request forwarding to external URLs
