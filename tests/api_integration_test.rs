@@ -1,7 +1,12 @@
-use axum::extract::{Path, Query, State};
-use hookshot::{db, handlers::api, models::RequestQueryParams, websocket::WebSocketManager};
+use axum::extract::{Extension, Path, Query, State};
+use hookshot::{
+    db, handlers::api, middleware::SessionId, models::RequestQueryParams,
+    websocket::WebSocketManager,
+};
 use sqlx::SqlitePool;
 use std::{sync::Arc, time::Instant};
+
+const TEST_SESSION_ID: &str = "test-integration-session";
 
 async fn setup_test_db() -> SqlitePool {
     db::init_pool("sqlite::memory:").await.unwrap()
@@ -13,8 +18,9 @@ fn create_test_state(pool: SqlitePool) -> (SqlitePool, Arc<WebSocketManager>) {
 
 async fn create_test_endpoint(pool: &SqlitePool) -> String {
     let endpoint_id = uuid::Uuid::new_v4().to_string();
-    sqlx::query("INSERT INTO endpoints (id) VALUES (?)")
+    sqlx::query("INSERT INTO endpoints (id, session_id) VALUES (?, ?)")
         .bind(&endpoint_id)
+        .bind(TEST_SESSION_ID)
         .execute(pool)
         .await
         .unwrap();
@@ -269,6 +275,7 @@ async fn test_cascade_delete_with_many_requests() {
     // Delete endpoint
     let result = api::delete_endpoint(
         Path(endpoint_id.clone()),
+        Extension(SessionId(TEST_SESSION_ID.to_string())),
         State(create_test_state(pool.clone())),
     )
     .await;

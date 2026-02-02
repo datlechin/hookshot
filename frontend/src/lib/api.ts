@@ -32,6 +32,7 @@ async function request<T>(
     try {
       const response = await fetch(`${API_BASE}${endpoint}`, {
         ...options,
+        credentials: 'include', // Include cookies for cross-origin requests (localhost vs 127.0.0.1)
         headers: {
           'Content-Type': 'application/json',
           ...options?.headers,

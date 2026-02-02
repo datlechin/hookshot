@@ -26,8 +26,8 @@ async fn create_test_endpoint(pool: &SqlitePool) -> String {
     let endpoint_id = uuid::Uuid::new_v4().to_string();
     sqlx::query(
         r#"
-        INSERT INTO endpoints (id, created_at, custom_response_enabled, response_status, request_count)
-        VALUES (?, datetime('now'), false, 200, 0)
+        INSERT INTO endpoints (id, created_at, custom_response_enabled, response_status, request_count, session_id)
+        VALUES (?, datetime('now'), false, 200, 0, 'test-webhook-session')
         "#
     )
     .bind(&endpoint_id)

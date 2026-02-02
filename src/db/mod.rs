@@ -25,40 +25,68 @@ pub async fn init_pool(database_url: &str) -> Result<SqlitePool, sqlx::Error> {
 
 /// Run database migrations
 async fn run_migrations(pool: &SqlitePool) -> Result<(), sqlx::Error> {
-    // Read migration file
-    let migration_sql = include_str!("../../migrations/20240129_initial_schema.sql");
+    // List of migration files in order
+    let migrations = [
+        include_str!("../../migrations/20240129_initial_schema.sql"),
+        include_str!("../../migrations/20240201_add_session_tracking.sql"),
+    ];
 
-    // Parse and execute SQL statements
-    let mut current_statement = String::new();
+    for migration_sql in migrations {
+        // Parse and execute SQL statements
+        let mut current_statement = String::new();
 
-    for line in migration_sql.lines() {
-        let trimmed = line.trim();
+        for line in migration_sql.lines() {
+            let trimmed = line.trim();
 
-        // Skip empty lines and standalone comments
-        if trimmed.is_empty() || (trimmed.starts_with("--") && current_statement.is_empty()) {
-            continue;
-        }
-
-        // Append line to current statement
-        if !trimmed.starts_with("--") {
-            current_statement.push_str(line);
-            current_statement.push('\n');
-        }
-
-        // If line ends with semicolon, execute the statement
-        if trimmed.ends_with(';') {
-            let stmt = current_statement.trim().trim_end_matches(';').trim();
-            if !stmt.is_empty() {
-                sqlx::query(stmt).execute(pool).await?;
+            // Skip empty lines and standalone comments
+            if trimmed.is_empty() || (trimmed.starts_with("--") && current_statement.is_empty()) {
+                continue;
             }
-            current_statement.clear();
-        }
-    }
 
-    // Execute any remaining statement
-    if !current_statement.trim().is_empty() {
-        let stmt = current_statement.trim().trim_end_matches(';').trim();
-        sqlx::query(stmt).execute(pool).await?;
+            // Append line to current statement
+            if !trimmed.starts_with("--") {
+                current_statement.push_str(line);
+                current_statement.push('\n');
+            }
+
+            // If line ends with semicolon, execute the statement
+            if trimmed.ends_with(';') {
+                let stmt = current_statement.trim().trim_end_matches(';').trim();
+                if !stmt.is_empty() {
+                    // Execute migration, but ignore "duplicate column" errors for idempotency
+                    if let Err(e) = sqlx::query(stmt).execute(pool).await {
+                        let err_msg = e.to_string();
+                        if err_msg.contains("duplicate column name") {
+                            // Column already exists, skip this migration step
+                            tracing::debug!(
+                                "Migration step skipped (already applied): {}",
+                                err_msg
+                            );
+                        } else {
+                            // Re-throw other errors
+                            return Err(e);
+                        }
+                    }
+                }
+                current_statement.clear();
+            }
+        }
+
+        // Execute any remaining statement
+        if !current_statement.trim().is_empty() {
+            let stmt = current_statement.trim().trim_end_matches(';').trim();
+            // Execute migration, but ignore "duplicate column" errors for idempotency
+            if let Err(e) = sqlx::query(stmt).execute(pool).await {
+                let err_msg = e.to_string();
+                if err_msg.contains("duplicate column name") {
+                    // Column already exists, skip this migration step
+                    tracing::debug!("Migration step skipped (already applied): {}", err_msg);
+                } else {
+                    // Re-throw other errors
+                    return Err(e);
+                }
+            }
+        }
     }
 
     tracing::info!("Database migrations completed successfully");

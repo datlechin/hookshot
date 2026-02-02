@@ -12,6 +12,8 @@ pub struct Endpoint {
     pub response_headers: Option<String>,
     pub response_body: Option<String>,
     pub request_count: i32,
+    #[serde(skip_serializing)] // Don't send session_id to client
+    pub session_id: Option<String>,
 }
 
 /// Request model
@@ -40,6 +42,7 @@ pub struct CreateEndpointResponse {
     pub response_headers: Option<String>,
     pub response_body: Option<String>,
     pub request_count: i32,
+    // session_id is intentionally omitted from response
 }
 
 /// Query parameters for GET /api/endpoints/:id/requests

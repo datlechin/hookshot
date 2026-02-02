@@ -1,22 +1,26 @@
 mod db;
 mod handlers;
+mod middleware;
 mod models;
 mod services;
 mod static_files;
 mod websocket;
 
 use axum::{
+    middleware as axum_middleware,
     routing::{any, delete, get, post, put},
     Router,
 };
 use clap::Parser;
+use middleware::session_middleware;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tower_http::{
     compression::CompressionLayer,
-    cors::{Any, CorsLayer},
+    cors::CorsLayer,
     trace::TraceLayer,
 };
+use axum::http::{HeaderValue, Method, header};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use websocket::WebSocketManager;
 
@@ -72,11 +76,22 @@ async fn main() {
         }
     });
 
-    // Configure CORS to allow all origins
+    // Configure CORS to allow credentials (cookies) for localhost and 127.0.0.1
     let cors = CorsLayer::new()
-        .allow_origin(Any)
-        .allow_methods(Any)
-        .allow_headers(Any);
+        .allow_origin([
+            "http://localhost:3000".parse::<HeaderValue>().unwrap(),
+            "http://127.0.0.1:3000".parse::<HeaderValue>().unwrap(),
+            "http://localhost:5173".parse::<HeaderValue>().unwrap(), // Vite dev server
+            "http://127.0.0.1:5173".parse::<HeaderValue>().unwrap(),
+        ])
+        .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE, Method::OPTIONS])
+        .allow_headers([
+            header::CONTENT_TYPE,
+            header::AUTHORIZATION,
+            header::ACCEPT,
+            header::ORIGIN,
+        ])
+        .allow_credentials(true); // Required for cookie-based sessions
 
     // Check if static files are embedded
     if static_files::is_embedded() {
@@ -119,6 +134,7 @@ async fn main() {
     let app = api_routes
         // Fallback to static file serving for all other routes (SPA support)
         .fallback(static_files::serve_static_file)
+        .layer(axum_middleware::from_fn(session_middleware)) // Add session middleware
         .layer(CompressionLayer::new())
         .layer(cors)
         .layer(TraceLayer::new_for_http())

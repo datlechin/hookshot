@@ -25,7 +25,9 @@ describe('EndpointItem Accessibility', () => {
     onSelect: vi.fn(),
     onDelete: vi.fn(),
     onConfigure: vi.fn(),
-    requestCount: 5,
+    customName: undefined,
+    onSetCustomName: vi.fn(),
+    lastRequestTime: null,
   }
 
   it('should not have accessibility violations in default state', async () => {
@@ -53,7 +55,8 @@ describe('EndpointItem Accessibility', () => {
   })
 
   it('should not have accessibility violations with zero requests', async () => {
-    const { container } = render(<EndpointItem {...defaultProps} requestCount={0} />)
+    const endpointWithNoRequests = { ...mockEndpoint, request_count: 0 }
+    const { container } = render(<EndpointItem {...defaultProps} endpoint={endpointWithNoRequests} />)
     const results = await axe(container)
     expect(results).toHaveNoViolations()
   })

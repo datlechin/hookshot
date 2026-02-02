@@ -1,12 +1,14 @@
+use crate::middleware::SessionId;
 use crate::models::{
     Endpoint, Request, RequestListResponse, RequestQueryParams, RequestResponse,
     UpdateResponseConfig,
 };
+use crate::services::endpoint;
 use crate::websocket::WebSocketManager;
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
-    Json,
+    Extension, Json,
 };
 use sqlx::SqlitePool;
 use std::sync::Arc;
@@ -158,47 +160,38 @@ pub async fn get_request_by_id(
 }
 
 /// Handler for DELETE /api/endpoints/:id
-/// Deletes an endpoint and all associated requests (cascade)
+/// Deletes an endpoint and all associated requests (cascade) - with session verification
 pub async fn delete_endpoint(
     Path(endpoint_id): Path<String>,
+    Extension(SessionId(session_id)): Extension<SessionId>,
     State((pool, _ws_manager)): State<(SqlitePool, Arc<WebSocketManager>)>,
 ) -> Result<StatusCode, StatusCode> {
-    // Check if endpoint exists
-    let endpoint_exists: Option<(i64,)> = sqlx::query_as("SELECT 1 FROM endpoints WHERE id = ?")
-        .bind(&endpoint_id)
-        .fetch_optional(&pool)
-        .await
-        .map_err(|e| {
-            tracing::error!("Database error checking endpoint: {}", e);
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
-
-    if endpoint_exists.is_none() {
-        return Err(StatusCode::NOT_FOUND);
-    }
-
-    // Delete endpoint (cascade will delete requests)
-    sqlx::query("DELETE FROM endpoints WHERE id = ?")
-        .bind(&endpoint_id)
-        .execute(&pool)
-        .await
-        .map_err(|e| {
+    // Use service function which verifies session ownership
+    match endpoint::delete_endpoint(&pool, &endpoint_id, &session_id).await {
+        Ok(true) => {
+            tracing::info!(
+                "Deleted endpoint {} for session {}",
+                endpoint_id,
+                session_id
+            );
+            Ok(StatusCode::NO_CONTENT)
+        }
+        Ok(false) => {
+            // Either endpoint doesn't exist or doesn't belong to this session
+            Err(StatusCode::NOT_FOUND)
+        }
+        Err(e) => {
             tracing::error!("Database error deleting endpoint: {}", e);
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
-
-    tracing::info!(
-        "Deleted endpoint {} and all associated requests",
-        endpoint_id
-    );
-
-    Ok(StatusCode::NO_CONTENT)
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
 }
 
 /// Handler for PUT /api/endpoints/:id/response
-/// Updates custom response configuration for an endpoint
+/// Updates custom response configuration for an endpoint - with session verification
 pub async fn update_endpoint_response(
     Path(endpoint_id): Path<String>,
+    Extension(SessionId(session_id)): Extension<SessionId>,
     State((pool, _ws_manager)): State<(SqlitePool, Arc<WebSocketManager>)>,
     Json(config): Json<UpdateResponseConfig>,
 ) -> Result<Json<Endpoint>, (StatusCode, String)> {
@@ -220,10 +213,11 @@ pub async fn update_endpoint_response(
         }
     }
 
-    // Update endpoint response configuration
-    let updated = crate::services::endpoint::update_response_config(
+    // Update endpoint response configuration (with session verification)
+    let updated = endpoint::update_response_config(
         &pool,
         &endpoint_id,
+        &session_id,
         config.enabled,
         config.status,
         config.headers,
@@ -239,11 +233,14 @@ pub async fn update_endpoint_response(
     })?;
 
     if !updated {
-        return Err((StatusCode::NOT_FOUND, "Endpoint not found".to_string()));
+        return Err((
+            StatusCode::NOT_FOUND,
+            "Endpoint not found or unauthorized".to_string(),
+        ));
     }
 
     // Fetch and return the updated endpoint
-    let endpoint = crate::services::endpoint::get_endpoint(&pool, &endpoint_id)
+    let endpoint = endpoint::get_endpoint(&pool, &endpoint_id)
         .await
         .map_err(|e| {
             tracing::error!("Database error fetching updated endpoint: {}", e);
@@ -255,8 +252,9 @@ pub async fn update_endpoint_response(
         .ok_or((StatusCode::NOT_FOUND, "Endpoint not found".to_string()))?;
 
     tracing::info!(
-        "Updated response config for endpoint {}: enabled={}, status={}",
+        "Updated response config for endpoint {} (session: {}): enabled={}, status={}",
         endpoint_id,
+        session_id,
         config.enabled,
         config.status
     );
@@ -271,6 +269,8 @@ mod tests {
     use crate::models::Endpoint;
     use axum::extract::Query;
 
+    const TEST_SESSION_ID: &str = "test-api-session";
+
     async fn setup_test_db() -> SqlitePool {
         db::init_pool("sqlite::memory:").await.unwrap()
     }
@@ -281,8 +281,9 @@ mod tests {
 
     async fn create_test_endpoint(pool: &SqlitePool) -> String {
         let endpoint_id = uuid::Uuid::new_v4().to_string();
-        sqlx::query("INSERT INTO endpoints (id) VALUES (?)")
+        sqlx::query("INSERT INTO endpoints (id, session_id) VALUES (?, ?)")
             .bind(&endpoint_id)
+            .bind(TEST_SESSION_ID)
             .execute(pool)
             .await
             .unwrap();
@@ -502,6 +503,7 @@ mod tests {
         // Delete endpoint
         let result = delete_endpoint(
             Path(endpoint_id.clone()),
+            Extension(SessionId(TEST_SESSION_ID.to_string())),
             State(create_test_state(pool.clone())),
         )
         .await;
@@ -534,6 +536,7 @@ mod tests {
 
         let result = delete_endpoint(
             Path("nonexistent".to_string()),
+            Extension(SessionId(TEST_SESSION_ID.to_string())),
             State(create_test_state(pool)),
         )
         .await;
@@ -556,6 +559,7 @@ mod tests {
 
         let result: Result<Json<Endpoint>, (StatusCode, String)> = update_endpoint_response(
             Path(endpoint_id.clone()),
+            Extension(SessionId(TEST_SESSION_ID.to_string())),
             State(create_test_state(pool.clone())),
             Json(config),
         )
@@ -593,6 +597,7 @@ mod tests {
 
         let result: Result<Json<Endpoint>, (StatusCode, String)> = update_endpoint_response(
             Path(endpoint_id.clone()),
+            Extension(SessionId(TEST_SESSION_ID.to_string())),
             State(create_test_state(pool.clone())),
             Json(config),
         )
@@ -613,6 +618,7 @@ mod tests {
 
         let result: Result<Json<Endpoint>, (StatusCode, String)> = update_endpoint_response(
             Path(endpoint_id),
+            Extension(SessionId(TEST_SESSION_ID.to_string())),
             State(create_test_state(pool)),
             Json(config),
         )
@@ -638,6 +644,7 @@ mod tests {
 
         let result: Result<Json<Endpoint>, (StatusCode, String)> = update_endpoint_response(
             Path(endpoint_id),
+            Extension(SessionId(TEST_SESSION_ID.to_string())),
             State(create_test_state(pool)),
             Json(config),
         )
@@ -662,6 +669,7 @@ mod tests {
 
         let result: Result<Json<Endpoint>, (StatusCode, String)> = update_endpoint_response(
             Path("nonexistent-id".to_string()),
+            Extension(SessionId(TEST_SESSION_ID.to_string())),
             State(create_test_state(pool)),
             Json(config),
         )
@@ -687,6 +695,7 @@ mod tests {
 
         let result: Result<Json<Endpoint>, (StatusCode, String)> = update_endpoint_response(
             Path(endpoint_id.clone()),
+            Extension(SessionId(TEST_SESSION_ID.to_string())),
             State(create_test_state(pool.clone())),
             Json(config),
         )
@@ -707,6 +716,7 @@ mod tests {
 
         let result: Result<Json<Endpoint>, (StatusCode, String)> = update_endpoint_response(
             Path(endpoint_id.clone()),
+            Extension(SessionId(TEST_SESSION_ID.to_string())),
             State(create_test_state(pool.clone())),
             Json(config),
         )

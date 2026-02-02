@@ -22,7 +22,7 @@ pub async fn websocket_handler(
 ) -> impl IntoResponse {
     // Verify endpoint exists before upgrading connection
     let endpoint_exists = sqlx::query_as::<_, Endpoint>(
-        "SELECT id, created_at, custom_response_enabled, response_status, response_headers, response_body, request_count FROM endpoints WHERE id = ? LIMIT 1"
+        "SELECT id, created_at, custom_response_enabled, response_status, response_headers, response_body, request_count, session_id FROM endpoints WHERE id = ? LIMIT 1"
     )
     .bind(&endpoint_id)
     .fetch_optional(&pool)

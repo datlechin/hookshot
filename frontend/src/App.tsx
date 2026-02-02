@@ -1,10 +1,11 @@
-import { useState, lazy, Suspense, useRef, useCallback } from 'react'
+import { useState, lazy, Suspense, useRef, useCallback, useEffect } from 'react'
 import { useKeyboard } from '@/hooks/useKeyboard'
 import { EndpointProvider, useSelectedEndpoint } from '@/contexts/EndpointContext'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { LoadingFallback } from '@/components/ui/Loading'
 import { Toaster } from '@/components/ui/toaster'
 import { KeyboardShortcutsModal } from '@/components/ui/KeyboardShortcutsModal'
+import { SidebarToggle } from '@/components/layout/SidebarToggle'
 import type { Request } from '@/lib/types'
 
 // Lazy load layout components for better code splitting
@@ -35,6 +36,25 @@ function AppContent() {
   const { selectedEndpointId } = useSelectedEndpoint()
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null)
   const [showShortcutsModal, setShowShortcutsModal] = useState(false)
+
+  // Sidebar collapsed state (persisted)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    try {
+      const stored = localStorage.getItem('sidebar_collapsed')
+      return stored === 'true'
+    } catch {
+      return false
+    }
+  })
+
+  // Persist sidebar collapsed state
+  useEffect(() => {
+    try {
+      localStorage.setItem('sidebar_collapsed', String(sidebarCollapsed))
+    } catch (error) {
+      console.error('Failed to save sidebar state:', error)
+    }
+  }, [sidebarCollapsed])
 
   // Refs to access child component functions
   const sidebarRef = useRef<SidebarHandle>(null)
@@ -107,18 +127,38 @@ function AppContent() {
       <div className="min-h-screen bg-(--background) text-(--text-primary)">
         {/* Main 3-panel layout - full viewport height */}
         <div className="flex h-screen">
-          <Sidebar ref={sidebarRef} />
-          <RequestList
-            ref={requestListRef}
-            selectedEndpointId={selectedEndpointId}
-            onRequestSelect={handleRequestSelect}
-          />
-          <DetailPanel
-            ref={detailPanelRef}
-            isOpen={!!selectedRequest}
-            onClose={handleCloseDetailPanel}
-            selectedRequest={selectedRequest}
-          />
+          {/* Sidebar with collapse animation */}
+          <div
+            className="transition-all duration-300 ease-in-out overflow-hidden"
+            style={{ width: sidebarCollapsed ? '0px' : '280px' }}
+          >
+            <Sidebar ref={sidebarRef} />
+          </div>
+
+          {/* Main content area */}
+          <div className="flex-1 flex flex-col">
+            {/* Toggle button in its own row */}
+            <div className="shrink-0 border-b border-(--border) bg-(--surface) px-4 py-2">
+              <SidebarToggle
+                collapsed={sidebarCollapsed}
+                onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+              />
+            </div>
+
+            <div className="flex-1 flex">
+              <RequestList
+                ref={requestListRef}
+                selectedEndpointId={selectedEndpointId}
+                onRequestSelect={handleRequestSelect}
+              />
+              <DetailPanel
+                ref={detailPanelRef}
+                isOpen={!!selectedRequest}
+                onClose={handleCloseDetailPanel}
+                selectedRequest={selectedRequest}
+              />
+            </div>
+          </div>
         </div>
         <Toaster />
         <KeyboardShortcutsModal

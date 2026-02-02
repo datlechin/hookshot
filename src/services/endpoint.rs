@@ -2,27 +2,31 @@ use crate::models::{CreateEndpointResponse, Endpoint};
 use sqlx::SqlitePool;
 use uuid::Uuid;
 
-/// Create a new endpoint with a generated UUID
-pub async fn create_endpoint(pool: &SqlitePool) -> Result<CreateEndpointResponse, sqlx::Error> {
+/// Create a new endpoint with a generated UUID and session ID
+pub async fn create_endpoint(
+    pool: &SqlitePool,
+    session_id: &str,
+) -> Result<CreateEndpointResponse, sqlx::Error> {
     let id = Uuid::new_v4().to_string();
 
     sqlx::query(
         r#"
-        INSERT INTO endpoints (id, custom_response_enabled, response_status, request_count)
-        VALUES (?, FALSE, 200, 0)
+        INSERT INTO endpoints (id, custom_response_enabled, response_status, request_count, session_id)
+        VALUES (?, FALSE, 200, 0, ?)
         "#,
     )
     .bind(&id)
+    .bind(session_id)
     .execute(pool)
     .await?;
 
-    tracing::info!("Created new endpoint: {}", id);
+    tracing::info!("Created new endpoint: {} for session: {}", id, session_id);
 
     // Fetch the created endpoint to get created_at and other fields
     let endpoint = sqlx::query_as::<_, Endpoint>(
         r#"
         SELECT id, created_at, custom_response_enabled, response_status,
-               response_headers, response_body, request_count
+               response_headers, response_body, request_count, session_id
         FROM endpoints
         WHERE id = ?
         "#,
@@ -43,28 +47,33 @@ pub async fn create_endpoint(pool: &SqlitePool) -> Result<CreateEndpointResponse
     })
 }
 
-/// List all endpoints with full configuration
-pub async fn list_endpoints(pool: &SqlitePool) -> Result<Vec<Endpoint>, sqlx::Error> {
+/// List endpoints for a specific session
+pub async fn list_endpoints(
+    pool: &SqlitePool,
+    session_id: &str,
+) -> Result<Vec<Endpoint>, sqlx::Error> {
     let endpoints = sqlx::query_as::<_, Endpoint>(
         r#"
         SELECT id, created_at, custom_response_enabled, response_status,
-               response_headers, response_body, request_count
+               response_headers, response_body, request_count, session_id
         FROM endpoints
+        WHERE session_id = ?
         ORDER BY created_at DESC
         "#,
     )
+    .bind(session_id)
     .fetch_all(pool)
     .await?;
 
     Ok(endpoints)
 }
 
-/// Get a single endpoint by ID
+/// Get a single endpoint by ID (no session check - needed for webhook capture)
 pub async fn get_endpoint(pool: &SqlitePool, id: &str) -> Result<Option<Endpoint>, sqlx::Error> {
     let endpoint = sqlx::query_as::<_, Endpoint>(
         r#"
         SELECT id, created_at, custom_response_enabled, response_status,
-               response_headers, response_body, request_count
+               response_headers, response_body, request_count, session_id
         FROM endpoints
         WHERE id = ?
         "#,
@@ -76,10 +85,34 @@ pub async fn get_endpoint(pool: &SqlitePool, id: &str) -> Result<Option<Endpoint
     Ok(endpoint)
 }
 
-/// Update custom response configuration for an endpoint
+/// Get a single endpoint by ID with session verification
+#[allow(dead_code)]
+pub async fn get_endpoint_for_session(
+    pool: &SqlitePool,
+    id: &str,
+    session_id: &str,
+) -> Result<Option<Endpoint>, sqlx::Error> {
+    let endpoint = sqlx::query_as::<_, Endpoint>(
+        r#"
+        SELECT id, created_at, custom_response_enabled, response_status,
+               response_headers, response_body, request_count, session_id
+        FROM endpoints
+        WHERE id = ? AND session_id = ?
+        "#,
+    )
+    .bind(id)
+    .bind(session_id)
+    .fetch_optional(pool)
+    .await?;
+
+    Ok(endpoint)
+}
+
+/// Update custom response configuration for an endpoint (with session verification)
 pub async fn update_response_config(
     pool: &SqlitePool,
     id: &str,
+    session_id: &str,
     enabled: bool,
     status: i32,
     headers: Option<String>,
@@ -92,7 +125,7 @@ pub async fn update_response_config(
             response_status = ?,
             response_headers = ?,
             response_body = ?
-        WHERE id = ?
+        WHERE id = ? AND session_id = ?
         "#,
     )
     .bind(enabled)
@@ -100,6 +133,27 @@ pub async fn update_response_config(
     .bind(&headers)
     .bind(&body)
     .bind(id)
+    .bind(session_id)
+    .execute(pool)
+    .await?;
+
+    Ok(result.rows_affected() > 0)
+}
+
+/// Delete an endpoint (with session verification)
+pub async fn delete_endpoint(
+    pool: &SqlitePool,
+    id: &str,
+    session_id: &str,
+) -> Result<bool, sqlx::Error> {
+    let result = sqlx::query(
+        r#"
+        DELETE FROM endpoints
+        WHERE id = ? AND session_id = ?
+        "#,
+    )
+    .bind(id)
+    .bind(session_id)
     .execute(pool)
     .await?;
 
@@ -114,7 +168,8 @@ mod tests {
     #[tokio::test]
     async fn test_create_endpoint() {
         let pool = init_pool("sqlite::memory:").await.unwrap();
-        let result = create_endpoint(&pool).await;
+        let session_id = "test-session-123";
+        let result = create_endpoint(&pool, session_id).await;
         assert!(result.is_ok(), "Creating endpoint should succeed");
 
         let response = result.unwrap();
@@ -124,23 +179,25 @@ mod tests {
     #[tokio::test]
     async fn test_list_endpoints() {
         let pool = init_pool("sqlite::memory:").await.unwrap();
+        let session_id = "test-session-123";
 
         // Initially empty
-        let endpoints = list_endpoints(&pool).await.unwrap();
+        let endpoints = list_endpoints(&pool, session_id).await.unwrap();
         assert_eq!(endpoints.len(), 0, "Should start with no endpoints");
 
         // Create one endpoint
-        create_endpoint(&pool).await.unwrap();
-        let endpoints = list_endpoints(&pool).await.unwrap();
+        create_endpoint(&pool, session_id).await.unwrap();
+        let endpoints = list_endpoints(&pool, session_id).await.unwrap();
         assert_eq!(endpoints.len(), 1, "Should have one endpoint");
     }
 
     #[tokio::test]
     async fn test_get_endpoint() {
         let pool = init_pool("sqlite::memory:").await.unwrap();
+        let session_id = "test-session-123";
 
         // Create an endpoint
-        let created = create_endpoint(&pool).await.unwrap();
+        let created = create_endpoint(&pool, session_id).await.unwrap();
 
         // Retrieve it
         let endpoint = get_endpoint(&pool, &created.id).await.unwrap();
@@ -154,9 +211,10 @@ mod tests {
     #[tokio::test]
     async fn test_uuid_uniqueness() {
         let pool = init_pool("sqlite::memory:").await.unwrap();
+        let session_id = "test-session-123";
 
-        let endpoint1 = create_endpoint(&pool).await.unwrap();
-        let endpoint2 = create_endpoint(&pool).await.unwrap();
+        let endpoint1 = create_endpoint(&pool, session_id).await.unwrap();
+        let endpoint2 = create_endpoint(&pool, session_id).await.unwrap();
 
         assert_ne!(endpoint1.id, endpoint2.id, "UUIDs should be unique");
     }
@@ -164,12 +222,14 @@ mod tests {
     #[tokio::test]
     async fn test_update_response_config() {
         let pool = init_pool("sqlite::memory:").await.unwrap();
-        let created = create_endpoint(&pool).await.unwrap();
+        let session_id = "test-session-123";
+        let created = create_endpoint(&pool, session_id).await.unwrap();
 
         // Update response config
         let updated = update_response_config(
             &pool,
             &created.id,
+            session_id,
             true,
             404,
             Some(r#"{"x-custom":"value"}"#.to_string()),
@@ -197,10 +257,12 @@ mod tests {
     #[tokio::test]
     async fn test_update_response_config_nonexistent() {
         let pool = init_pool("sqlite::memory:").await.unwrap();
+        let session_id = "test-session-123";
 
-        let updated = update_response_config(&pool, "nonexistent-id", true, 404, None, None)
-            .await
-            .unwrap();
+        let updated =
+            update_response_config(&pool, "nonexistent-id", session_id, true, 404, None, None)
+                .await
+                .unwrap();
 
         assert!(
             !updated,

@@ -35,9 +35,9 @@ pub async fn webhook_handler(
         return Err(StatusCode::PAYLOAD_TOO_LARGE);
     }
 
-    // Fetch endpoint from database
+    // Fetch endpoint from database (no session check for webhook capture)
     let endpoint = match sqlx::query_as::<_, Endpoint>(
-        "SELECT id, created_at, custom_response_enabled, response_status, response_headers, response_body, request_count FROM endpoints WHERE id = ? LIMIT 1"
+        "SELECT id, created_at, custom_response_enabled, response_status, response_headers, response_body, request_count, session_id FROM endpoints WHERE id = ? LIMIT 1"
     )
     .bind(&endpoint_id)
     .fetch_optional(&pool)

@@ -1,11 +1,11 @@
 /**
  * Hook for managing endpoint state
+ * Now fully relies on backend session-based filtering
  */
 
 import { useState, useEffect, useCallback } from 'react'
 import { api } from '@/lib/api'
 import type { Endpoint, EndpointConfig } from '@/lib/types'
-import { useMyEndpoints } from './useMyEndpoints'
 
 interface UseEndpointsReturn {
   endpoints: Endpoint[]
@@ -21,37 +21,18 @@ interface UseEndpointsReturn {
 }
 
 export function useEndpoints(): UseEndpointsReturn {
-  const [allEndpoints, setAllEndpoints] = useState<Endpoint[]>([])
   const [endpoints, setEndpoints] = useState<Endpoint[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [hasMigrated, setHasMigrated] = useState(false)
 
-  const {
-    myEndpointIds,
-    claimEndpoint,
-    unclaimEndpoint,
-    cleanupStaleIds,
-    claimAll,
-  } = useMyEndpoints()
-
-  // Fetch all endpoints from API
+  // Fetch endpoints from API (backend filters by session)
   const fetchEndpoints = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
       const data = await api.endpoints.list()
-      setAllEndpoints(data)
-
-      // One-time migration: Auto-claim all existing endpoints on first load
-      if (!hasMigrated && myEndpointIds.length === 0 && data.length > 0) {
-        claimAll(data.map((e) => e.id))
-        setHasMigrated(true)
-      }
-
-      // Cleanup stale endpoint IDs from localStorage
-      cleanupStaleIds(data.map((e) => e.id))
+      setEndpoints(data)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to fetch endpoints'
       setError(message)
@@ -59,23 +40,18 @@ export function useEndpoints(): UseEndpointsReturn {
     } finally {
       setLoading(false)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // Empty deps - we'll call this manually, not react to changes
+  }, [])
 
-  // Filter endpoints whenever allEndpoints or myEndpointIds changes
+  // Auto-select first endpoint when endpoints change
   useEffect(() => {
-    const filteredEndpoints = allEndpoints.filter((e) => myEndpointIds.includes(e.id))
-    setEndpoints(filteredEndpoints)
-
-    // Auto-select first endpoint if none selected OR if selected endpoint is no longer in list
-    const selectedExists = selectedId && filteredEndpoints.some((e) => e.id === selectedId)
-    if (!selectedExists && filteredEndpoints.length > 0) {
-      setSelectedId(filteredEndpoints[0].id)
-    } else if (!selectedExists && filteredEndpoints.length === 0) {
+    const selectedExists = selectedId && endpoints.some((e) => e.id === selectedId)
+    if (!selectedExists && endpoints.length > 0) {
+      setSelectedId(endpoints[0].id)
+    } else if (!selectedExists && endpoints.length === 0) {
       setSelectedId(null)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allEndpoints, myEndpointIds]) // Don't include selectedId to avoid loop
+  }, [endpoints]) // Don't include selectedId to avoid loop
 
   // Fetch endpoints on mount only
   useEffect(() => {
@@ -92,12 +68,9 @@ export function useEndpoints(): UseEndpointsReturn {
     try {
       setError(null)
       const newEndpoint = await api.endpoints.create()
-      claimEndpoint(newEndpoint.id) // Auto-claim newly created endpoint
 
-      // Update both allEndpoints and endpoints
-      setAllEndpoints((prev) => [newEndpoint, ...prev])
-      // No need to update endpoints here - the filter effect will handle it
-
+      // Update endpoints state immediately
+      setEndpoints((prev) => [newEndpoint, ...prev])
       setSelectedId(newEndpoint.id)
       return newEndpoint
     } catch (err) {
@@ -106,23 +79,19 @@ export function useEndpoints(): UseEndpointsReturn {
       console.error('Failed to create endpoint:', err)
       return null
     }
-  }, [claimEndpoint])
+  }, [])
 
   const deleteEndpoint = useCallback(
     async (id: string): Promise<boolean> => {
       try {
         setError(null)
         await api.endpoints.delete(id)
-        unclaimEndpoint(id) // Remove from localStorage
 
-        // Remove from allEndpoints
-        setAllEndpoints((prev) => prev.filter((e) => e.id !== id))
-        // The filter effect will update endpoints automatically
+        // Remove from state
+        setEndpoints((prev) => prev.filter((e) => e.id !== id))
 
-        // If deleted endpoint was selected, select first remaining
+        // If deleted endpoint was selected, clear selection
         if (selectedId === id) {
-          // We need to wait for the filter effect to run
-          // For now, just clear selection
           setSelectedId(null)
         }
 
@@ -134,7 +103,7 @@ export function useEndpoints(): UseEndpointsReturn {
         return false
       }
     },
-    [selectedId, unclaimEndpoint]
+    [selectedId]
   )
 
   const updateConfig = useCallback(
@@ -153,6 +122,13 @@ export function useEndpoints(): UseEndpointsReturn {
     },
     []
   )
+
+  // claimEndpoint is now a no-op since backend handles session claiming
+  const claimEndpoint = useCallback((id: string) => {
+    // Backend automatically claims endpoints when they're accessed
+    // This function kept for API compatibility but does nothing
+    console.log('Endpoint auto-claimed by backend:', id)
+  }, [])
 
   return {
     endpoints,

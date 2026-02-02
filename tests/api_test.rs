@@ -1,11 +1,12 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     Json,
 };
 use hookshot::{
     db,
     handlers::api,
     handlers::endpoint,
+    middleware::SessionId,
     models::{RequestQueryParams, UpdateResponseConfig},
     websocket::WebSocketManager,
 };
@@ -14,6 +15,8 @@ use std::sync::Arc;
 
 type AppState = (SqlitePool, Arc<WebSocketManager>);
 
+const TEST_SESSION_ID: &str = "test-session-12345";
+
 async fn setup() -> AppState {
     let pool = db::init_pool("sqlite::memory:").await.unwrap();
     let ws_manager = Arc::new(WebSocketManager::new());
@@ -21,9 +24,12 @@ async fn setup() -> AppState {
 }
 
 async fn create_endpoint(state: &AppState) -> String {
-    let response = endpoint::create_endpoint(State(state.clone()))
-        .await
-        .unwrap();
+    let response = endpoint::create_endpoint(
+        Extension(SessionId(TEST_SESSION_ID.to_string())),
+        State(state.clone()),
+    )
+    .await
+    .unwrap();
     response.0.id
 }
 
@@ -45,7 +51,11 @@ async fn create_request(pool: &SqlitePool, endpoint_id: &str, method: &str) -> i
 #[tokio::test]
 async fn test_create_endpoint() {
     let state = setup().await;
-    let result = endpoint::create_endpoint(State(state)).await;
+    let result = endpoint::create_endpoint(
+        Extension(SessionId(TEST_SESSION_ID.to_string())),
+        State(state),
+    )
+    .await;
     assert!(result.is_ok());
     let response = result.unwrap().0;
     assert!(uuid::Uuid::parse_str(&response.id).is_ok());
@@ -56,7 +66,11 @@ async fn test_list_endpoints() {
     let state = setup().await;
 
     // Initially empty
-    let result = endpoint::list_endpoints(State(state.clone())).await;
+    let result = endpoint::list_endpoints(
+        Extension(SessionId(TEST_SESSION_ID.to_string())),
+        State(state.clone()),
+    )
+    .await;
     assert_eq!(result.unwrap().0.len(), 0);
 
     // Create 3 endpoints
@@ -65,7 +79,11 @@ async fn test_list_endpoints() {
     }
 
     // List should return 3
-    let result = endpoint::list_endpoints(State(state)).await;
+    let result = endpoint::list_endpoints(
+        Extension(SessionId(TEST_SESSION_ID.to_string())),
+        State(state),
+    )
+    .await;
     assert_eq!(result.unwrap().0.len(), 3);
 }
 
@@ -191,7 +209,12 @@ async fn test_delete_endpoint() {
     }
 
     // Delete endpoint
-    let result = api::delete_endpoint(Path(endpoint_id.clone()), State(state.clone())).await;
+    let result = api::delete_endpoint(
+        Path(endpoint_id.clone()),
+        Extension(SessionId(TEST_SESSION_ID.to_string())),
+        State(state.clone()),
+    )
+    .await;
     assert_eq!(result.unwrap(), axum::http::StatusCode::NO_CONTENT);
 
     // Verify cascade delete
@@ -206,7 +229,12 @@ async fn test_delete_endpoint() {
 #[tokio::test]
 async fn test_delete_endpoint_not_found() {
     let state = setup().await;
-    let result = api::delete_endpoint(Path("nonexistent".to_string()), State(state)).await;
+    let result = api::delete_endpoint(
+        Path("nonexistent".to_string()),
+        Extension(SessionId(TEST_SESSION_ID.to_string())),
+        State(state),
+    )
+    .await;
     assert_eq!(result.unwrap_err(), axum::http::StatusCode::NOT_FOUND);
 }
 
@@ -224,6 +252,7 @@ async fn test_update_endpoint_response() {
 
     let result = api::update_endpoint_response(
         Path(endpoint_id.clone()),
+        Extension(SessionId(TEST_SESSION_ID.to_string())),
         State(state.clone()),
         Json(config),
     )
@@ -257,6 +286,7 @@ async fn test_update_endpoint_response_invalid_status() {
         };
         let result = api::update_endpoint_response(
             Path(endpoint_id.clone()),
+            Extension(SessionId(TEST_SESSION_ID.to_string())),
             State(state.clone()),
             Json(config),
         )
@@ -275,6 +305,7 @@ async fn test_update_endpoint_response_invalid_status() {
         };
         let result = api::update_endpoint_response(
             Path(endpoint_id.clone()),
+            Extension(SessionId(TEST_SESSION_ID.to_string())),
             State(state.clone()),
             Json(config),
         )
@@ -295,7 +326,13 @@ async fn test_update_endpoint_response_invalid_json() {
         body: None,
     };
 
-    let result = api::update_endpoint_response(Path(endpoint_id), State(state), Json(config)).await;
+    let result = api::update_endpoint_response(
+        Path(endpoint_id),
+        Extension(SessionId(TEST_SESSION_ID.to_string())),
+        State(state),
+        Json(config),
+    )
+    .await;
     assert!(result.is_err());
     let (status, msg) = result.unwrap_err();
     assert_eq!(status, axum::http::StatusCode::BAD_REQUEST);
@@ -311,9 +348,13 @@ async fn test_update_endpoint_response_not_found() {
         headers: None,
         body: None,
     };
-    let result =
-        api::update_endpoint_response(Path("nonexistent".to_string()), State(state), Json(config))
-            .await;
+    let result = api::update_endpoint_response(
+        Path("nonexistent".to_string()),
+        Extension(SessionId(TEST_SESSION_ID.to_string())),
+        State(state),
+        Json(config),
+    )
+    .await;
     assert_eq!(result.unwrap_err().0, axum::http::StatusCode::NOT_FOUND);
 }
 
@@ -362,10 +403,13 @@ async fn test_json_response_format() {
     create_request(&state.0, &endpoint_id, "POST").await;
 
     // Test list response
-    let list_result = endpoint::list_endpoints(State(state.clone()))
-        .await
-        .unwrap()
-        .0;
+    let list_result = endpoint::list_endpoints(
+        Extension(SessionId(TEST_SESSION_ID.to_string())),
+        State(state.clone()),
+    )
+    .await
+    .unwrap()
+    .0;
     let list_json = serde_json::to_value(&list_result).unwrap();
     assert!(list_json.is_array());
 
