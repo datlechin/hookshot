@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { api } from '@/lib/api';
 
 /**
@@ -6,6 +6,9 @@ import { api } from '@/lib/api';
  */
 export function useLastRequestTime(endpointIds: string[]): Record<string, string | null> {
   const [lastRequestTimes, setLastRequestTimes] = useState<Record<string, string | null>>({});
+
+  // Create stable string representation of endpointIds for dependency checking
+  const endpointIdsKey = useMemo(() => endpointIds.join(','), [endpointIds]);
 
   useEffect(() => {
     if (endpointIds.length === 0) return;
@@ -34,7 +37,7 @@ export function useLastRequestTime(endpointIds: string[]): Record<string, string
     };
 
     fetchLastRequestTimes();
-  }, [endpointIds.join(',')]); // Use join to create stable dependency
+  }, [endpointIds, endpointIdsKey]);
 
   return lastRequestTimes;
 }

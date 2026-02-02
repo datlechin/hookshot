@@ -31,6 +31,7 @@ export function useEndpointNames() {
     setNames((prev) => {
       if (name.trim() === '') {
         // Remove if empty
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { [endpointId]: _, ...rest } = prev;
         return rest;
       }
@@ -47,6 +48,7 @@ export function useEndpointNames() {
 
   const removeCustomName = useCallback((endpointId: string) => {
     setNames((prev) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { [endpointId]: _, ...rest } = prev;
       return rest;
     });

@@ -2,7 +2,7 @@
  * UI Components exports
  */
 
-export { Button, buttonVariants } from './Button'
+export { Button } from './Button'
 export { Badge } from './Badge'
 export { Skeleton } from './Skeleton'
 export { CopyButton } from './CopyButton'
