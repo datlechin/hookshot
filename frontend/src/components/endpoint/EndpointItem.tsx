@@ -116,18 +116,20 @@ export function EndpointItem({
 
   return (
     <>
-      <div
-        className={cn(endpointItemVariants({ selected, compact }))}
-        onClick={onSelect}
-        onKeyDown={handleKeyDown}
-        role="button"
-        tabIndex={0}
-        aria-label={`Select endpoint ${customName || endpoint.id}`}
-        aria-pressed={selected}
-      >
+      <div className={cn(endpointItemVariants({ selected, compact }))}>
+        {/* Invisible overlay button for selection - positioned behind interactive elements */}
+        <button
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-0 border-none bg-transparent p-0 m-0"
+          onClick={onSelect}
+          onKeyDown={handleKeyDown}
+          aria-label={`Select endpoint ${customName || endpoint.id}`}
+          aria-pressed={selected}
+          type="button"
+        />
+
         {/* Main row: Name + Badge + Indicator + Actions */}
-        <div className="flex items-center justify-between gap-2 mb-1">
-          <div className="flex items-center gap-1.5 min-w-0 flex-1" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between gap-2 mb-1 relative pointer-events-none">
+          <div className="flex items-center gap-1.5 min-w-0 flex-1 relative z-10 pointer-events-auto">
             {/* Endpoint Name */}
             <EndpointNameEditor
               endpointId={endpoint.id}
@@ -148,12 +150,13 @@ export function EndpointItem({
               <Circle
                 className="w-2 h-2 fill-(--accent-green) text-(--accent-green)"
                 aria-label="Custom response enabled"
+                title="Custom response enabled"
               />
             )}
           </div>
 
           {/* Action buttons */}
-          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 relative z-10 pointer-events-auto">
             <button
               onClick={handleCopy}
               className={cn(
@@ -163,6 +166,7 @@ export function EndpointItem({
               )}
               title={copied ? 'Copied!' : 'Copy URL'}
               aria-label={copied ? 'Copied webhook URL' : 'Copy webhook URL'}
+              type="button"
             >
               {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
             </button>
@@ -171,6 +175,7 @@ export function EndpointItem({
               className={cn(actionButtonVariants({ variant: 'default' }), focusRing)}
               title="Configure"
               aria-label="Configure response"
+              type="button"
             >
               <Settings className="w-3.5 h-3.5" />
             </button>
@@ -179,6 +184,7 @@ export function EndpointItem({
               className={cn(actionButtonVariants({ variant: 'danger' }), focusRing)}
               title="Delete"
               aria-label="Delete endpoint"
+              type="button"
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>
@@ -186,7 +192,7 @@ export function EndpointItem({
         </div>
 
         {/* Metadata line */}
-        <div className="flex items-center gap-2 text-[11px] text-(--text-tertiary)">
+        <div className="flex items-center gap-2 text-[11px] text-(--text-tertiary) relative z-10">
           <span className="font-mono truncate">{endpoint.id}</span>
           {lastRequestTime && (
             <>
