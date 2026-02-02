@@ -94,6 +94,99 @@ This project uses **CCPM (Claude Code PM)** adapted for OpenCode. CCPM provides:
 /pm:issue-sync 1234
 ```
 
+## Testing Before Commit
+
+**CRITICAL:** Always run all CI checks locally before committing to ensure GitHub Actions will pass.
+
+### Quick Check - Run All Tests
+
+**Recommended:** Use the provided script:
+
+```bash
+./test-ci.sh
+```
+
+Or run all checks manually:
+
+```bash
+# Run all CI checks (frontend + backend)
+(cd frontend && npm ci && npm run ci:test && npm run ci:lint && npm run ci:typecheck) && \
+cargo test --all-features --verbose && \
+cargo clippy --all-features -- -D warnings && \
+cargo fmt --all -- --check
+```
+
+### Individual CI Checks
+
+#### Frontend Tests
+
+```bash
+cd frontend
+
+# Install dependencies (if needed)
+npm ci
+
+# Run tests
+npm run ci:test
+
+# Run linting
+npm run ci:lint
+
+# Run TypeScript type checking
+npm run ci:typecheck
+```
+
+#### Backend Tests
+
+```bash
+# Run Rust tests
+cargo test --all-features --verbose
+
+# Run Clippy (Rust linter)
+cargo clippy --all-features -- -D warnings
+
+# Check Rust formatting
+cargo fmt --all -- --check
+```
+
+#### Build Verification (Optional)
+
+```bash
+# Build frontend
+cd frontend && npm run build && cd ..
+
+# Build release binary
+cargo build --release --verbose
+
+# Verify binary runs
+./target/release/hookshot --version
+./target/release/hookshot --help
+```
+
+### CI Workflow Summary
+
+The GitHub Actions CI runs these jobs on every push/PR:
+
+1. **Frontend Tests** - Vitest, ESLint, TypeScript checking
+2. **Backend Tests** - Cargo test, Clippy, formatting
+3. **Build Matrix** - Cross-platform builds (Linux, macOS, Windows)
+4. **Security Audit** - Cargo audit for vulnerabilities
+
+### Common Issues
+
+- **Frontend lint errors**: Run `npm run format` to auto-fix
+- **Backend format errors**: Run `cargo fmt --all` to auto-fix
+- **Clippy warnings**: Fix manually or adjust code
+- **Test failures**: Debug and fix before committing
+
+### Pre-commit Workflow
+
+1. Make your changes
+2. Run tests locally (use quick check command above)
+3. Fix any failures
+4. Commit only when all checks pass
+5. Push to GitHub with confidence
+
 ## Architecture Guidelines
 
 ### Backend Structure
