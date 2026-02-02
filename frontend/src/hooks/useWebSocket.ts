@@ -43,6 +43,8 @@ export function useWebSocket(endpointId: string | null): UseWebSocketReturn {
    */
   const startPolling = useCallback(() => {
     if (!endpointId) return
+    // Guard against starting polling multiple times
+    if (pollingIntervalRef.current) return
 
     console.log('[useWebSocket] Starting HTTP polling fallback')
     setUsingPolling(true)
@@ -123,7 +125,8 @@ export function useWebSocket(endpointId: string | null): UseWebSocketReturn {
         stopPolling()
       } else {
         // WebSocket disconnected, fall back to polling
-        if (!usingPolling) {
+        // Use ref to avoid stale closure issues
+        if (!pollingIntervalRef.current) {
           startPolling()
         }
       }
@@ -155,7 +158,10 @@ export function useWebSocket(endpointId: string | null): UseWebSocketReturn {
       setLastMessage(null)
       stopPolling()
     }
-  }, [endpointId, startPolling, stopPolling, usingPolling])
+  // Note: startPolling and stopPolling are stable callbacks, usingPolling should NOT
+  // be in the dependency array as it would cause an infinite loop when polling starts
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [endpointId])
 
   return {
     connected,

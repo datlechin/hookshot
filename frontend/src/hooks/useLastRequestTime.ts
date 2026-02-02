@@ -37,7 +37,9 @@ export function useLastRequestTime(endpointIds: string[]): Record<string, string
     };
 
     fetchLastRequestTimes();
-  }, [endpointIds, endpointIdsKey]);
+    // Note: Only use endpointIdsKey as dependency since endpointIds is a new array each render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [endpointIdsKey]);
 
   return lastRequestTimes;
 }
