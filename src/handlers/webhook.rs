@@ -40,6 +40,11 @@ where
 
 /// Check if a string matches UUID format (simple validation)
 fn is_valid_uuid_format(s: &str) -> bool {
+    // Reject paths with file extensions (static assets)
+    if s.contains('.') {
+        return false;
+    }
+
     if s.len() != 36 {
         return false;
     }
@@ -318,6 +323,13 @@ mod tests {
         assert!(!is_valid_uuid_format(
             "550e8400-e29b-41d4-a716-44665544000g"
         )); // Invalid hex char
+
+        // Static file paths with extensions (should be rejected)
+        assert!(!is_valid_uuid_format("favicon.svg")); // Static file
+        assert!(!is_valid_uuid_format("apple-touch-icon.png")); // Static file
+        assert!(!is_valid_uuid_format("robots.txt")); // Static file
+        assert!(!is_valid_uuid_format("sitemap.xml")); // Static file
+        assert!(!is_valid_uuid_format("og-image.png")); // Static file
     }
 
     #[test]
