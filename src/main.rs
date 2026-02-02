@@ -6,6 +6,7 @@ mod services;
 mod static_files;
 mod websocket;
 
+use axum::http::{header, HeaderValue, Method};
 use axum::{
     middleware as axum_middleware,
     routing::{any, delete, get, post, put},
@@ -15,12 +16,7 @@ use clap::Parser;
 use middleware::session_middleware;
 use std::net::SocketAddr;
 use std::sync::Arc;
-use tower_http::{
-    compression::CompressionLayer,
-    cors::CorsLayer,
-    trace::TraceLayer,
-};
-use axum::http::{HeaderValue, Method, header};
+use tower_http::{compression::CompressionLayer, cors::CorsLayer, trace::TraceLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use websocket::WebSocketManager;
 
@@ -84,7 +80,13 @@ async fn main() {
             "http://localhost:5173".parse::<HeaderValue>().unwrap(), // Vite dev server
             "http://127.0.0.1:5173".parse::<HeaderValue>().unwrap(),
         ])
-        .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE, Method::OPTIONS])
+        .allow_methods([
+            Method::GET,
+            Method::POST,
+            Method::PUT,
+            Method::DELETE,
+            Method::OPTIONS,
+        ])
         .allow_headers([
             header::CONTENT_TYPE,
             header::AUTHORIZATION,

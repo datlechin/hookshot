@@ -303,12 +303,8 @@ mod tests {
     #[test]
     fn test_is_valid_uuid_format() {
         // Valid UUIDs
-        assert!(is_valid_uuid_format(
-            "550e8400-e29b-41d4-a716-446655440000"
-        ));
-        assert!(is_valid_uuid_format(
-            "8fb1feb1-9d69-49f4-aa5b-fa4bf4917272"
-        ));
+        assert!(is_valid_uuid_format("550e8400-e29b-41d4-a716-446655440000"));
+        assert!(is_valid_uuid_format("8fb1feb1-9d69-49f4-aa5b-fa4bf4917272"));
 
         // Invalid UUIDs
         assert!(!is_valid_uuid_format("health")); // Not a UUID
@@ -318,9 +314,7 @@ mod tests {
         assert!(!is_valid_uuid_format(
             "550e8400-e29b-41d4-a716-446655440000-extra"
         )); // Too long
-        assert!(!is_valid_uuid_format(
-            "550e8400-e29b-41d4-a716"
-        )); // Missing segment
+        assert!(!is_valid_uuid_format("550e8400-e29b-41d4-a716")); // Missing segment
         assert!(!is_valid_uuid_format(
             "550e8400-e29b-41d4-a716-44665544000g"
         )); // Invalid hex char
