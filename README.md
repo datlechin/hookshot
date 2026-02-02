@@ -480,7 +480,7 @@ See [GitHub Issues](https://github.com/datlechin/hookshot/issues) for feature re
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - Built with [Claude Code PM](https://github.com/automazeio/ccpm) - AI-powered project management
 - Inspired by [webhook.site](https://webhook.site) and [requestbin](https://requestbin.com)
