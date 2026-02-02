@@ -23,7 +23,7 @@ const mockRequest: Request = {
   id: 1,
   endpoint_id: 'test-endpoint-123',
   method: 'POST',
-  path: '/webhook/test-endpoint-123',
+  path: '/test-endpoint-123',
   query_string: 'foo=bar',
   headers: {
     'content-type': 'application/json',

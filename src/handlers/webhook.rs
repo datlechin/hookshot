@@ -2,8 +2,8 @@ use crate::models::Endpoint;
 use crate::websocket::{RequestData, WebSocketManager, WebSocketMessage};
 use axum::{
     body::Bytes,
-    extract::{ConnectInfo, Path, State},
-    http::{HeaderMap, HeaderName, HeaderValue, Method, StatusCode, Uri},
+    extract::{ConnectInfo, FromRequestParts, Path, State},
+    http::{request::Parts, HeaderMap, HeaderName, HeaderValue, Method, StatusCode, Uri},
     response::{IntoResponse, Response},
 };
 use sqlx::SqlitePool;
@@ -14,9 +14,60 @@ use tracing::{error, info};
 
 const MAX_BODY_SIZE: usize = 10 * 1024 * 1024; // 10MB
 
+/// Custom UUID path extractor that validates the ID format
+pub struct UuidPath(pub String);
+
+impl<S> FromRequestParts<S> for UuidPath
+where
+    S: Send + Sync,
+{
+    type Rejection = StatusCode;
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let Path(id) = Path::<String>::from_request_parts(parts, state)
+            .await
+            .map_err(|_| StatusCode::NOT_FOUND)?;
+
+        // Validate that the ID looks like a UUID (basic format check)
+        // UUID format: 8-4-4-4-12 hex digits with hyphens
+        if is_valid_uuid_format(&id) {
+            Ok(UuidPath(id))
+        } else {
+            Err(StatusCode::NOT_FOUND)
+        }
+    }
+}
+
+/// Check if a string matches UUID format (simple validation)
+fn is_valid_uuid_format(s: &str) -> bool {
+    if s.len() != 36 {
+        return false;
+    }
+
+    let parts: Vec<&str> = s.split('-').collect();
+    if parts.len() != 5 {
+        return false;
+    }
+
+    // Check segment lengths: 8-4-4-4-12
+    if parts[0].len() != 8
+        || parts[1].len() != 4
+        || parts[2].len() != 4
+        || parts[3].len() != 4
+        || parts[4].len() != 12
+    {
+        return false;
+    }
+
+    // Check that all characters are valid hex
+    s.chars()
+        .filter(|c| *c != '-')
+        .all(|c| c.is_ascii_hexdigit())
+}
+
 /// Webhook capture handler - accepts any HTTP method and stores the request
 pub async fn webhook_handler(
-    Path(endpoint_id): Path<String>,
+    UuidPath(endpoint_id): UuidPath,
     method: Method,
     uri: Uri,
     headers: HeaderMap,
@@ -248,6 +299,32 @@ fn headers_to_json(headers: &HeaderMap) -> String {
 mod tests {
     use super::*;
     use axum::http::HeaderValue;
+
+    #[test]
+    fn test_is_valid_uuid_format() {
+        // Valid UUIDs
+        assert!(is_valid_uuid_format(
+            "550e8400-e29b-41d4-a716-446655440000"
+        ));
+        assert!(is_valid_uuid_format(
+            "8fb1feb1-9d69-49f4-aa5b-fa4bf4917272"
+        ));
+
+        // Invalid UUIDs
+        assert!(!is_valid_uuid_format("health")); // Not a UUID
+        assert!(!is_valid_uuid_format("api")); // Not a UUID
+        assert!(!is_valid_uuid_format("ws")); // Not a UUID
+        assert!(!is_valid_uuid_format("550e8400")); // Too short
+        assert!(!is_valid_uuid_format(
+            "550e8400-e29b-41d4-a716-446655440000-extra"
+        )); // Too long
+        assert!(!is_valid_uuid_format(
+            "550e8400-e29b-41d4-a716"
+        )); // Missing segment
+        assert!(!is_valid_uuid_format(
+            "550e8400-e29b-41d4-a716-44665544000g"
+        )); // Invalid hex char
+    }
 
     #[test]
     fn test_headers_to_json() {

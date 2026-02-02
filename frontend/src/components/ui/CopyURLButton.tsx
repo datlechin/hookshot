@@ -13,7 +13,7 @@ interface CopyURLButtonProps {
 
 export function CopyURLButton({ endpointId, className = '' }: CopyURLButtonProps) {
   const [copied, setCopied] = useState(false)
-  const url = `${window.location.origin}/webhook/${endpointId}`
+  const url = `${window.location.origin}/${endpointId}`
 
   async function copyToClipboard(e: React.MouseEvent) {
     e.stopPropagation()

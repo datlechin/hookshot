@@ -1,13 +1,59 @@
 import { useState } from 'react'
-import { Trash2, Settings } from 'lucide-react'
+import { Trash2, Settings, Circle, Copy, Check } from 'lucide-react'
+import { cva, type VariantProps } from 'class-variance-authority'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
-import { CopyURLButton } from '@/components/ui/CopyURLButton'
+import { Badge } from '@/components/ui/Badge'
 import { EndpointNameEditor } from '@/components/endpoint/EndpointNameEditor'
 import type { Endpoint } from '@/lib/types'
-import { cn } from '@/lib/utils'
-import { formatRelativeTime, formatDate, formatRequestCount } from '@/utils/formatters'
+import { cn, focusRing } from '@/lib/utils'
+import { formatRelativeTime, formatRequestCount } from '@/utils/formatters'
 
-interface EndpointItemProps {
+/**
+ * EndpointItem variant definitions - Compact & minimal design
+ */
+const endpointItemVariants = cva(
+  'group relative rounded-md transition-all cursor-pointer',
+  {
+    variants: {
+      selected: {
+        true: 'bg-(--surface-hover)',
+        false: 'hover:bg-(--surface-hover)',
+      },
+      compact: {
+        true: 'p-2',
+        false: 'p-2.5',
+      },
+    },
+    defaultVariants: {
+      selected: false,
+      compact: false,
+    },
+  }
+)
+
+/**
+ * Action button variants
+ */
+const actionButtonVariants = cva(
+  'p-1 transition-all rounded focus:outline-none',
+  {
+    variants: {
+      variant: {
+        default: 'text-(--text-tertiary) hover:text-(--text-primary) hover:bg-(--surface)',
+        danger: 'text-(--text-tertiary) hover:text-(--accent-red) hover:bg-(--accent-red)/10',
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
+    },
+  }
+)
+
+/**
+ * EndpointItem - Main component
+ * Compact design with minimal spacing
+ */
+interface EndpointItemProps extends VariantProps<typeof endpointItemVariants> {
   endpoint: Endpoint
   selected: boolean
   onSelect: () => void
@@ -27,9 +73,24 @@ export function EndpointItem({
   customName,
   onSetCustomName,
   lastRequestTime,
+  compact = false,
 }: EndpointItemProps) {
   const [showConfirm, setShowConfirm] = useState(false)
+  const [copied, setCopied] = useState(false)
   const requestCount = endpoint.request_count || 0
+
+  async function handleCopy(e: React.MouseEvent) {
+    e.stopPropagation()
+    const url = `${window.location.origin}/${endpoint.id}`
+
+    try {
+      await navigator.clipboard.writeText(url)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch (error) {
+      console.error('Failed to copy URL:', error)
+    }
+  }
 
   function handleDelete(e: React.MouseEvent) {
     e.stopPropagation()
@@ -46,59 +107,68 @@ export function EndpointItem({
     onDelete()
   }
 
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      onSelect()
+    }
+  }
+
   return (
     <>
       <div
-        className={cn(
-          'p-2 rounded transition-all group relative',
-          selected
-            ? 'bg-(--surface-hover) border-l-3 border-(--accent-blue) pl-1.5'
-            : 'hover:bg-(--surface-hover) border-l-3 border-transparent'
-        )}
+        className={cn(endpointItemVariants({ selected, compact }))}
+        onClick={onSelect}
+        onKeyDown={handleKeyDown}
+        role="button"
+        tabIndex={0}
+        aria-label={`Select endpoint ${customName || endpoint.id}`}
+        aria-pressed={selected}
       >
-        <button
-          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-0 border-none bg-transparent p-0 m-0"
-          onClick={onSelect}
-          aria-label={`Select endpoint ${endpoint.id}`}
-          tabIndex={0}
-        />
+        {/* Main row: Name + Badge + Indicator + Actions */}
+        <div className="flex items-center justify-between gap-2 mb-1">
+          <div className="flex items-center gap-1.5 min-w-0 flex-1" onClick={(e) => e.stopPropagation()}>
+            {/* Endpoint Name */}
+            <EndpointNameEditor
+              endpointId={endpoint.id}
+              currentName={customName}
+              defaultName={endpoint.id.substring(0, 8)}
+              onSave={onSetCustomName}
+            />
 
-        <div className="flex items-start justify-between mb-1 relative pointer-events-none">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5 mb-0.5 relative z-10 pointer-events-auto">
-              <EndpointNameEditor
-                endpointId={endpoint.id}
-                currentName={customName}
-                defaultName={endpoint.id.substring(0, 8)}
-                onSave={onSetCustomName}
+            {/* Request Count Badge */}
+            {requestCount > 0 && (
+              <Badge variant="default" size="sm">
+                {formatRequestCount(requestCount)}
+              </Badge>
+            )}
+
+            {/* Custom Response Indicator */}
+            {endpoint.custom_response_enabled && (
+              <Circle
+                className="w-2 h-2 fill-(--accent-green) text-(--accent-green)"
+                aria-label="Custom response enabled"
               />
-              {requestCount > 0 && (
-                <span className="shrink-0 text-[11px] px-1.5 py-0.5 bg-(--accent-blue)/10 text-(--accent-blue) rounded font-medium">
-                  {formatRequestCount(requestCount)}
-                </span>
-              )}
-              {endpoint.custom_response_enabled && (
-                <span
-                  className="shrink-0 w-2 h-2 bg-(--accent-green) rounded-full"
-                  title="Custom response enabled"
-                />
-              )}
-            </div>
-            <p className="text-[11px] font-mono text-(--text-tertiary) truncate mb-0.5">{endpoint.id}</p>
-            <div className="flex items-center gap-1.5 text-[11px] text-(--text-tertiary)">
-              <span>{formatDate(endpoint.created_at)}</span>
-              {lastRequestTime && (
-                <>
-                  <span>•</span>
-                  <span>{formatRelativeTime(lastRequestTime)}</span>
-                </>
-              )}
-            </div>
+            )}
           </div>
-          <div className="flex gap-0.5 ml-1.5 relative z-10 pointer-events-auto">
+
+          {/* Action buttons */}
+          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={handleCopy}
+              className={cn(
+                actionButtonVariants({ variant: 'default' }),
+                focusRing,
+                copied && 'text-(--accent-green)'
+              )}
+              title={copied ? 'Copied!' : 'Copy URL'}
+              aria-label={copied ? 'Copied webhook URL' : 'Copy webhook URL'}
+            >
+              {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+            </button>
             <button
               onClick={handleConfigure}
-              className="p-0.5 text-(--text-tertiary) hover:text-(--accent-blue) transition-colors opacity-0 group-hover:opacity-100"
+              className={cn(actionButtonVariants({ variant: 'default' }), focusRing)}
               title="Configure"
               aria-label="Configure response"
             >
@@ -106,7 +176,7 @@ export function EndpointItem({
             </button>
             <button
               onClick={handleDelete}
-              className="p-0.5 text-(--text-tertiary) hover:text-(--accent-red) transition-colors opacity-0 group-hover:opacity-100"
+              className={cn(actionButtonVariants({ variant: 'danger' }), focusRing)}
               title="Delete"
               aria-label="Delete endpoint"
             >
@@ -115,11 +185,19 @@ export function EndpointItem({
           </div>
         </div>
 
-        <div className="opacity-0 group-hover:opacity-100 transition-opacity relative z-10 pointer-events-auto">
-          <CopyURLButton endpointId={endpoint.id} />
+        {/* Metadata line */}
+        <div className="flex items-center gap-2 text-[11px] text-(--text-tertiary)">
+          <span className="font-mono truncate">{endpoint.id}</span>
+          {lastRequestTime && (
+            <>
+              <span>•</span>
+              <span className="shrink-0">{formatRelativeTime(lastRequestTime)}</span>
+            </>
+          )}
         </div>
       </div>
 
+      {/* Delete confirmation dialog */}
       {showConfirm && (
         <ConfirmDialog
           title="Delete Endpoint?"

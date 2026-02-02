@@ -77,7 +77,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ✅ `PUT /api/endpoints/:id/response` - Update custom response
 - ✅ `GET /api/endpoints/:id/requests` - List requests (paginated, filtered)
 - ✅ `GET /api/requests/:id` - Get request details
-- ✅ `ANY /webhook/:id` - Webhook capture (all methods)
+- ✅ `ANY /:id` - Webhook capture (all methods)
 - ✅ `WS /ws/endpoints/:id` - WebSocket connection
 
 #### Database

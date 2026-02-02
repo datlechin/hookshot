@@ -99,7 +99,7 @@ That's it! No database setup, no config files - just run and go.
 3. **Copy the webhook URL** - Use it in your applications or services
 4. **Send a test request**:
    ```bash
-   curl -X POST http://localhost:3000/webhook/YOUR-ENDPOINT-ID \
+   curl -X POST http://localhost:3000/YOUR-ENDPOINT-ID \
      -H "Content-Type: application/json" \
      -d '{"event": "test", "message": "Hello Hookshot!"}'
    ```
@@ -405,7 +405,7 @@ Returns server health status.
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `ANY` | `/webhook/:id` | Webhook capture endpoint (accepts ALL HTTP methods) |
+| `ANY` | `/:id` | Webhook capture endpoint (accepts ALL HTTP methods) |
 
 This endpoint:
 - Accepts any HTTP method (GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD, etc.)

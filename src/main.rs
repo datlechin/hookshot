@@ -128,7 +128,7 @@ async fn main() {
             get(handlers::websocket::websocket_handler),
         )
         // Webhook capture route - accepts all HTTP methods
-        .route("/webhook/{id}", any(handlers::webhook::webhook_handler));
+        .route("/{id}", any(handlers::webhook::webhook_handler));
 
     // Combine API routes with static file serving
     let app = api_routes

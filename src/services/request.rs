@@ -82,7 +82,7 @@ mod tests {
             StoreRequestData {
                 endpoint_id: endpoint_id.to_string(),
                 method: "POST".to_string(),
-                path: "/webhook/test".to_string(),
+                path: "/test".to_string(),
                 query_string: Some("key=value".to_string()),
                 headers: headers.clone(),
                 body: body.clone(),
@@ -107,7 +107,7 @@ mod tests {
 
         assert_eq!(stored.endpoint_id, endpoint_id);
         assert_eq!(stored.method, "POST");
-        assert_eq!(stored.path, "/webhook/test");
+        assert_eq!(stored.path, "/test");
         assert_eq!(stored.query_string, Some("key=value".to_string()));
         assert_eq!(stored.headers, headers);
         assert_eq!(stored.body, body);

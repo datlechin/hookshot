@@ -4,7 +4,7 @@ Allow: /
 
 # Disallow private/sensitive paths
 Disallow: /api/
-Disallow: /webhook/
+Disallow: /
 
 # Sitemap location
 Sitemap: https://hook.nqd.vn/sitemap.xml

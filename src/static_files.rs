@@ -18,9 +18,9 @@ pub async fn serve_static_file(uri: Uri) -> Response {
         return serve_file(path, file.contents());
     }
 
-    // For SPA routing: if file not found and not an API/webhook/ws route,
+    // For SPA routing: if file not found and not an API/ws route,
     // serve index.html to let the frontend router handle it
-    if !path.starts_with("api/") && !path.starts_with("webhook/") && !path.starts_with("ws/") {
+    if !path.starts_with("api/") && !path.starts_with("ws/") && !path.starts_with("health") {
         if let Some(index) = STATIC_DIR.get_file("index.html") {
             return serve_file("index.html", index.contents());
         }

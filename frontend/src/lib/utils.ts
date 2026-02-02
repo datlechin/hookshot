@@ -60,11 +60,25 @@ export async function copyToClipboard(text: string): Promise<boolean> {
 }
 
 /**
- * Combine class names conditionally
+ * Combine class names conditionally using clsx and tailwind-merge
  */
-export function cn(...classes: (string | boolean | undefined | null)[]): string {
-  return classes.filter(Boolean).join(' ')
+import { type ClassValue, clsx } from 'clsx'
+import { twMerge } from 'tailwind-merge'
+
+export function cn(...inputs: ClassValue[]): string {
+  return twMerge(clsx(inputs))
 }
+
+/**
+ * Focus ring utility for accessibility
+ */
+export const focusRing =
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--accent-blue) focus-visible:ring-offset-2'
+
+/**
+ * Disabled state utility
+ */
+export const disabled = 'disabled:pointer-events-none disabled:opacity-50'
 
 /**
  * Group requests by time periods

@@ -2,7 +2,9 @@
  * UI Components exports
  */
 
-export { Button } from './Button'
+export { Button, buttonVariants } from './Button'
+export { Badge } from './Badge'
+export { Skeleton } from './Skeleton'
 export { CopyButton } from './CopyButton'
 export { MethodBadge } from './MethodBadge'
 export { Tabs, TabsList, TabsTrigger, TabsContent } from './Tabs'

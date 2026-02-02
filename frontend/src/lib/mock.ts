@@ -37,7 +37,7 @@ export const mockRequests: Request[] = [
     id: 1,
     endpoint_id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
     method: 'POST',
-    path: '/webhook/a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+    path: '/a1b2c3d4-e5f6-7890-abcd-ef1234567890',
     query_string: 'source=github&event=push',
     headers: {
       'Content-Type': 'application/json',
@@ -62,7 +62,7 @@ export const mockRequests: Request[] = [
     id: 2,
     endpoint_id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
     method: 'GET',
-    path: '/webhook/a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+    path: '/a1b2c3d4-e5f6-7890-abcd-ef1234567890',
     query_string: 'test=true',
     headers: {
       'User-Agent': 'curl/7.68.0',
@@ -75,7 +75,7 @@ export const mockRequests: Request[] = [
     id: 3,
     endpoint_id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
     method: 'POST',
-    path: '/webhook/a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+    path: '/a1b2c3d4-e5f6-7890-abcd-ef1234567890',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
       'User-Agent': 'Stripe/1.0',
@@ -89,7 +89,7 @@ export const mockRequests: Request[] = [
     id: 4,
     endpoint_id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
     method: 'PUT',
-    path: '/webhook/a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+    path: '/a1b2c3d4-e5f6-7890-abcd-ef1234567890',
     headers: {
       'Content-Type': 'application/json',
       'X-Custom-Header': 'test-value',
@@ -107,7 +107,7 @@ export const mockRequests: Request[] = [
     id: 5,
     endpoint_id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
     method: 'DELETE',
-    path: '/webhook/a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+    path: '/a1b2c3d4-e5f6-7890-abcd-ef1234567890',
     query_string: 'id=12345',
     headers: {
       'User-Agent': 'Custom-Service/2.0',
@@ -132,7 +132,7 @@ export function generateMockRequest(endpointId: string): Request {
     id,
     endpoint_id: endpointId,
     method,
-    path: `/webhook/${endpointId}`,
+    path: `/${endpointId}`,
     query_string: Math.random() > 0.5 ? 'test=true' : undefined,
     headers: {
       'Content-Type': 'application/json',

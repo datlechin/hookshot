@@ -46,7 +46,7 @@ async fn test_webhook_post_request() {
     // Create webhook handler with mock ConnectInfo
     let app = axum::Router::new()
         .route(
-            "/webhook/{id}",
+            "/{id}",
             axum::routing::any(handlers::webhook::webhook_handler),
         )
         .with_state(create_test_state(pool.clone()))
@@ -58,7 +58,7 @@ async fn test_webhook_post_request() {
     // Send POST request
     let request = Request::builder()
         .method(Method::POST)
-        .uri(format!("/webhook/{}", endpoint_id))
+        .uri(format!("/{}", endpoint_id))
         .header("content-type", "application/json")
         .header("user-agent", "test-client")
         .body(Body::from(r#"{"test": "data"}"#))
@@ -84,7 +84,7 @@ async fn test_webhook_post_request() {
             .expect("Failed to fetch captured request");
 
     assert_eq!(captured.1, "POST");
-    assert_eq!(captured.2, format!("/webhook/{}", endpoint_id));
+    assert_eq!(captured.2, format!("/{}", endpoint_id));
     assert!(captured.3.contains("application/json"));
 
     // Verify request count incremented
@@ -104,7 +104,7 @@ async fn test_webhook_get_request() {
 
     let app = axum::Router::new()
         .route(
-            "/webhook/{id}",
+            "/{id}",
             axum::routing::any(handlers::webhook::webhook_handler),
         )
         .with_state(create_test_state(pool.clone()))
@@ -116,7 +116,7 @@ async fn test_webhook_get_request() {
     // Send GET request with query parameters
     let request = Request::builder()
         .method(Method::GET)
-        .uri(format!("/webhook/{}?key=value&foo=bar", endpoint_id))
+        .uri(format!("/{}?key=value&foo=bar", endpoint_id))
         .body(Body::empty())
         .unwrap();
 
@@ -148,7 +148,7 @@ async fn test_webhook_invalid_endpoint() {
 
     let app = axum::Router::new()
         .route(
-            "/webhook/{id}",
+            "/{id}",
             axum::routing::any(handlers::webhook::webhook_handler),
         )
         .with_state(create_test_state(pool.clone()))
@@ -159,7 +159,7 @@ async fn test_webhook_invalid_endpoint() {
 
     let request = Request::builder()
         .method(Method::POST)
-        .uri(format!("/webhook/{}", invalid_id))
+        .uri(format!("/{}", invalid_id))
         .body(Body::empty())
         .unwrap();
 
@@ -178,7 +178,7 @@ async fn test_webhook_payload_too_large() {
 
     let app = axum::Router::new()
         .route(
-            "/webhook/{id}",
+            "/{id}",
             axum::routing::any(handlers::webhook::webhook_handler),
         )
         .with_state(create_test_state(pool.clone()))
@@ -192,7 +192,7 @@ async fn test_webhook_payload_too_large() {
 
     let request = Request::builder()
         .method(Method::POST)
-        .uri(format!("/webhook/{}", endpoint_id))
+        .uri(format!("/{}", endpoint_id))
         .body(Body::from(large_payload))
         .unwrap();
 
@@ -222,7 +222,7 @@ async fn test_webhook_all_http_methods() {
     for method in methods {
         let app = axum::Router::new()
             .route(
-                "/webhook/{id}",
+                "/{id}",
                 axum::routing::any(handlers::webhook::webhook_handler),
             )
             .with_state(create_test_state(pool.clone()))
@@ -233,7 +233,7 @@ async fn test_webhook_all_http_methods() {
 
         let request = Request::builder()
             .method(method.clone())
-            .uri(format!("/webhook/{}", endpoint_id))
+            .uri(format!("/{}", endpoint_id))
             .body(Body::empty())
             .unwrap();
 
@@ -270,7 +270,7 @@ async fn test_webhook_binary_body() {
 
     let app = axum::Router::new()
         .route(
-            "/webhook/{id}",
+            "/{id}",
             axum::routing::any(handlers::webhook::webhook_handler),
         )
         .with_state(create_test_state(pool.clone()))
@@ -284,7 +284,7 @@ async fn test_webhook_binary_body() {
 
     let request = Request::builder()
         .method(Method::POST)
-        .uri(format!("/webhook/{}", endpoint_id))
+        .uri(format!("/{}", endpoint_id))
         .header("content-type", "application/octet-stream")
         .body(Body::from(binary_data.clone()))
         .unwrap();
@@ -317,7 +317,7 @@ async fn test_webhook_empty_body() {
 
     let app = axum::Router::new()
         .route(
-            "/webhook/{id}",
+            "/{id}",
             axum::routing::any(handlers::webhook::webhook_handler),
         )
         .with_state(create_test_state(pool.clone()))
@@ -328,7 +328,7 @@ async fn test_webhook_empty_body() {
 
     let request = Request::builder()
         .method(Method::POST)
-        .uri(format!("/webhook/{}", endpoint_id))
+        .uri(format!("/{}", endpoint_id))
         .body(Body::empty())
         .unwrap();
 
@@ -360,7 +360,7 @@ async fn test_webhook_cors_headers() {
 
     let app = axum::Router::new()
         .route(
-            "/webhook/{id}",
+            "/{id}",
             axum::routing::any(handlers::webhook::webhook_handler),
         )
         .with_state(create_test_state(pool.clone()))
@@ -371,7 +371,7 @@ async fn test_webhook_cors_headers() {
 
     let request = Request::builder()
         .method(Method::POST)
-        .uri(format!("/webhook/{}", endpoint_id))
+        .uri(format!("/{}", endpoint_id))
         .body(Body::empty())
         .unwrap();
 
@@ -410,7 +410,7 @@ async fn test_webhook_custom_response() {
 
     let app = axum::Router::new()
         .route(
-            "/webhook/{id}",
+            "/{id}",
             axum::routing::any(handlers::webhook::webhook_handler),
         )
         .with_state(create_test_state(pool.clone()))
@@ -421,7 +421,7 @@ async fn test_webhook_custom_response() {
 
     let request = Request::builder()
         .method(Method::POST)
-        .uri(format!("/webhook/{}", endpoint_id))
+        .uri(format!("/{}", endpoint_id))
         .body(Body::from(r#"{"test": "data"}"#))
         .unwrap();
 

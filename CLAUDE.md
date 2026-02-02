@@ -12,7 +12,7 @@ Built with:
 
 ## Core Features to Implement
 
-1. **Webhook Endpoints** - Auto-generated UUID endpoints (`/webhook/{uuid}`)
+1. **Webhook Endpoints** - Auto-generated UUID endpoints (`/{uuid}`)
 2. **Request Capture** - Store all HTTP methods, headers, body, metadata
 3. **Custom Responses** - Configurable status codes, headers, response body
 4. **Real-time Viewer** - WebSocket-based live updates when requests arrive
