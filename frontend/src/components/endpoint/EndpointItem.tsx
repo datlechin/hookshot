@@ -147,11 +147,9 @@ export function EndpointItem({
 
             {/* Custom Response Indicator */}
             {endpoint.custom_response_enabled && (
-              <Circle
-                className="w-2 h-2 fill-(--accent-green) text-(--accent-green)"
-                aria-label="Custom response enabled"
-                title="Custom response enabled"
-              />
+              <span title="Custom response enabled" aria-label="Custom response enabled">
+                <Circle className="w-2 h-2 fill-(--accent-green) text-(--accent-green)" />
+              </span>
             )}
           </div>
 
