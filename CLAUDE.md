@@ -100,14 +100,6 @@ This project uses **CCPM (Claude Code PM)** adapted for OpenCode. CCPM provides:
 
 ### Quick Check - Run All Tests
 
-**Recommended:** Use the provided script:
-
-```bash
-./test-ci.sh
-```
-
-Or run all checks manually:
-
 ```bash
 # Run all CI checks (frontend + backend)
 (cd frontend && npm ci && npm run ci:test && npm run ci:lint && npm run ci:typecheck) && \

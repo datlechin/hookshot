@@ -1,4 +1,4 @@
-# Hookshot 🎯
+# Hookshot
 
 **Self-hosted webhook testing and debugging tool** - Inspect, test, and debug webhooks with ease.
 
